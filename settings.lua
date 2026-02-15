@@ -707,7 +707,7 @@ function Settings.build(page, r)
         }, minKeyBg)
 
         local minListening  = false
-        local currentMinKey = Enum.KeyCode.LeftAlt
+        local currentMinKey = Enum.KeyCode.LeftControl
 
         local minListenConn = nil
         local function startMinListening()
