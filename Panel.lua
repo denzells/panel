@@ -17,7 +17,7 @@ if old then old:Destroy() end
 -- ============================================
 -- CARGAR MÓDULOS (Cambia estas URLs por las tuyas)
 -- ============================================
-local BASE_URL = "https://raw.githubusercontent.com/TU_USUARIO/TU_REPO/main/"
+local BASE_URL = ""https://raw.githubusercontent.com/dzanity/dzanity.gg/main/"
 
 local function loadModule(name)
     local success, result = pcall(function()
@@ -281,4 +281,5 @@ task.delay(1, function()
     if Settings then Settings.init(_G.PanelConfig.tPages[4]) end
     
     print("[PanelBase] ✨ Panel cargado completamente")
+
 end)
