@@ -19,6 +19,9 @@ end
 
 local Animations = loadModule("animations.lua")
 local Settings   = loadModule("settings.lua")
+local Combat     = loadModule("combat.lua")
+local Visuals    = loadModule("visuals.lua")
+local Commands   = loadModule("commands.lua")
 
 if not Animations or not Settings then
     warn("[PanelBase] Falló la carga de módulos. Abortando.")
@@ -112,7 +115,7 @@ local function tlbl(txt, font, sz, col, x, w)
     }, TBar)
 end
 
-local title1 = tlbl("dzload.gg",  Enum.Font.GothamBold,  13, C.WHITE,  30,  80)
+local title1 = tlbl("dzanity.gg",  Enum.Font.GothamBold,  13, C.WHITE,  30,  80)
 local title2 = tlbl("|",           Enum.Font.GothamBold,  16, C.RED,   113,  14)
 local title3 = tlbl("Base Panel",  Enum.Font.Gotham,      12, C.GRAY,  129, 110)
 local title4 = tlbl("|",           Enum.Font.GothamBold,  14, C.MUTED, 241,  14)
@@ -315,6 +318,19 @@ UIS.InputBegan:Connect(function(i, gp)
     if i.KeyCode == Enum.KeyCode.RightShift then anim.toggleHide() end
     if i.KeyCode == Enum.KeyCode.End        then anim.doClose()    end
 end)
+
+-- ── PÁGINAS ──────────────────────────────────────────────────
+Combat.build(tPages[1], {
+    C = C, mk = mk, rnd = rnd, tw = tw,
+})
+
+Visuals.build(tPages[2], {
+    C = C, mk = mk, rnd = rnd, tw = tw,
+})
+
+Commands.build(tPages[3], {
+    C = C, mk = mk, rnd = rnd, tw = tw,
+})
 
 -- ── SETTINGS ─────────────────────────────────────────────────
 Settings.build(tPages[4], {
