@@ -675,7 +675,7 @@ function Settings.build(page, r)
         end
 
         -- ══════════════════════════════════════════════════════
-        -- MINIMIZE KEY
+        -- MINIMIZE KEY (✅ CAMBIADO A L.CTRL POR DEFECTO)
         -- ══════════════════════════════════════════════════════
         local row1 = mk("Frame", {
             Size = UDim2.new(0, PW, 0, 22), BackgroundTransparency = 1, LayoutOrder = 1,
@@ -695,7 +695,8 @@ function Settings.build(page, r)
         mk("UIStroke", { Color = C.LINE, Thickness = 1, Transparency = 0.3 }, minKeyBg)
 
         local minKeyLbl = mk("TextLabel", {
-            Text = "L.Ctrl", Font = Enum.Font.Code, TextSize = 8,
+            Text = "L.Ctrl", -- ✅ CAMBIADO DE "L.Alt" A "L.Ctrl"
+            Font = Enum.Font.Code, TextSize = 8,
             TextColor3 = C.WHITE, BackgroundTransparency = 1,
             Size = UDim2.new(1, 0, 1, 0), ZIndex = 6,
             TextXAlignment = Enum.TextXAlignment.Center,
@@ -707,7 +708,7 @@ function Settings.build(page, r)
         }, minKeyBg)
 
         local minListening  = false
-        local currentMinKey = Enum.KeyCode.LeftControl
+        local currentMinKey = Enum.KeyCode.LeftControl  -- ✅ CAMBIADO DE LeftAlt A LeftControl
 
         local minListenConn = nil
         local function startMinListening()
@@ -781,7 +782,8 @@ function Settings.build(page, r)
         mk("UIStroke", { Color = C.LINE, Thickness = 1, Transparency = 0.3 }, closeKeyBg)
 
         local closeKeyLbl = mk("TextLabel", {
-            Text = "L.Alt", Font = Enum.Font.Code, TextSize = 8,  -- ✅ CAMBIADO A L.ALT
+            Text = "L.Alt",
+            Font = Enum.Font.Code, TextSize = 8,
             TextColor3 = C.WHITE, BackgroundTransparency = 1,
             Size = UDim2.new(1, 0, 1, 0), ZIndex = 6,
             TextXAlignment = Enum.TextXAlignment.Center,
@@ -793,7 +795,7 @@ function Settings.build(page, r)
         }, closeKeyBg)
 
         local closeListening  = false
-        local currentCloseKey = Enum.KeyCode.LeftAlt  -- ✅ CAMBIADO A L.ALT
+        local currentCloseKey = Enum.KeyCode.LeftAlt
 
         local closeListenConn = nil
         local function startCloseListening()
