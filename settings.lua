@@ -620,10 +620,146 @@ function Settings.build(page, r)
         end)
     end
 
+    -- ════════════════════════════════════════════════════════
+    -- KEYBINDS
+    -- ════════════════════════════════════════════════════════
+    local function CreateKeybinds(parent)
+        local PW = 168
+
+        local root = mk("Frame", {
+            Size = UDim2.new(0, PW, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
+            BackgroundTransparency = 1, LayoutOrder = SO(),
+        }, parent)
+        mk("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, root)
+
+        -- ── Fila: Minimize Key ───────────────────────────────
+        local row = mk("Frame", {
+            Size = UDim2.new(0, PW, 0, 22), BackgroundTransparency = 1, LayoutOrder = 1,
+        }, root)
+
+        mk("TextLabel", {
+            Text = "Minimize Key", Font = Enum.Font.GothamSemibold, TextSize = 10,
+            TextColor3 = C.WHITE, BackgroundTransparency = 1,
+            Size = UDim2.new(0, PW - 46, 1, 0), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 5,
+        }, row)
+
+        -- Badge tecla
+        local keyBadgeBg = mk("Frame", {
+            Size = UDim2.new(0, 40, 0, 18), Position = UDim2.new(0, PW - 42, 0.5, -9),
+            BackgroundColor3 = Color3.fromRGB(22, 22, 22), BorderSizePixel = 0, ZIndex = 5,
+        }, row)
+        rnd(5, keyBadgeBg)
+        mk("UIStroke", { Color = C.LINE, Thickness = 1, Transparency = 0.3 }, keyBadgeBg)
+
+        local keyLbl = mk("TextLabel", {
+            Text = "L.Ctrl", Font = Enum.Font.Code, TextSize = 8,
+            TextColor3 = C.WHITE, BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 1, 0), ZIndex = 6,
+            TextXAlignment = Enum.TextXAlignment.Center,
+        }, keyBadgeBg)
+
+        local keyBtn = mk("TextButton", {
+            Text = "", BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 1, 0), ZIndex = 7, AutoButtonColor = false,
+        }, keyBadgeBg)
+
+        -- Estado
+        local listening  = false
+        local currentKey = Enum.KeyCode.LeftControl
+
+        -- Nombre corto legible
+        local function keyName(kc)
+            local names = {
+                [Enum.KeyCode.LeftControl]  = "L.Ctrl",
+                [Enum.KeyCode.RightControl] = "R.Ctrl",
+                [Enum.KeyCode.LeftShift]    = "L.Shft",
+                [Enum.KeyCode.RightShift]   = "R.Shft",
+                [Enum.KeyCode.LeftAlt]      = "L.Alt",
+                [Enum.KeyCode.RightAlt]     = "R.Alt",
+                [Enum.KeyCode.Tab]          = "Tab",
+                [Enum.KeyCode.CapsLock]     = "Caps",
+                [Enum.KeyCode.Insert]       = "Ins",
+                [Enum.KeyCode.Home]         = "Home",
+                [Enum.KeyCode.Delete]       = "Del",
+                [Enum.KeyCode.End]          = "End",
+                [Enum.KeyCode.BackSpace]    = "Back",
+                [Enum.KeyCode.Return]       = "Enter",
+                [Enum.KeyCode.Escape]       = "Esc",
+                [Enum.KeyCode.Space]        = "Space",
+            }
+            if names[kc] then return names[kc] end
+            local raw = tostring(kc):gsub("Enum%.KeyCode%.", "")
+            if #raw <= 6 then return raw end
+            return raw:sub(1, 6)
+        end
+
+        -- Escucha la siguiente tecla pulsada
+        local listenConn = nil
+        local function startListening()
+            if listenConn then listenConn:Disconnect() end
+            listenConn = UIS.InputBegan:Connect(function(input, gpe)
+                if input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+                listening = false
+                currentKey = input.KeyCode
+                if listenConn then listenConn:Disconnect(); listenConn = nil end
+                keyLbl.Text       = keyName(currentKey)
+                keyLbl.TextColor3 = C.WHITE
+                tw(keyBadgeBg, .08, { BackgroundColor3 = Color3.fromRGB(25, 55, 25) })
+                task.delay(.35, function()
+                    tw(keyBadgeBg, .2, { BackgroundColor3 = Color3.fromRGB(22, 22, 22) })
+                end)
+            end)
+        end
+
+        -- Click → modo escucha
+        keyBtn.MouseButton1Click:Connect(function()
+            if listening then return end
+            listening = true
+            tw(keyBadgeBg, .1, { BackgroundColor3 = Color3.fromRGB(38, 30, 12) })
+            keyLbl.Text       = "..."
+            keyLbl.TextColor3 = C.GRAY
+            startListening()
+        end)
+
+        keyBtn.MouseEnter:Connect(function()
+            if not listening then tw(keyBadgeBg, .1, { BackgroundColor3 = Color3.fromRGB(30, 30, 30) }) end
+        end)
+        keyBtn.MouseLeave:Connect(function()
+            if not listening then tw(keyBadgeBg, .1, { BackgroundColor3 = Color3.fromRGB(22, 22, 22) }) end
+        end)
+
+        -- Toggle visibilidad de la ventana con la tecla asignada
+        UIS.InputBegan:Connect(function(input, gpe)
+            if gpe then return end
+            if input.UserInputType == Enum.UserInputType.Keyboard
+            and input.KeyCode == currentKey
+            and not listening then
+                if r.toggleWindow then
+                    r.toggleWindow()
+                end
+            end
+        end)
+    end
+
     -- ── Construir la página ──────────────────────────────────
     task.delay(1, function()
-        local colorPanel = MiniPanel(page, "Accent Color", 216)
+        -- Fila superior: Accent Color  +  Keybinds  (lado a lado)
+        local topRow = mk("Frame", {
+            Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
+            BackgroundTransparency = 1, LayoutOrder = SO(),
+        }, page)
+        mk("UIListLayout", {
+            FillDirection     = Enum.FillDirection.Horizontal,
+            Padding           = UDim.new(0, 8),
+            SortOrder         = Enum.SortOrder.LayoutOrder,
+            VerticalAlignment = Enum.VerticalAlignment.Top,
+        }, topRow)
+
+        local colorPanel = MiniPanel(topRow, "Accent Color", 216)
         CreateAccentPicker(colorPanel)
+
+        local keybindPanel = MiniPanel(topRow, "Keybinds", 184)
+        CreateKeybinds(keybindPanel)
 
         local fontPanel = MiniPanel(page, "Font", 216)
         CreateFontPicker(fontPanel)
