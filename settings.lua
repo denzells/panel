@@ -669,7 +669,6 @@ function Settings.build(page, r)
 
         -- Nombre corto legible para CUALQUIER tecla
         local function keyName(kc)
-            -- Teclas especiales con nombres personalizados
             local names = {
                 [Enum.KeyCode.LeftControl]  = "L.Ctrl",
                 [Enum.KeyCode.RightControl] = "R.Ctrl",
@@ -689,22 +688,16 @@ function Settings.build(page, r)
                 [Enum.KeyCode.Space]        = "Space",
                 [Enum.KeyCode.PageUp]       = "PgUp",
                 [Enum.KeyCode.PageDown]     = "PgDn",
-                [Enum.KeyCode.LeftSuper]    = "L.Win",
-                [Enum.KeyCode.RightSuper]   = "R.Win",
             }
             
-            -- Si está en la tabla, retornar nombre personalizado
             if names[kc] then return names[kc] end
             
-            -- Para cualquier otra tecla, extraer el nombre del enum
             local raw = tostring(kc):gsub("Enum%.KeyCode%.", "")
             
-            -- Letras y números se muestran tal cual
             if raw:match("^[A-Z]$") or raw:match("^[0-9]$") then
                 return raw
             end
             
-            -- Para teclas más largas, truncar si es necesario
             if #raw <= 6 then 
                 return raw 
             else
@@ -718,28 +711,25 @@ function Settings.build(page, r)
             if listenConn then listenConn:Disconnect() end
             
             listenConn = UIS.InputBegan:Connect(function(input, gpe)
-                -- NO ignorar gpe aquí porque queremos capturar CUALQUIER tecla
                 if input.UserInputType ~= Enum.UserInputType.Keyboard then return end
                 
-                -- Detener el modo listening
                 listening = false
                 currentKey = input.KeyCode
                 
-                -- Desconectar el listener
                 if listenConn then 
                     listenConn:Disconnect()
                     listenConn = nil 
                 end
                 
-                -- Actualizar el display
                 keyLbl.Text = keyName(currentKey)
                 keyLbl.TextColor3 = C.WHITE
                 
-                -- Feedback visual de confirmación
                 tw(keyBadgeBg, .08, { BackgroundColor3 = Color3.fromRGB(25, 55, 25) })
                 task.delay(.35, function()
                     tw(keyBadgeBg, .2, { BackgroundColor3 = Color3.fromRGB(22, 22, 22) })
                 end)
+                
+                print("[Keybind] ✓ Nueva tecla seleccionada:", keyName(currentKey))
             end)
         end
 
@@ -764,24 +754,24 @@ function Settings.build(page, r)
             end
         end)
 
-        -- Toggle visibilidad con la tecla asignada
+        -- ✅ TOGGLE VISIBILIDAD CON ANIM
         local toggleConn = UIS.InputBegan:Connect(function(input, gpe)
-            -- Ignorar eventos procesados por el juego
             if gpe then return end
-            -- Ignorar si estamos en modo listening
             if listening then return end
             
             if input.UserInputType == Enum.UserInputType.Keyboard
             and input.KeyCode == currentKey then
-                -- Buscar la ventana y togglear
-                if r.toggleWindow then
-                    r.toggleWindow()
-                elseif r.win then
-                    r.win.Visible = not r.win.Visible
-                elseif r.window then
-                    r.window.Visible = not r.window.Visible
-                elseif r.frame then
-                    r.frame.Visible = not r.frame.Visible
+                print("[Keybind] ✓ Tecla detectada:", keyName(currentKey))
+                
+                -- Usar la función de animación si existe
+                if r.anim and r.anim.toggleMinimize then
+                    print("[Keybind] ✓ Ejecutando anim.toggleMinimize()")
+                    r.anim.toggleMinimize()
+                elseif r.Win then
+                    print("[Keybind] ✓ Toggleando Win.Visible")
+                    r.Win.Visible = not r.Win.Visible
+                else
+                    warn("[Keybind] ⚠️ No se encontró ni anim ni Win")
                 end
             end
         end)
@@ -790,6 +780,7 @@ function Settings.build(page, r)
         root.Destroying:Connect(function()
             if listenConn then listenConn:Disconnect() end
             if toggleConn then toggleConn:Disconnect() end
+            print("[Keybind] Keybinds desconectados")
         end)
     end
 
