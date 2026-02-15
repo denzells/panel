@@ -621,258 +621,259 @@ function Settings.build(page, r)
     end
 
     -- ════════════════════════════════════════════════════════
--- KEYBINDS
--- ════════════════════════════════════════════════════════
-local function CreateKeybinds(parent)
-    local PW = 168
+    -- KEYBINDS
+    -- ════════════════════════════════════════════════════════
+    local function CreateKeybinds(parent)
+        local PW = 168
 
-    local root = mk("Frame", {
-        Size = UDim2.new(0, PW, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
-        BackgroundTransparency = 1, LayoutOrder = SO(),
-    }, parent)
-    mk("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, root)
+        local root = mk("Frame", {
+            Size = UDim2.new(0, PW, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
+            BackgroundTransparency = 1, LayoutOrder = SO(),
+        }, parent)
+        mk("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, root)
 
-    -- Nombre corto legible para CUALQUIER tecla
-    local function keyName(kc)
-        local names = {
-            [Enum.KeyCode.LeftControl]  = "L.Ctrl",
-            [Enum.KeyCode.RightControl] = "R.Ctrl",
-            [Enum.KeyCode.LeftShift]    = "L.Shft",
-            [Enum.KeyCode.RightShift]   = "R.Shft",
-            [Enum.KeyCode.LeftAlt]      = "L.Alt",
-            [Enum.KeyCode.RightAlt]     = "R.Alt",
-            [Enum.KeyCode.Tab]          = "Tab",
-            [Enum.KeyCode.CapsLock]     = "Caps",
-            [Enum.KeyCode.Insert]       = "Ins",
-            [Enum.KeyCode.Home]         = "Home",
-            [Enum.KeyCode.Delete]       = "Del",
-            [Enum.KeyCode.End]          = "End",
-            [Enum.KeyCode.Backspace]    = "Back",
-            [Enum.KeyCode.Return]       = "Enter",
-            [Enum.KeyCode.Escape]       = "Esc",
-            [Enum.KeyCode.Space]        = "Space",
-            [Enum.KeyCode.PageUp]       = "PgUp",
-            [Enum.KeyCode.PageDown]     = "PgDn",
-        }
-        
-        if names[kc] then return names[kc] end
-        
-        local raw = tostring(kc):gsub("Enum%.KeyCode%.", "")
-        
-        if raw:match("^[A-Z]$") or raw:match("^[0-9]$") then
-            return raw
-        end
-        
-        if #raw <= 6 then 
-            return raw 
-        else
-            return raw:sub(1, 5) .. "."
-        end
-    end
-
-    -- ══════════════════════════════════════════════════════
-    -- MINIMIZE KEY
-    -- ══════════════════════════════════════════════════════
-    local row1 = mk("Frame", {
-        Size = UDim2.new(0, PW, 0, 22), BackgroundTransparency = 1, LayoutOrder = 1,
-    }, root)
-
-    mk("TextLabel", {
-        Text = "Minimize Key", Font = Enum.Font.GothamSemibold, TextSize = 10,
-        TextColor3 = C.WHITE, BackgroundTransparency = 1,
-        Size = UDim2.new(0, PW - 46, 1, 0), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 5,
-    }, row1)
-
-    local minKeyBg = mk("Frame", {
-        Size = UDim2.new(0, 40, 0, 18), Position = UDim2.new(0, PW - 42, 0.5, -9),
-        BackgroundColor3 = Color3.fromRGB(22, 22, 22), BorderSizePixel = 0, ZIndex = 5,
-    }, row1)
-    rnd(5, minKeyBg)
-    mk("UIStroke", { Color = C.LINE, Thickness = 1, Transparency = 0.3 }, minKeyBg)
-
-    local minKeyLbl = mk("TextLabel", {
-        Text = "L.Alt", Font = Enum.Font.Code, TextSize = 8,
-        TextColor3 = C.WHITE, BackgroundTransparency = 1,
-        Size = UDim2.new(1, 0, 1, 0), ZIndex = 6,
-        TextXAlignment = Enum.TextXAlignment.Center,
-    }, minKeyBg)
-
-    local minKeyBtn = mk("TextButton", {
-        Text = "", BackgroundTransparency = 1,
-        Size = UDim2.new(1, 0, 1, 0), ZIndex = 7, AutoButtonColor = false,
-    }, minKeyBg)
-
-    local minListening  = false
-    local currentMinKey = Enum.KeyCode.LeftAlt  -- ✅ CAMBIADO A L.ALT
-
-    local minListenConn = nil
-    local function startMinListening()
-        if minListenConn then minListenConn:Disconnect() end
-        
-        minListenConn = UIS.InputBegan:Connect(function(input, gpe)
-            if input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+        -- Nombre corto legible para CUALQUIER tecla
+        local function keyName(kc)
+            local names = {
+                [Enum.KeyCode.LeftControl]  = "L.Ctrl",
+                [Enum.KeyCode.RightControl] = "R.Ctrl",
+                [Enum.KeyCode.LeftShift]    = "L.Shft",
+                [Enum.KeyCode.RightShift]   = "R.Shft",
+                [Enum.KeyCode.LeftAlt]      = "L.Alt",
+                [Enum.KeyCode.RightAlt]     = "R.Alt",
+                [Enum.KeyCode.Tab]          = "Tab",
+                [Enum.KeyCode.CapsLock]     = "Caps",
+                [Enum.KeyCode.Insert]       = "Ins",
+                [Enum.KeyCode.Home]         = "Home",
+                [Enum.KeyCode.Delete]       = "Del",
+                [Enum.KeyCode.End]          = "End",
+                [Enum.KeyCode.Backspace]    = "Back",
+                [Enum.KeyCode.Return]       = "Enter",
+                [Enum.KeyCode.Escape]       = "Esc",
+                [Enum.KeyCode.Space]        = "Space",
+                [Enum.KeyCode.PageUp]       = "PgUp",
+                [Enum.KeyCode.PageDown]     = "PgDn",
+            }
             
-            -- ✅ SOLO GUARDA LA TECLA, NO EJECUTA NINGUNA ACCIÓN
-            minListening = false
-            currentMinKey = input.KeyCode
+            if names[kc] then return names[kc] end
+            
+            local raw = tostring(kc):gsub("Enum%.KeyCode%.", "")
+            
+            if raw:match("^[A-Z]$") or raw:match("^[0-9]$") then
+                return raw
+            end
+            
+            if #raw <= 6 then 
+                return raw 
+            else
+                return raw:sub(1, 5) .. "."
+            end
+        end
+
+        -- ══════════════════════════════════════════════════════
+        -- MINIMIZE KEY
+        -- ══════════════════════════════════════════════════════
+        local row1 = mk("Frame", {
+            Size = UDim2.new(0, PW, 0, 22), BackgroundTransparency = 1, LayoutOrder = 1,
+        }, root)
+
+        mk("TextLabel", {
+            Text = "Minimize Key", Font = Enum.Font.GothamSemibold, TextSize = 10,
+            TextColor3 = C.WHITE, BackgroundTransparency = 1,
+            Size = UDim2.new(0, PW - 46, 1, 0), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 5,
+        }, row1)
+
+        local minKeyBg = mk("Frame", {
+            Size = UDim2.new(0, 40, 0, 18), Position = UDim2.new(0, PW - 42, 0.5, -9),
+            BackgroundColor3 = Color3.fromRGB(22, 22, 22), BorderSizePixel = 0, ZIndex = 5,
+        }, row1)
+        rnd(5, minKeyBg)
+        mk("UIStroke", { Color = C.LINE, Thickness = 1, Transparency = 0.3 }, minKeyBg)
+
+        local minKeyLbl = mk("TextLabel", {
+            Text = "L.Alt", Font = Enum.Font.Code, TextSize = 8,
+            TextColor3 = C.WHITE, BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 1, 0), ZIndex = 6,
+            TextXAlignment = Enum.TextXAlignment.Center,
+        }, minKeyBg)
+
+        local minKeyBtn = mk("TextButton", {
+            Text = "", BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 1, 0), ZIndex = 7, AutoButtonColor = false,
+        }, minKeyBg)
+
+        local minListening  = false
+        local currentMinKey = Enum.KeyCode.LeftAlt  -- ✅ CAMBIADO A L.ALT
+
+        local minListenConn = nil
+        local function startMinListening()
+            if minListenConn then minListenConn:Disconnect() end
+            
+            minListenConn = UIS.InputBegan:Connect(function(input, gpe)
+                if input.UserInputType ~= Enum.UserInputType.Keyboard then return end
                 
-            if minListenConn then 
-                minListenConn:Disconnect()
-                minListenConn = nil 
-            end
-            
-            minKeyLbl.Text = keyName(currentMinKey)
-            minKeyLbl.TextColor3 = C.WHITE
-            
-            tw(minKeyBg, .08, { BackgroundColor3 = Color3.fromRGB(25, 55, 25) })
-            task.delay(.35, function()
-                tw(minKeyBg, .2, { BackgroundColor3 = Color3.fromRGB(22, 22, 22) })
+                -- ✅ SOLO GUARDA LA TECLA, NO EJECUTA NINGUNA ACCIÓN
+                minListening = false
+                currentMinKey = input.KeyCode
+                
+                if minListenConn then 
+                    minListenConn:Disconnect()
+                    minListenConn = nil 
+                end
+                
+                minKeyLbl.Text = keyName(currentMinKey)
+                minKeyLbl.TextColor3 = C.WHITE
+                
+                tw(minKeyBg, .08, { BackgroundColor3 = Color3.fromRGB(25, 55, 25) })
+                task.delay(.35, function()
+                    tw(minKeyBg, .2, { BackgroundColor3 = Color3.fromRGB(22, 22, 22) })
+                end)
+                
+                print("[Keybind] ✓ Minimize Key asignada:", keyName(currentMinKey), "- Presiona nuevamente para ejecutar")
             end)
+        end
+
+        minKeyBtn.MouseButton1Click:Connect(function()
+            if minListening then return end
+            minListening = true
+            tw(minKeyBg, .1, { BackgroundColor3 = Color3.fromRGB(38, 30, 12) })
+            minKeyLbl.Text = "..."
+            minKeyLbl.TextColor3 = C.GRAY
+            startMinListening()
+        end)
+
+        minKeyBtn.MouseEnter:Connect(function()
+            if not minListening then 
+                tw(minKeyBg, .1, { BackgroundColor3 = Color3.fromRGB(30, 30, 30) }) 
+            end
+        end)
+        minKeyBtn.MouseLeave:Connect(function()
+            if not minListening then 
+                tw(minKeyBg, .1, { BackgroundColor3 = Color3.fromRGB(22, 22, 22) }) 
+            end
+        end)
+
+        -- ══════════════════════════════════════════════════════
+        -- CLOSE KEY
+        -- ══════════════════════════════════════════════════════
+        local row2 = mk("Frame", {
+            Size = UDim2.new(0, PW, 0, 22), BackgroundTransparency = 1, LayoutOrder = 2,
+        }, root)
+
+        mk("TextLabel", {
+            Text = "Close Key", Font = Enum.Font.GothamSemibold, TextSize = 10,
+            TextColor3 = C.WHITE, BackgroundTransparency = 1,
+            Size = UDim2.new(0, PW - 46, 1, 0), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 5,
+        }, row2)
+
+        local closeKeyBg = mk("Frame", {
+            Size = UDim2.new(0, 40, 0, 18), Position = UDim2.new(0, PW - 42, 0.5, -9),
+            BackgroundColor3 = Color3.fromRGB(22, 22, 22), BorderSizePixel = 0, ZIndex = 5,
+        }, row2)
+        rnd(5, closeKeyBg)
+        mk("UIStroke", { Color = C.LINE, Thickness = 1, Transparency = 0.3 }, closeKeyBg)
+
+        local closeKeyLbl = mk("TextLabel", {
+            Text = "End", Font = Enum.Font.Code, TextSize = 8,
+            TextColor3 = C.WHITE, BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 1, 0), ZIndex = 6,
+            TextXAlignment = Enum.TextXAlignment.Center,
+        }, closeKeyBg)
+
+        local closeKeyBtn = mk("TextButton", {
+            Text = "", BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 1, 0), ZIndex = 7, AutoButtonColor = false,
+        }, closeKeyBg)
+
+        local closeListening  = false
+        local currentCloseKey = Enum.KeyCode.End
+
+        local closeListenConn = nil
+        local function startCloseListening()
+            if closeListenConn then closeListenConn:Disconnect() end
             
-            print("[Keybind] ✓ Minimize Key asignada:", keyName(currentMinKey), "- Presiona nuevamente para ejecutar")
+            closeListenConn = UIS.InputBegan:Connect(function(input, gpe)
+                if input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+                
+                -- ✅ SOLO GUARDA LA TECLA, NO EJECUTA NINGUNA ACCIÓN
+                closeListening = false
+                currentCloseKey = input.KeyCode
+                
+                if closeListenConn then 
+                    closeListenConn:Disconnect()
+                    closeListenConn = nil 
+                end
+                
+                closeKeyLbl.Text = keyName(currentCloseKey)
+                closeKeyLbl.TextColor3 = C.WHITE
+                
+                tw(closeKeyBg, .08, { BackgroundColor3 = Color3.fromRGB(25, 55, 25) })
+                task.delay(.35, function()
+                    tw(closeKeyBg, .2, { BackgroundColor3 = Color3.fromRGB(22, 22, 22) })
+                end)
+                
+                print("[Keybind] ✓ Close Key asignada:", keyName(currentCloseKey), "- Presiona nuevamente para ejecutar")
+            end)
+        end
+
+        closeKeyBtn.MouseButton1Click:Connect(function()
+            if closeListening then return end
+            closeListening = true
+            tw(closeKeyBg, .1, { BackgroundColor3 = Color3.fromRGB(38, 30, 12) })
+            closeKeyLbl.Text = "..."
+            closeKeyLbl.TextColor3 = C.GRAY
+            startCloseListening()
+        end)
+
+        closeKeyBtn.MouseEnter:Connect(function()
+            if not closeListening then 
+                tw(closeKeyBg, .1, { BackgroundColor3 = Color3.fromRGB(30, 30, 30) }) 
+            end
+        end)
+        closeKeyBtn.MouseLeave:Connect(function()
+            if not closeListening then 
+                tw(closeKeyBg, .1, { BackgroundColor3 = Color3.fromRGB(22, 22, 22) }) 
+            end
+        end)
+
+        -- ══════════════════════════════════════════════════════
+        -- GLOBAL INPUT HANDLER - EJECUTA LAS ACCIONES
+        -- ══════════════════════════════════════════════════════
+        local toggleConn = UIS.InputBegan:Connect(function(input, gpe)
+            if gpe then return end
+            -- ✅ NO EJECUTAR SI ESTAMOS EN MODO LISTENING (seleccionando tecla)
+            if minListening or closeListening then return end
+            
+            if input.UserInputType == Enum.UserInputType.Keyboard then
+                -- Minimize Key - solo ejecuta si NO estamos en listening
+                if input.KeyCode == currentMinKey then
+                    print("[Keybind] ✓ Minimize ejecutado con:", keyName(currentMinKey))
+                    if r.anim and r.anim.toggleMinimize then
+                        r.anim.toggleMinimize()
+                    elseif r.Win then
+                        r.Win.Visible = not r.Win.Visible
+                    end
+                end
+                
+                -- Close Key - solo ejecuta si NO estamos en listening
+                if input.KeyCode == currentCloseKey then
+                    print("[Keybind] ✓ Close ejecutado con:", keyName(currentCloseKey))
+                    if r.anim and r.anim.doClose then
+                        r.anim.doClose()
+                    end
+                end
+            end
+        end)
+        
+        -- Cleanup
+        root.Destroying:Connect(function()
+            if minListenConn then minListenConn:Disconnect() end
+            if closeListenConn then closeListenConn:Disconnect() end
+            if toggleConn then toggleConn:Disconnect() end
+            print("[Keybind] Keybinds desconectados")
         end)
     end
 
-    minKeyBtn.MouseButton1Click:Connect(function()
-        if minListening then return end
-        minListening = true
-        tw(minKeyBg, .1, { BackgroundColor3 = Color3.fromRGB(38, 30, 12) })
-        minKeyLbl.Text = "..."
-        minKeyLbl.TextColor3 = C.GRAY
-        startMinListening()
-    end)
-
-    minKeyBtn.MouseEnter:Connect(function()
-        if not minListening then 
-            tw(minKeyBg, .1, { BackgroundColor3 = Color3.fromRGB(30, 30, 30) }) 
-        end
-    end)
-    minKeyBtn.MouseLeave:Connect(function()
-        if not minListening then 
-            tw(minKeyBg, .1, { BackgroundColor3 = Color3.fromRGB(22, 22, 22) }) 
-        end
-    end)
-
-    -- ══════════════════════════════════════════════════════
-    -- CLOSE KEY
-    -- ══════════════════════════════════════════════════════
-    local row2 = mk("Frame", {
-        Size = UDim2.new(0, PW, 0, 22), BackgroundTransparency = 1, LayoutOrder = 2,
-    }, root)
-
-    mk("TextLabel", {
-        Text = "Close Key", Font = Enum.Font.GothamSemibold, TextSize = 10,
-        TextColor3 = C.WHITE, BackgroundTransparency = 1,
-        Size = UDim2.new(0, PW - 46, 1, 0), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 5,
-    }, row2)
-
-    local closeKeyBg = mk("Frame", {
-        Size = UDim2.new(0, 40, 0, 18), Position = UDim2.new(0, PW - 42, 0.5, -9),
-        BackgroundColor3 = Color3.fromRGB(22, 22, 22), BorderSizePixel = 0, ZIndex = 5,
-    }, row2)
-    rnd(5, closeKeyBg)
-    mk("UIStroke", { Color = C.LINE, Thickness = 1, Transparency = 0.3 }, closeKeyBg)
-
-    local closeKeyLbl = mk("TextLabel", {
-        Text = "End", Font = Enum.Font.Code, TextSize = 8,
-        TextColor3 = C.WHITE, BackgroundTransparency = 1,
-        Size = UDim2.new(1, 0, 1, 0), ZIndex = 6,
-        TextXAlignment = Enum.TextXAlignment.Center,
-    }, closeKeyBg)
-
-    local closeKeyBtn = mk("TextButton", {
-        Text = "", BackgroundTransparency = 1,
-        Size = UDim2.new(1, 0, 1, 0), ZIndex = 7, AutoButtonColor = false,
-    }, closeKeyBg)
-
-    local closeListening  = false
-    local currentCloseKey = Enum.KeyCode.End
-
-    local closeListenConn = nil
-    local function startCloseListening()
-        if closeListenConn then closeListenConn:Disconnect() end
-        
-        closeListenConn = UIS.InputBegan:Connect(function(input, gpe)
-            if input.UserInputType ~= Enum.UserInputType.Keyboard then return end
-            
-            -- ✅ SOLO GUARDA LA TECLA, NO EJECUTA NINGUNA ACCIÓN
-            closeListening = false
-            currentCloseKey = input.KeyCode
-            
-            if closeListenConn then 
-                closeListenConn:Disconnect()
-                closeListenConn = nil 
-            end
-            
-            closeKeyLbl.Text = keyName(currentCloseKey)
-            closeKeyLbl.TextColor3 = C.WHITE
-            
-            tw(closeKeyBg, .08, { BackgroundColor3 = Color3.fromRGB(25, 55, 25) })
-            task.delay(.35, function()
-                tw(closeKeyBg, .2, { BackgroundColor3 = Color3.fromRGB(22, 22, 22) })
-            end)
-            
-            print("[Keybind] ✓ Close Key asignada:", keyName(currentCloseKey), "- Presiona nuevamente para ejecutar")
-        end)
-    end
-
-    closeKeyBtn.MouseButton1Click:Connect(function()
-        if closeListening then return end
-        closeListening = true
-        tw(closeKeyBg, .1, { BackgroundColor3 = Color3.fromRGB(38, 30, 12) })
-        closeKeyLbl.Text = "..."
-        closeKeyLbl.TextColor3 = C.GRAY
-        startCloseListening()
-    end)
-
-    closeKeyBtn.MouseEnter:Connect(function()
-        if not closeListening then 
-            tw(closeKeyBg, .1, { BackgroundColor3 = Color3.fromRGB(30, 30, 30) }) 
-        end
-    end)
-    closeKeyBtn.MouseLeave:Connect(function()
-        if not closeListening then 
-            tw(closeKeyBg, .1, { BackgroundColor3 = Color3.fromRGB(22, 22, 22) }) 
-        end
-    end)
-
-    -- ══════════════════════════════════════════════════════
-    -- GLOBAL INPUT HANDLER - EJECUTA LAS ACCIONES
-    -- ══════════════════════════════════════════════════════
-    local toggleConn = UIS.InputBegan:Connect(function(input, gpe)
-        if gpe then return end
-        -- ✅ NO EJECUTAR SI ESTAMOS EN MODO LISTENING (seleccionando tecla)
-        if minListening or closeListening then return end
-        
-        if input.UserInputType == Enum.UserInputType.Keyboard then
-            -- Minimize Key - solo ejecuta si NO estamos en listening
-            if input.KeyCode == currentMinKey then
-                print("[Keybind] ✓ Minimize ejecutado con:", keyName(currentMinKey))
-                if r.anim and r.anim.toggleMinimize then
-                    r.anim.toggleMinimize()
-                elseif r.Win then
-                    r.Win.Visible = not r.Win.Visible
-                end
-            end
-            
-            -- Close Key - solo ejecuta si NO estamos en listening
-            if input.KeyCode == currentCloseKey then
-                print("[Keybind] ✓ Close ejecutado con:", keyName(currentCloseKey))
-                if r.anim and r.anim.doClose then
-                    r.anim.doClose()
-                end
-            end
-        end
-    end)
-    
-    -- Cleanup
-    root.Destroying:Connect(function()
-        if minListenConn then minListenConn:Disconnect() end
-        if closeListenConn then closeListenConn:Disconnect() end
-        if toggleConn then toggleConn:Disconnect() end
-        print("[Keybind] Keybinds desconectados")
-    end)
-end
     -- ── Construir la página ──────────────────────────────────
     task.delay(1, function()
         -- Fila superior: Accent Color  +  Keybinds  (lado a lado)
