@@ -21,7 +21,7 @@ Settings.C = {
 }
 
 Settings.Layout = {
-    WW   = 600,  -- ✅ AUMENTADO DE 540 A 600 (más ancho)
+    WW   = 540,
     WH   = 440,
     TH   = 42,
     NW   = 320,
@@ -695,7 +695,7 @@ function Settings.build(page, r)
         mk("UIStroke", { Color = C.LINE, Thickness = 1, Transparency = 0.3 }, minKeyBg)
 
         local minKeyLbl = mk("TextLabel", {
-            Text = "L.Ctrl",
+            Text = "L.Ctrl", -- ✅ CAMBIADO DE "L.Alt" A "L.Ctrl"
             Font = Enum.Font.Code, TextSize = 8,
             TextColor3 = C.WHITE, BackgroundTransparency = 1,
             Size = UDim2.new(1, 0, 1, 0), ZIndex = 6,
@@ -708,7 +708,7 @@ function Settings.build(page, r)
         }, minKeyBg)
 
         local minListening  = false
-        local currentMinKey = Enum.KeyCode.LeftControl
+        local currentMinKey = Enum.KeyCode.LeftControl  -- ✅ CAMBIADO DE LeftAlt A LeftControl
 
         local minListenConn = nil
         local function startMinListening()
