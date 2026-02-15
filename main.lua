@@ -4,7 +4,7 @@
 -- ============================================================
 
 -- ── CONFIG: cambia estas URLs cuando subas a GitHub ─────────
-local RAW_BASE = "https://raw.githubusercontent.com/TU_USUARIO/TU_REPO/main/"
+local RAW_BASE = "https://raw.githubusercontent.com/dzanity-gg/dzanity.gg/main/"
 
 -- ── Loader seguro ────────────────────────────────────────────
 local function loadModule(path)
