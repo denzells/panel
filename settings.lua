@@ -632,6 +632,10 @@ function Settings.build(page, r)
         }, parent)
         mk("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, root)
 
+        -- ✅ FLAGS PARA PREVENIR EJECUCIÓN INMEDIATA
+        local justAssignedMin = false
+        local justAssignedClose = false
+
         -- Nombre corto legible para CUALQUIER tecla
         local function keyName(kc)
             local names = {
@@ -703,7 +707,7 @@ function Settings.build(page, r)
         }, minKeyBg)
 
         local minListening  = false
-        local currentMinKey = Enum.KeyCode.LeftAlt  -- ✅ CAMBIADO A L.ALT
+        local currentMinKey = Enum.KeyCode.LeftAlt
 
         local minListenConn = nil
         local function startMinListening()
@@ -712,9 +716,12 @@ function Settings.build(page, r)
             minListenConn = UIS.InputBegan:Connect(function(input, gpe)
                 if input.UserInputType ~= Enum.UserInputType.Keyboard then return end
                 
-                -- ✅ SOLO GUARDA LA TECLA, NO EJECUTA NINGUNA ACCIÓN
                 minListening = false
                 currentMinKey = input.KeyCode
+                
+                -- ✅ ACTIVAR FLAG PARA NO EJECUTAR ACCIÓN INMEDIATAMENTE
+                justAssignedMin = true
+                task.delay(0.1, function() justAssignedMin = false end)
                 
                 if minListenConn then 
                     minListenConn:Disconnect()
@@ -774,7 +781,7 @@ function Settings.build(page, r)
         mk("UIStroke", { Color = C.LINE, Thickness = 1, Transparency = 0.3 }, closeKeyBg)
 
         local closeKeyLbl = mk("TextLabel", {
-            Text = "End", Font = Enum.Font.Code, TextSize = 8,
+            Text = "L.Alt", Font = Enum.Font.Code, TextSize = 8,  -- ✅ CAMBIADO A L.ALT
             TextColor3 = C.WHITE, BackgroundTransparency = 1,
             Size = UDim2.new(1, 0, 1, 0), ZIndex = 6,
             TextXAlignment = Enum.TextXAlignment.Center,
@@ -786,7 +793,7 @@ function Settings.build(page, r)
         }, closeKeyBg)
 
         local closeListening  = false
-        local currentCloseKey = Enum.KeyCode.End
+        local currentCloseKey = Enum.KeyCode.LeftAlt  -- ✅ CAMBIADO A L.ALT
 
         local closeListenConn = nil
         local function startCloseListening()
@@ -795,9 +802,12 @@ function Settings.build(page, r)
             closeListenConn = UIS.InputBegan:Connect(function(input, gpe)
                 if input.UserInputType ~= Enum.UserInputType.Keyboard then return end
                 
-                -- ✅ SOLO GUARDA LA TECLA, NO EJECUTA NINGUNA ACCIÓN
                 closeListening = false
                 currentCloseKey = input.KeyCode
+                
+                -- ✅ ACTIVAR FLAG PARA NO EJECUTAR ACCIÓN INMEDIATAMENTE
+                justAssignedClose = true
+                task.delay(0.1, function() justAssignedClose = false end)
                 
                 if closeListenConn then 
                     closeListenConn:Disconnect()
@@ -841,12 +851,11 @@ function Settings.build(page, r)
         -- ══════════════════════════════════════════════════════
         local toggleConn = UIS.InputBegan:Connect(function(input, gpe)
             if gpe then return end
-            -- ✅ NO EJECUTAR SI ESTAMOS EN MODO LISTENING (seleccionando tecla)
             if minListening or closeListening then return end
             
             if input.UserInputType == Enum.UserInputType.Keyboard then
-                -- Minimize Key - solo ejecuta si NO estamos en listening
-                if input.KeyCode == currentMinKey then
+                -- ✅ MINIMIZE KEY - NO EJECUTAR SI ACABAMOS DE ASIGNARLA
+                if input.KeyCode == currentMinKey and not justAssignedMin then
                     print("[Keybind] ✓ Minimize ejecutado con:", keyName(currentMinKey))
                     if r.anim and r.anim.toggleMinimize then
                         r.anim.toggleMinimize()
@@ -855,8 +864,8 @@ function Settings.build(page, r)
                     end
                 end
                 
-                -- Close Key - solo ejecuta si NO estamos en listening
-                if input.KeyCode == currentCloseKey then
+                -- ✅ CLOSE KEY - NO EJECUTAR SI ACABAMOS DE ASIGNARLA
+                if input.KeyCode == currentCloseKey and not justAssignedClose then
                     print("[Keybind] ✓ Close ejecutado con:", keyName(currentCloseKey))
                     if r.anim and r.anim.doClose then
                         r.anim.doClose()
