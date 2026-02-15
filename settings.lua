@@ -154,6 +154,82 @@ function Settings.build(page, r)
         local checked  = false
         local chkBtn   = mk("TextButton", { Text = "", BackgroundTransparency = 1, Size = UDim2.new(1,0,1,0), ZIndex = 7, AutoButtonColor = false }, chkBg)
 
+        -- ── Row 1b: RGB Mode checkbox ────────────────────────
+        local rgbModeRow = mk("Frame", { Size = UDim2.new(0, PW, 0, 22), BackgroundTransparency = 1, LayoutOrder = 2 }, root)
+        mk("TextLabel", {
+            Text = "RGB Mode", Font = Enum.Font.GothamSemibold, TextSize = 10,
+            TextColor3 = C.WHITE, BackgroundTransparency = 1,
+            Size = UDim2.new(0, PW - 26, 1, 0), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 5,
+        }, rgbModeRow)
+
+        -- pequeño badge "LED" decorativo
+        local ledBadge = mk("Frame", {
+            Size = UDim2.new(0, 28, 0, 13), Position = UDim2.new(0, 68, 0.5, -6),
+            BackgroundColor3 = Color3.fromRGB(22, 22, 22), BorderSizePixel = 0, ZIndex = 6,
+        }, rgbModeRow)
+        rnd(4, ledBadge)
+        mk("UIStroke", { Color = C.LINE, Thickness = 1, Transparency = 0.4 }, ledBadge)
+        mk("TextLabel", {
+            Text = "LED", Font = Enum.Font.GothamBold, TextSize = 7,
+            TextColor3 = C.GRAY, BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 1, 0), ZIndex = 7,
+            TextXAlignment = Enum.TextXAlignment.Center,
+        }, ledBadge)
+
+        local rgbChkBg = mk("Frame", {
+            Size = UDim2.new(0, 16, 0, 16), Position = UDim2.new(0, PW - 16, 0.5, -8),
+            BackgroundColor3 = C.MUTED, BorderSizePixel = 0, ZIndex = 5,
+        }, rgbModeRow)
+        rnd(4, rgbChkBg)
+        mk("UIStroke", { Color = C.LINE, Thickness = 1, Transparency = 0.3 }, rgbChkBg)
+
+        local rgbChkMark = mk("TextLabel", {
+            Text = "✓", Font = Enum.Font.GothamBold, TextSize = 10,
+            TextColor3 = C.RED, BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 1, 0), ZIndex = 6,
+            TextXAlignment = Enum.TextXAlignment.Center, TextTransparency = 1,
+        }, rgbChkBg)
+        table.insert(accentEls, { el = rgbChkMark, prop = "TextColor3" })
+
+        local rgbChkBtn = mk("TextButton", {
+            Text = "", BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 1, 0), ZIndex = 7, AutoButtonColor = false,
+        }, rgbChkBg)
+
+        -- Estado y loop del RGB Mode
+        local rgbModeOn   = false
+        local rgbHue      = 0
+        local rgbConn     = nil   -- conexión RenderStepped
+
+        local function stopRGBMode()
+            if rgbConn then rgbConn:Disconnect(); rgbConn = nil end
+        end
+
+        local function startRGBMode()
+            stopRGBMode()
+            rgbConn = RunService.RenderStepped:Connect(function(dt)
+                rgbHue = (rgbHue + dt * 0.4) % 1   -- velocidad: 0.4 = una vuelta ~2.5 seg
+                local col = Color3.fromHSV(rgbHue, 1, 1)
+                applyAccent(col)
+            end)
+        end
+
+        rgbChkBtn.MouseButton1Click:Connect(function()
+            rgbModeOn = not rgbModeOn
+            tw(rgbChkBg, .15, { BackgroundColor3 = rgbModeOn and Color3.fromRGB(28,28,28) or C.MUTED })
+            tw(rgbChkMark, .15, { TextTransparency = rgbModeOn and 0 or 1 })
+            if rgbModeOn then
+                -- desactivar el otro checkbox si estaba activo
+                checked = false
+                tw(chkBg, .15, { BackgroundColor3 = C.MUTED })
+                tw(chkMark, .15, { TextTransparency = 1 })
+                startRGBMode()
+            else
+                stopRGBMode()
+                applyAccent(originalColor)   -- restaurar color original
+            end
+        end)
+
         -- ── Row 2: botón desplegable ─────────────────────────
         local palBtn = mk("TextButton", {
             Text = "", BackgroundTransparency = 1,
@@ -295,7 +371,18 @@ function Settings.build(page, r)
             checked = not checked
             tw(chkBg,.15,{BackgroundColor3=checked and Color3.fromRGB(28,28,28) or C.MUTED})
             tw(chkMark,.15,{TextTransparency=checked and 0 or 1})
-            applyAccent(checked and Color3.fromHSV(currentH,currentS,currentV) or originalColor)
+            if checked then
+                -- desactivar RGB Mode si estaba encendido
+                if rgbModeOn then
+                    rgbModeOn = false
+                    stopRGBMode()
+                    tw(rgbChkBg, .15, { BackgroundColor3 = C.MUTED })
+                    tw(rgbChkMark, .15, { TextTransparency = 1 })
+                end
+                applyAccent(Color3.fromHSV(currentH,currentS,currentV))
+            else
+                applyAccent(originalColor)
+            end
         end)
 
         -- Apply
@@ -304,6 +391,13 @@ function Settings.build(page, r)
                 tw(chkBg,.1,{BackgroundColor3=Color3.fromRGB(80,40,40)})
                 task.delay(.2,function() tw(chkBg,.1,{BackgroundColor3=C.MUTED}) end)
                 return
+            end
+            -- detener RGB Mode si estaba activo
+            if rgbModeOn then
+                rgbModeOn = false
+                stopRGBMode()
+                tw(rgbChkBg, .15, { BackgroundColor3 = C.MUTED })
+                tw(rgbChkMark, .15, { TextTransparency = 1 })
             end
             local newCol = Color3.fromHSV(currentH,currentS,currentV)
             applyAccent(newCol)
