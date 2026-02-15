@@ -352,6 +352,284 @@ function Settings.build(page, r)
     end
 
     -- ════════════════════════════════════════════════════════
+    -- ACENTO RGB  –  sliders R / G / B
+    -- ════════════════════════════════════════════════════════
+    local function CreateRGBPicker(parent)
+        local PW       = 200
+        local PAD      = 8
+        local SLIDERH  = 14   -- altura de cada barra de slider
+        local ROWH     = 32   -- alto total de cada fila (label + slider)
+        local APPH     = 20
+        -- Panel colapsable: 3 filas + separador + apply + paddings
+        local INNERH   = ROWH * 3 + 6 + APPH + PAD
+        local TOTALH   = INNERH + PAD * 2
+
+        -- Valores iniciales desde C.RED actual
+        local rVal = math.floor(C.RED.R * 255)
+        local gVal = math.floor(C.RED.G * 255)
+        local bVal = math.floor(C.RED.B * 255)
+
+        local rgbOpen  = false
+        local rgbAnim  = false
+        local checked  = false
+
+        local root = mk("Frame", {
+            Size = UDim2.new(0, PW, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
+            BackgroundTransparency = 1, LayoutOrder = SO(),
+        }, parent)
+        mk("UIListLayout", { Padding = UDim.new(0, 5), SortOrder = Enum.SortOrder.LayoutOrder }, root)
+
+        -- ── Row 1: label + checkbox ──────────────────────────
+        local row1 = mk("Frame", { Size = UDim2.new(0, PW, 0, 22), BackgroundTransparency = 1, LayoutOrder = 1 }, root)
+        mk("TextLabel", {
+            Text = "Acento RGB", Font = Enum.Font.GothamSemibold, TextSize = 10,
+            TextColor3 = C.WHITE, BackgroundTransparency = 1,
+            Size = UDim2.new(0, PW - 26, 1, 0), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 5,
+        }, row1)
+
+        local chkBg = mk("Frame", {
+            Size = UDim2.new(0, 16, 0, 16), Position = UDim2.new(0, PW - 16, 0.5, -8),
+            BackgroundColor3 = C.MUTED, BorderSizePixel = 0, ZIndex = 5,
+        }, row1)
+        rnd(4, chkBg)
+        mk("UIStroke", { Color = C.LINE, Thickness = 1, Transparency = 0.3 }, chkBg)
+
+        local chkMark = mk("TextLabel", {
+            Text = "✓", Font = Enum.Font.GothamBold, TextSize = 10,
+            TextColor3 = C.RED, BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 1, 0), ZIndex = 6,
+            TextXAlignment = Enum.TextXAlignment.Center, TextTransparency = 1,
+        }, chkBg)
+        table.insert(accentEls, { el = chkMark, prop = "TextColor3" })
+
+        local chkBtn = mk("TextButton", {
+            Text = "", BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 1, 0), ZIndex = 7, AutoButtonColor = false,
+        }, chkBg)
+
+        -- ── Row 2: botón desplegable ─────────────────────────
+        local rgbBtn = mk("TextButton", {
+            Text = "", BackgroundTransparency = 1,
+            Size = UDim2.new(0, PW, 0, 26), BorderSizePixel = 0,
+            ZIndex = 5, AutoButtonColor = false, LayoutOrder = 2,
+        }, root)
+        local rgbBtnBg = mk("Frame", {
+            Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.fromRGB(22, 22, 22),
+            BorderSizePixel = 0, ZIndex = 4,
+        }, rgbBtn)
+        rnd(6, rgbBtnBg)
+        mk("UIStroke", { Color = C.LINE, Thickness = 1, Transparency = 0.5 }, rgbBtnBg)
+
+        -- Dot de preview del color actual
+        local prevDotRGB = mk("Frame", {
+            Size = UDim2.new(0, 12, 0, 12), Position = UDim2.new(0, 8, 0.5, -6),
+            BackgroundColor3 = Color3.fromRGB(rVal, gVal, bVal), BorderSizePixel = 0, ZIndex = 6,
+        }, rgbBtnBg)
+        rnd(6, prevDotRGB)
+        mk("UIStroke", { Color = C.LINE, Thickness = 1, Transparency = 0.3 }, prevDotRGB)
+
+        mk("TextLabel", {
+            Text = "RGB Sliders", Font = Enum.Font.GothamSemibold, TextSize = 9,
+            TextColor3 = C.WHITE, BackgroundTransparency = 1,
+            Size = UDim2.new(0, PW - 46, 1, 0), Position = UDim2.new(0, 26, 0, 0),
+            TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 6,
+        }, rgbBtnBg)
+
+        local arrowRGB = mk("TextLabel", {
+            Text = "▼", Font = Enum.Font.Code, TextSize = 7,
+            TextColor3 = C.GRAY, BackgroundTransparency = 1,
+            Size = UDim2.new(0, 14, 1, 0), Position = UDim2.new(0, PW - 16, 0, 0),
+            TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 6,
+        }, rgbBtnBg)
+
+        rgbBtn.MouseEnter:Connect(function() tw(rgbBtnBg, .1, { BackgroundColor3 = Color3.fromRGB(27,27,27) }) end)
+        rgbBtn.MouseLeave:Connect(function() tw(rgbBtnBg, .1, { BackgroundColor3 = Color3.fromRGB(22,22,22) }) end)
+
+        -- ── Row 3: panel colapsable ──────────────────────────
+        local rgbPanel = mk("Frame", {
+            Size = UDim2.new(0, PW, 0, 0),
+            BackgroundColor3 = Color3.fromRGB(16, 16, 16),
+            BorderSizePixel = 0, ZIndex = 5,
+            ClipsDescendants = true, LayoutOrder = 3,
+        }, root)
+        rnd(8, rgbPanel)
+        mk("UIStroke", { Color = C.LINE, Thickness = 1, Transparency = 0.5 }, rgbPanel)
+
+        local inner = mk("Frame", {
+            Size = UDim2.new(0, PW - PAD * 2, 0, INNERH),
+            Position = UDim2.new(0, PAD, 0, PAD),
+            BackgroundTransparency = 1, ZIndex = 6,
+        }, rgbPanel)
+
+        -- ── Helper: crear una fila de slider ─────────────────
+        -- Devuelve una función setVal(0-255) y conecta el drag
+        local applyBtnRGB  -- referencia anticipada
+
+        local sliderDrags = {}  -- para evitar solapamientos
+
+        local function makeSlider(yPos, labelTxt, initVal, trackCol, onChanged)
+            local SW = PW - PAD * 2   -- ancho total disponible
+            local LW = 10             -- ancho del label R/G/B
+            local NW = 22             -- ancho del número
+            local BAR = SW - LW - NW - 6  -- ancho de la barra
+
+            -- Label (R / G / B)
+            mk("TextLabel", {
+                Text = labelTxt, Font = Enum.Font.GothamBold, TextSize = 9,
+                TextColor3 = C.GRAY, BackgroundTransparency = 1,
+                Size = UDim2.new(0, LW, 0, ROWH), Position = UDim2.new(0, 0, 0, yPos),
+                TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 7,
+            }, inner)
+
+            -- Track (barra de fondo)
+            local track = mk("Frame", {
+                Size = UDim2.new(0, BAR, 0, SLIDERH),
+                Position = UDim2.new(0, LW + 2, 0, yPos + (ROWH - SLIDERH) / 2),
+                BackgroundColor3 = Color3.fromRGB(30, 30, 30),
+                BorderSizePixel = 0, ZIndex = 7,
+            }, inner)
+            rnd(4, track)
+            mk("UIStroke", { Color = C.LINE, Thickness = 1, Transparency = 0.5 }, track)
+
+            -- Fill (parte coloreada)
+            local fill = mk("Frame", {
+                Size = UDim2.new(initVal / 255, 0, 1, 0),
+                BackgroundColor3 = trackCol,
+                BorderSizePixel = 0, ZIndex = 8,
+            }, track)
+            rnd(4, fill)
+
+            -- Número
+            local numLbl = mk("TextLabel", {
+                Text = tostring(initVal), Font = Enum.Font.Code, TextSize = 8,
+                TextColor3 = C.GRAY, BackgroundTransparency = 1,
+                Size = UDim2.new(0, NW, 0, ROWH), Position = UDim2.new(0, LW + BAR + 4, 0, yPos),
+                TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 7,
+            }, inner)
+
+            -- Hit zone (botón invisible sobre la barra)
+            local hit = mk("TextButton", {
+                Text = "", BackgroundTransparency = 1,
+                Size = UDim2.new(0, BAR, 0, SLIDERH + 8),
+                Position = UDim2.new(0, LW + 2, 0, yPos + (ROWH - SLIDERH) / 2 - 4),
+                ZIndex = 10, AutoButtonColor = false,
+            }, inner)
+
+            local dragging = false
+            local function updateDrag()
+                if not dragging then return end
+                local mp = UIS:GetMouseLocation()
+                local pct = math.clamp(
+                    (mp.X - track.AbsolutePosition.X) / track.AbsoluteSize.X,
+                    0, 1
+                )
+                local val = math.floor(pct * 255)
+                fill.Size = UDim2.new(pct, 0, 1, 0)
+                numLbl.Text = tostring(val)
+                onChanged(val)
+            end
+
+            hit.InputBegan:Connect(function(i)
+                if i.UserInputType == Enum.UserInputType.MouseButton1 then
+                    dragging = true
+                    updateDrag()
+                end
+            end)
+            UIS.InputEnded:Connect(function(i)
+                if i.UserInputType == Enum.UserInputType.MouseButton1 then
+                    dragging = false
+                end
+            end)
+            RunService.RenderStepped:Connect(function()
+                if dragging then updateDrag() end
+            end)
+
+            -- Función pública para actualizar visualmente desde fuera
+            local function setVal(v)
+                fill.Size   = UDim2.new(v / 255, 0, 1, 0)
+                numLbl.Text = tostring(v)
+            end
+
+            return setVal
+        end
+
+        -- Actualizar el preview dot y el apply button cuando cambia cualquier canal
+        local function onAnyChange()
+            local col = Color3.fromRGB(rVal, gVal, bVal)
+            prevDotRGB.BackgroundColor3 = col
+            if applyBtnRGB then
+                applyBtnRGB.TextColor3 = col
+            end
+        end
+
+        local setR = makeSlider(0,         "R", rVal, Color3.fromRGB(200, 60,  60),  function(v) rVal = v; onAnyChange() end)
+        local setG = makeSlider(ROWH + 3,  "G", gVal, Color3.fromRGB(60,  200, 60),  function(v) gVal = v; onAnyChange() end)
+        local setB = makeSlider(ROWH*2+6,  "B", bVal, Color3.fromRGB(60,  100, 220), function(v) bVal = v; onAnyChange() end)
+
+        -- Apply button
+        applyBtnRGB = mk("TextButton", {
+            Text = "Apply RGB", Font = Enum.Font.GothamSemibold, TextSize = 9,
+            TextColor3 = Color3.fromRGB(rVal, gVal, bVal),
+            BackgroundColor3 = Color3.fromRGB(30, 30, 30), BorderSizePixel = 0, ZIndex = 7,
+            Size = UDim2.new(0, PW - PAD * 2, 0, APPH),
+            Position = UDim2.new(0, 0, 0, ROWH * 3 + 6),
+            AutoButtonColor = false,
+        }, inner)
+        rnd(5, applyBtnRGB)
+        mk("UIStroke", { Color = C.LINE, Thickness = 1, Transparency = 0.3 }, applyBtnRGB)
+        applyBtnRGB.MouseEnter:Connect(function() tw(applyBtnRGB, .1, { BackgroundColor3 = Color3.fromRGB(38,38,38) }) end)
+        applyBtnRGB.MouseLeave:Connect(function() tw(applyBtnRGB, .1, { BackgroundColor3 = Color3.fromRGB(30,30,30) }) end)
+
+        -- Checkbox toggle
+        chkBtn.MouseButton1Click:Connect(function()
+            checked = not checked
+            tw(chkBg, .15, { BackgroundColor3 = checked and Color3.fromRGB(28,28,28) or C.MUTED })
+            tw(chkMark, .15, { TextTransparency = checked and 0 or 1 })
+            if checked then
+                applyAccent(Color3.fromRGB(rVal, gVal, bVal))
+            end
+        end)
+
+        -- Apply button click
+        applyBtnRGB.MouseButton1Click:Connect(function()
+            if not checked then
+                tw(chkBg, .1, { BackgroundColor3 = Color3.fromRGB(80,40,40) })
+                task.delay(.2, function() tw(chkBg, .1, { BackgroundColor3 = C.MUTED }) end)
+                return
+            end
+            local newCol = Color3.fromRGB(rVal, gVal, bVal)
+            applyAccent(newCol)
+            tw(applyBtnRGB, .08, { TextColor3 = Color3.fromRGB(80,220,80) })
+            task.delay(.6, function() tw(applyBtnRGB, .25, { TextColor3 = newCol }) end)
+        end)
+
+        -- Sincronizar sliders cuando cambia C.RED desde otro picker
+        -- (llamado externamente si se necesita; aquí solo inicializamos)
+        local function syncFromAccent()
+            rVal = math.floor(C.RED.R * 255)
+            gVal = math.floor(C.RED.G * 255)
+            bVal = math.floor(C.RED.B * 255)
+            setR(rVal); setG(gVal); setB(bVal)
+            prevDotRGB.BackgroundColor3 = Color3.fromRGB(rVal, gVal, bVal)
+            if applyBtnRGB then applyBtnRGB.TextColor3 = Color3.fromRGB(rVal, gVal, bVal) end
+        end
+
+        -- Toggle desplegable
+        rgbBtn.MouseButton1Click:Connect(function()
+            if rgbAnim then return end
+            rgbAnim = true; rgbOpen = not rgbOpen
+            if rgbOpen then
+                arrowRGB.Text = "▲"
+                tw(rgbPanel, .3, { Size = UDim2.new(0, PW, 0, TOTALH) }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+            else
+                arrowRGB.Text = "▼"
+                tw(rgbPanel, .25, { Size = UDim2.new(0, PW, 0, 0) }, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+            end
+            task.delay(.3, function() rgbAnim = false end)
+        end)
+    end
+
+    -- ════════════════════════════════════════════════════════
     -- FONT PICKER
     -- ════════════════════════════════════════════════════════
     local FONTS = {
@@ -533,6 +811,9 @@ function Settings.build(page, r)
     task.delay(1, function()
         local colorPanel = MiniPanel(page, "Accent Color", 216)
         CreateAccentPicker(colorPanel)
+
+        local rgbPanel = MiniPanel(page, "Acento RGB", 216)
+        CreateRGBPicker(rgbPanel)
 
         local fontPanel = MiniPanel(page, "Font", 216)
         CreateFontPicker(fontPanel)
