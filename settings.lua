@@ -796,9 +796,10 @@ function Settings.build(page, r)
             BackgroundTransparency = 1, LayoutOrder = SO(),
         }, page)
         
-        -- Padding SOLO para mantener Custom Panel a la izquierda
+        -- Padding para la fila completa
         mk("UIPadding", {
-            PaddingLeft = UDim.new(0, 0),    -- Custom Panel pegado a la izquierda
+            PaddingLeft = UDim.new(0, 0),    -- Panel Custom pegado a la izquierda
+            PaddingRight = UDim.new(0, 10),  -- Margen derecho para Keybinds
         }, topRow)
         
         mk("UIListLayout", {
@@ -813,21 +814,8 @@ function Settings.build(page, r)
         CreateAccentPicker(customPanel)
         CreateFontPicker(customPanel)
 
-        -- 🔥 SOLUCIÓN: Crear un contenedor para Keybinds con margen izquierdo
-        local keybindContainer = mk("Frame", {
-            Size = UDim2.new(0, 248, 0, 0),  -- Mismo ancho que el panel
-            AutomaticSize = Enum.AutomaticSize.Y,
-            BackgroundTransparency = 1,
-            LayoutOrder = SO(),
-        }, topRow)
-        
-        -- Agregar margen izquierdo al contenedor (esto mueve TODO el panel)
-        mk("UIPadding", {
-            PaddingLeft = UDim.new(0, 200),  -- ⬅️ AUMENTA ESTO para mover Keybinds más a la derecha
-        }, keybindContainer)
-        
-        -- Panel Keybinds dentro del contenedor (sin margen interno)
-        local keybindPanel = MiniPanel(keybindContainer, "Keybinds", 248)
+        -- Panel separado: Keybinds
+        local keybindPanel = MiniPanel(topRow, "Keybinds", 248)
         CreateKeybinds(keybindPanel)
     end)
 end
