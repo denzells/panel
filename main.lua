@@ -1,5 +1,5 @@
 -- ============================================================
--- main.lua  –  PanelBase | dzanity.gg
+-- main.lua  –  PanelBase | seriosload.gg
 -- Carga: animations.lua y settings.lua desde GitHub Raw
 -- Uso: loadstring(game:HttpGet("RAW_URL/main.lua"))()
 -- ============================================================
@@ -115,7 +115,7 @@ local function tlbl(txt, font, sz, col, x, w)
     }, TBar)
 end
 
-local title1 = tlbl("dzanity.gg",  Enum.Font.GothamBold,  13, C.WHITE,  30,  80)
+local title1 = tlbl("serios.gg",  Enum.Font.GothamBold,  13, C.WHITE,  30,  80)
 local title2 = tlbl("|",           Enum.Font.GothamBold,  16, C.RED,   113,  14)
 local title3 = tlbl("Base Panel",  Enum.Font.Gotham,      12, C.GRAY,  129, 110)
 local title4 = tlbl("|",           Enum.Font.GothamBold,  14, C.MUTED, 241,  14)
