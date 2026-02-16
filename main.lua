@@ -352,7 +352,7 @@ Settings.build(tPages[4], {
     mk        = mk,
     rnd       = rnd,
     Win       = Win,
-    NavBar    = NavBar,     -- ✅ AGREGADO
+    NavBar    = NavBar,
     anim      = anim,
 })
 
