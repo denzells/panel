@@ -878,13 +878,9 @@ function Settings.build(page, r)
             tw(sliderHandle, .1, { Position = UDim2.new(value, -7, 0.5, -7) })
             percentLabel.Text = string.format("%d%%", math.floor(value * 100))
 
-            -- Aplicar transparencia si está activado
-            if checked and r.Win then
-                -- Aplicar transparencia al fondo del panel principal
-                local mainBg = r.Win:FindFirstChild("MainBg") or r.Win:FindFirstChildOfClass("Frame")
-                if mainBg then
-                    tw(mainBg, .2, { BackgroundTransparency = value })
-                end
+            -- Aplicar transparencia a la NavBar si está activado
+            if checked and r.NavBar then
+                tw(r.NavBar, .2, { BackgroundTransparency = value })
             end
         end
 
@@ -925,14 +921,11 @@ function Settings.build(page, r)
             tw(chkMark, .15, { BackgroundTransparency = checked and 0 or 1 })
             tw(chkBg, .15, { BackgroundColor3 = checked and Color3.fromRGB(28,28,28) or Color3.fromRGB(22,22,22) })
             
-            if r.Win then
-                local mainBg = r.Win:FindFirstChild("MainBg") or r.Win:FindFirstChildOfClass("Frame")
-                if mainBg then
-                    if checked then
-                        tw(mainBg, .3, { BackgroundTransparency = currentTransparency })
-                    else
-                        tw(mainBg, .3, { BackgroundTransparency = 0 })
-                    end
+            if r.NavBar then
+                if checked then
+                    tw(r.NavBar, .3, { BackgroundTransparency = currentTransparency })
+                else
+                    tw(r.NavBar, .3, { BackgroundTransparency = 0 })
                 end
             end
         end)
@@ -961,8 +954,8 @@ function Settings.build(page, r)
         local keybindPanel = MiniPanel(topRow, "Keybinds", 248)
         CreateKeybinds(keybindPanel)
 
-        -- Fila inferior: Transparency Panel (ocupa todo el ancho)
-        local transparencyPanel = MiniPanel(page, "Transparency Panel", nil)
+        -- Fila inferior: Transparency Panel (ancho fijo de 500)
+        local transparencyPanel = MiniPanel(page, "Transparency Panel", 500)
         CreateTransparencyPanel(transparencyPanel)
     end)
 end
