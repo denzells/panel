@@ -796,15 +796,15 @@ function Settings.build(page, r)
             BackgroundTransparency = 1, LayoutOrder = SO(),
         }, page)
         
-        -- Padding para la fila completa
+        -- Padding SOLO para mantener Custom Panel a la izquierda
         mk("UIPadding", {
-            PaddingLeft = UDim.new(0, 0),    -- Custom Panel pegado a la izquierda (NO SE MUEVE)
-            PaddingRight = UDim.new(0, 1000),  -- ⬅️ AUMENTADO DRÁSTICAMENTE a 200px para mover Keybinds muy a la derecha
+            PaddingLeft = UDim.new(0, 0),    -- Custom Panel pegado a la izquierda
+            -- PaddingRight ELIMINADO - no funciona como esperamos
         }, topRow)
         
         mk("UIListLayout", {
             FillDirection     = Enum.FillDirection.Horizontal,
-            Padding           = UDim.new(0, 10),  -- Espacio entre paneles (se mantiene)
+            Padding           = UDim.new(0, 10),  -- Espacio entre paneles
             SortOrder         = Enum.SortOrder.LayoutOrder,
             HorizontalAlignment = Enum.HorizontalAlignment.Left,
         }, topRow)
@@ -817,6 +817,12 @@ function Settings.build(page, r)
         -- Panel separado: Keybinds
         local keybindPanel = MiniPanel(topRow, "Keybinds", 248)
         CreateKeybinds(keybindPanel)
+        
+        -- 🔥 SOLUCIÓN: Agregar margen izquierdo al Keybinds para empujarlo desde la izquierda
+        -- (esto lo moverá hacia la derecha porque el layout es horizontal)
+        local keybindPadding = mk("UIPadding", {
+            PaddingLeft = UDim.new(0, 100),  -- ⬅️ AUMENTA ESTE VALOR para mover Keybinds más a la derecha
+        }, keybindPanel)
     end)
 end
 
