@@ -788,149 +788,6 @@ function Settings.build(page, r)
         end)
     end
 
-    -- ════════════════════════════════════════════════════════
-    -- TRANSPARENCY PANEL
-    -- ════════════════════════════════════════════════════════
-    local function CreateTransparencyPanel(parent)
-        local checked = false
-        local currentTransparency = 0.05 -- 5% por defecto
-
-        local root = mk("Frame", {
-            Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
-            BackgroundTransparency = 1, LayoutOrder = SO(),
-        }, parent)
-        mk("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, root)
-
-        -- Row: Transparency Base checkbox
-        local row1 = makeRow(root, "Transparency Base", 1)
-        local chkBg, chkMark, chkBtn = makeCheckbox(row1, 5)
-        chkBg.Position = UDim2.new(1, -18, 0.5, -9)
-
-        -- Slider container
-        local sliderContainer = mk("Frame", {
-            Size = UDim2.new(1, 0, 0, 40),
-            BackgroundTransparency = 1,
-            LayoutOrder = 2,
-        }, root)
-
-        -- Label con porcentaje a la derecha
-        local percentLabel = mk("TextLabel", {
-            Text = string.format("%d%%", math.floor(currentTransparency * 100)),
-            Font = Enum.Font.GothamBold,
-            TextSize = 10,
-            TextColor3 = C.WHITE,
-            BackgroundTransparency = 1,
-            Size = UDim2.new(0, 36, 0, 16),
-            Position = UDim2.new(1, -36, 0, 0),
-            TextXAlignment = Enum.TextXAlignment.Right,
-            ZIndex = 5,
-        }, sliderContainer)
-
-        -- Slider track (barra de fondo)
-        local sliderTrack = mk("Frame", {
-            Size = UDim2.new(1, -46, 0, 6),
-            Position = UDim2.new(0, 0, 0, 22),
-            BackgroundColor3 = Color3.fromRGB(22, 22, 22),
-            BorderSizePixel = 0,
-            ZIndex = 4,
-        }, sliderContainer)
-        rnd(3, sliderTrack)
-        mk("UIStroke", { Color = C.LINE, Thickness = 1, Transparency = 0.3 }, sliderTrack)
-
-        -- Slider fill (barra de progreso roja)
-        local sliderFill = mk("Frame", {
-            Size = UDim2.new(currentTransparency, 0, 1, 0),
-            BackgroundColor3 = C.RED,
-            BorderSizePixel = 0,
-            ZIndex = 5,
-        }, sliderTrack)
-        rnd(3, sliderFill)
-        table.insert(accentEls, { el = sliderFill, prop = "BackgroundColor3" })
-
-        -- Slider handle (círculo arrastrable)
-        local sliderHandle = mk("Frame", {
-            Size = UDim2.new(0, 14, 0, 14),
-            Position = UDim2.new(currentTransparency, -7, 0.5, -7),
-            BackgroundColor3 = C.WHITE,
-            BorderSizePixel = 0,
-            ZIndex = 6,
-        }, sliderTrack)
-        rnd(7, sliderHandle)
-        mk("UIStroke", { Color = C.RED, Thickness = 2 }, sliderHandle)
-        table.insert(accentEls, { el = sliderHandle:FindFirstChildOfClass("UIStroke"), prop = "Color" })
-
-        -- Hit box para el slider
-        local sliderHit = mk("TextButton", {
-            Text = "",
-            BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 1, 16),
-            Position = UDim2.new(0, 0, 0, -8),
-            ZIndex = 7,
-            AutoButtonColor = false,
-        }, sliderTrack)
-
-        -- Función para actualizar el slider
-        local function updateSlider(value)
-            value = math.clamp(value, 0, 1)
-            currentTransparency = value
-            
-            tw(sliderFill, .1, { Size = UDim2.new(value, 0, 1, 0) })
-            tw(sliderHandle, .1, { Position = UDim2.new(value, -7, 0.5, -7) })
-            percentLabel.Text = string.format("%d%%", math.floor(value * 100))
-
-            -- Aplicar transparencia a la NavBar si está activado
-            if checked and r.NavBar then
-                tw(r.NavBar, .2, { BackgroundTransparency = value })
-            end
-        end
-
-        -- Lógica de arrastre del slider
-        local dragging = false
-        
-        sliderHit.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                dragging = true
-            end
-        end)
-
-        UIS.InputEnded:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                dragging = false
-            end
-        end)
-
-        RunService.RenderStepped:Connect(function()
-            if not dragging then return end
-            local mousePos = UIS:GetMouseLocation()
-            local relativeX = mousePos.X - sliderTrack.AbsolutePosition.X
-            local value = math.clamp(relativeX / sliderTrack.AbsoluteSize.X, 0, 1)
-            updateSlider(value)
-        end)
-
-        -- Click directo en la barra
-        sliderHit.MouseButton1Click:Connect(function()
-            local mousePos = UIS:GetMouseLocation()
-            local relativeX = mousePos.X - sliderTrack.AbsolutePosition.X
-            local value = math.clamp(relativeX / sliderTrack.AbsoluteSize.X, 0, 1)
-            updateSlider(value)
-        end)
-
-        -- Checkbox toggle
-        chkBtn.MouseButton1Click:Connect(function()
-            checked = not checked
-            tw(chkMark, .15, { BackgroundTransparency = checked and 0 or 1 })
-            tw(chkBg, .15, { BackgroundColor3 = checked and Color3.fromRGB(28,28,28) or Color3.fromRGB(22,22,22) })
-            
-            if r.NavBar then
-                if checked then
-                    tw(r.NavBar, .3, { BackgroundTransparency = currentTransparency })
-                else
-                    tw(r.NavBar, .3, { BackgroundTransparency = 0 })
-                end
-            end
-        end)
-    end
-
     -- ── Construir la página ──────────────────────────────────
     task.delay(1, function()
         -- Fila superior: dos paneles lado a lado
@@ -939,16 +796,15 @@ function Settings.build(page, r)
             BackgroundTransparency = 1, LayoutOrder = SO(),
         }, page)
         
-        -- Padding: izquierdo PEQUEÑO (4px) para acercar Custom Panel al borde,
-        -- derecho se mantiene en 8px (el que ya funcionaba para Keybinds)
+        -- Padding para la fila completa
         mk("UIPadding", {
-            PaddingLeft = UDim.new(0, 4),    -- <-- REDUCIDO para mover Custom Panel a la izquierda
-            PaddingRight = UDim.new(0, 8),   -- Se mantiene
+            PaddingLeft = UDim.new(0, 0),    -- Panel Custom pegado a la izquierda
+            PaddingRight = UDim.new(0, 10),  -- Margen derecho para Keybinds
         }, topRow)
         
         mk("UIListLayout", {
             FillDirection     = Enum.FillDirection.Horizontal,
-            Padding           = UDim.new(0, 8),  -- Espacio entre paneles (puedes ajustar)
+            Padding           = UDim.new(0, 10),  -- Espacio entre paneles
             SortOrder         = Enum.SortOrder.LayoutOrder,
             HorizontalAlignment = Enum.HorizontalAlignment.Left,
         }, topRow)
@@ -961,23 +817,6 @@ function Settings.build(page, r)
         -- Panel separado: Keybinds
         local keybindPanel = MiniPanel(topRow, "Keybinds", 248)
         CreateKeybinds(keybindPanel)
-
-        -- Contenedor con padding superior para el Transparency Panel
-        local transparencyContainer = mk("Frame", {
-            Size = UDim2.new(1, 0, 0, 0),
-            AutomaticSize = Enum.AutomaticSize.Y,
-            BackgroundTransparency = 1,
-            LayoutOrder = SO(),
-        }, page)
-        mk("UIPadding", { 
-            PaddingTop = UDim.new(0, 0),     -- Espacio superior
-            PaddingLeft = UDim.new(0, 0),    -- MISMO margen izquierdo reducido
-            PaddingRight = UDim.new(0, 0),   -- MISMO margen derecho
-        }, transparencyContainer)
-
-        -- Panel de Transparency (ancho fijo de 500)
-        local transparencyPanel = MiniPanel(transparencyContainer, "Transparency Panel", 500)
-        CreateTransparencyPanel(transparencyPanel)
     end)
 end
 
