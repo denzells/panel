@@ -931,7 +931,7 @@ function Settings.build(page, r)
         end)
     end
 
-     -- ── Construir la página ──────────────────────────────────
+         -- ── Construir la página ──────────────────────────────────
     task.delay(1, function()
         -- Fila superior: dos paneles lado a lado
         local topRow = mk("Frame", {
@@ -939,15 +939,15 @@ function Settings.build(page, r)
             BackgroundTransparency = 1, LayoutOrder = SO(),
         }, page)
         
-        -- Padding SOLO izquierdo para el Custom Panel
+        -- Padding para la fila completa
         mk("UIPadding", {
-            PaddingLeft = UDim.new(0, 10),  -- Margen izquierdo para Custom Panel
-            -- SIN PaddingRight - dejamos que el margen derecho se maneje aparte
+            PaddingLeft = UDim.new(0, 10),   -- Margen izquierdo
+            PaddingRight = UDim.new(0, 10),  -- Margen derecho (para el último panel)
         }, topRow)
         
         mk("UIListLayout", {
             FillDirection     = Enum.FillDirection.Horizontal,
-            Padding           = UDim.new(0, 4),  -- Espacio entre paneles
+            Padding           = UDim.new(0, 10),  -- Aumentado de 4 a 10px para más espacio entre paneles
             SortOrder         = Enum.SortOrder.LayoutOrder,
             HorizontalAlignment = Enum.HorizontalAlignment.Left,
         }, topRow)
@@ -960,11 +960,6 @@ function Settings.build(page, r)
         -- Panel separado: Keybinds
         local keybindPanel = MiniPanel(topRow, "Keybinds", 248)
         CreateKeybinds(keybindPanel)
-        
-        -- Agregar margen derecho al panel Keybinds directamente
-        local keybindPadding = mk("UIPadding", {
-            PaddingRight = UDim.new(0, 10),  -- Mismo margen que el izquierdo
-        }, keybindPanel)
 
         -- Contenedor con padding superior para el Transparency Panel
         local transparencyContainer = mk("Frame", {
@@ -974,8 +969,8 @@ function Settings.build(page, r)
             LayoutOrder = SO(),
         }, page)
         mk("UIPadding", { 
-            PaddingTop = UDim.new(0, 8),  -- Margen superior
-            PaddingLeft = UDim.new(0, 10),  -- Mismo margen izquierdo
+            PaddingTop = UDim.new(0, 10),  -- Aumentado de 8 a 10px
+            PaddingLeft = UDim.new(0, 10),   -- Mismo margen izquierdo
             PaddingRight = UDim.new(0, 10),  -- Mismo margen derecho
         }, transparencyContainer)
 
