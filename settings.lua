@@ -970,7 +970,7 @@ function Settings.build(page, r)
             LayoutOrder = SO(),
         }, page)
         mk("UIPadding", { 
-            PaddingTop = UDim.new(0, 4),     -- Espacio superior
+            PaddingTop = UDim.new(0, 1),     -- Espacio superior
             PaddingLeft = UDim.new(0, 4),    -- MISMO margen izquierdo reducido
             PaddingRight = UDim.new(0, 8),   -- MISMO margen derecho
         }, transparencyContainer)
