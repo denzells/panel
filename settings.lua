@@ -821,7 +821,7 @@ function Settings.build(page, r)
         -- 🔥 SOLUCIÓN: Agregar margen izquierdo al Keybinds para empujarlo desde la izquierda
         -- (esto lo moverá hacia la derecha porque el layout es horizontal)
         local keybindPadding = mk("UIPadding", {
-            PaddingLeft = UDim.new(0, 100),  -- ⬅️ AUMENTA ESTE VALOR para mover Keybinds más a la derecha
+            PaddingLeft = UDim.new(0, 0),  -- ⬅️ AUMENTA ESTE VALOR para mover Keybinds más a la derecha
         }, keybindPanel)
     end)
 end
