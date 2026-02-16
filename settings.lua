@@ -603,7 +603,7 @@ function Settings.build(page, r)
     -- KEYBINDS
     -- ════════════════════════════════════════════════════════
     local function CreateKeybinds(parent)
-        local PW = 168
+        local PW = 220
 
         local root = mk("Frame", {
             Size = UDim2.new(0, PW, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
@@ -802,7 +802,7 @@ function Settings.build(page, r)
         local colorPanel = MiniPanel(topRow, "Accent Color", 216)
         CreateAccentPicker(colorPanel)
 
-        local keybindPanel = MiniPanel(topRow, "Keybinds", 184)
+        local keybindPanel = MiniPanel(topRow, "Keybinds", 236)
         CreateKeybinds(keybindPanel)
 
         local fontPanel = MiniPanel(page, "Font", 216)
