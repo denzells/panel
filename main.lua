@@ -42,6 +42,13 @@ if old then old:Destroy() end
 local C = Settings.C
 local W = Settings.Layout
 
+-- ── DEBUG: verificar que W tiene los valores esperados ───────
+print("[DEBUG] W.WW =", W.WW)
+print("[DEBUG] W.WH =", W.WH)
+print("[DEBUG] W.TH =", W.TH)
+print("[DEBUG] W.BH =", W.BH)
+print("[DEBUG] C.WIN =", tostring(C.WIN))
+
 local function mk(cls, props, parent)
     local obj = Instance.new(cls)
     for k, v in pairs(props) do pcall(function() obj[k] = v end) end
@@ -66,6 +73,7 @@ local SG = mk("ScreenGui", {
     IgnoreGuiInset = true,
     ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
 }, PlayerGui)
+print("[DEBUG] ScreenGui creado:", SG.Name, "Parent:", SG.Parent.Name)
 
 local Win, NavBar, BodyClip
 
@@ -79,145 +87,14 @@ Win = mk("Frame", {
     Size             = UDim2.new(0, W.WW, 0, W.WH),
     Position         = UDim2.new(0.5, -W.WW/2, 0.5, -W.WH/2),
     BackgroundColor3 = C.WIN,
-    BorderSizePixel  = 0, ClipsDescendants = false, ZIndex = 3,
+    BorderSizePixel  = 0,
+    ClipsDescendants = false,
+    ZIndex           = 3,
 }, SG)
 rnd(14, Win)
+print("[DEBUG] Win creado — Size:", W.WW, "x", W.WH, "| ZIndex:", Win.ZIndex)
+
 local WinStroke = mk("UIStroke", { Color = C.LINE, Thickness = 1, Transparency = 0.2 }, Win)
-
--- ══════════════════════════════════════════════════════════════
--- ── PARTÍCULAS ESTILO STARSPACE ───────────────────────────────
--- Pequeñas, rojas, flotando por todo el panel sin dirección fija
--- ══════════════════════════════════════════════════════════════
-do
-    local CFG = {
-        COUNT      = 22,          -- total de partículas vivas al mismo tiempo
-        IMG        = "rbxassetid://120297604949715",
-        SIZE_MIN   = 5,
-        SIZE_MAX   = 13,
-        -- Colores: rojo intenso, rojo oscuro, rojo rosado, naranja rojizo
-        COLORS = {
-            Color3.fromRGB(255,  40,  40),
-            Color3.fromRGB(200,  20,  20),
-            Color3.fromRGB(255,  80,  80),
-            Color3.fromRGB(220,  55,  55),
-            Color3.fromRGB(180,  15,  15),
-        },
-        -- Transparencia: la mayoría semi-invisibles, pocas muy brillantes
-        ALPHA = { 0.25, 0.45, 0.55, 0.65, 0.30 },
-        -- Velocidad de movimiento (píxeles por segundo, muy lento)
-        SPEED_MIN  = 6,
-        SPEED_MAX  = 22,
-        -- Duración del ciclo de vida completo de cada partícula
-        LIFE_MIN   = 5.0,
-        LIFE_MAX   = 10.0,
-        -- Fade in / fade out
-        FADE_DUR   = 1.2,
-    }
-
-    local function rng(a, b) return a + (b - a) * math.random() end
-    local function pick(t)   return t[math.random(#t)] end
-
-    local function stw(obj, dur, props, es, ed)
-        TweenService:Create(obj,
-            TweenInfo.new(dur,
-                es or Enum.EasingStyle.Sine,
-                ed or Enum.EasingDirection.InOut),
-            props):Play()
-    end
-
-    -- Contenedor que cubre todo el Win, detrás del contenido
-    local StarContainer = mk("Frame", {
-        Name                   = "StarParticles",
-        Size                   = UDim2.new(1, 0, 1, 0),
-        Position               = UDim2.new(0, 0, 0, 0),
-        BackgroundTransparency = 1,
-        ClipsDescendants       = true,
-        ZIndex                 = 1,
-    }, Win)
-
-    local function spawnParticle()
-        local sz    = rng(CFG.SIZE_MIN, CFG.SIZE_MAX)
-        local life  = rng(CFG.LIFE_MIN, CFG.LIFE_MAX)
-        local color = pick(CFG.COLORS)
-        local alpha = pick(CFG.ALPHA)
-        local speed = rng(CFG.SPEED_MIN, CFG.SPEED_MAX)
-
-        -- Posición inicial: aleatoria dentro del panel
-        local startX = rng(4, W.WW - sz - 4)
-        local startY = rng(4, W.WH - sz - 4)
-
-        -- Dirección de movimiento: ángulo completamente aleatorio
-        local angle  = rng(0, math.pi * 2)
-        local dx     = math.cos(angle) * speed * life
-        local dy     = math.sin(angle) * speed * life
-
-        -- Destino final (puede salirse del borde, el clip lo oculta)
-        local endX = startX + dx
-        local endY = startY + dy
-
-        local p = mk("ImageLabel", {
-            Size                   = UDim2.new(0, sz, 0, sz),
-            Position               = UDim2.new(0, startX, 0, startY),
-            BackgroundTransparency = 1,
-            Image                  = CFG.IMG,
-            ImageColor3            = color,
-            ImageTransparency      = 1,           -- empieza invisible
-            Rotation               = rng(0, 360),
-            ZIndex                 = 2,
-        }, StarContainer)
-
-        -- Fade IN
-        stw(p, CFG.FADE_DUR,
-            { ImageTransparency = alpha },
-            Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
-
-        -- Movimiento suave durante toda la vida
-        TweenService:Create(p,
-            TweenInfo.new(life, Enum.EasingStyle.Linear),
-            { Position = UDim2.new(0, endX, 0, endY) }):Play()
-
-        -- Pulso de brillo suave (parpadeo lento)
-        local pulseOn = true
-        task.spawn(function()
-            while pulseOn and p.Parent do
-                local pd = rng(1.0, 2.5)
-                -- se oscurece un poco
-                stw(p, pd,
-                    { ImageTransparency = math.min(0.92, alpha + rng(0.20, 0.45)) },
-                    Enum.EasingStyle.Sine)
-                task.wait(pd)
-                if not p.Parent then break end
-                -- vuelve al brillo base
-                stw(p, pd,
-                    { ImageTransparency = alpha },
-                    Enum.EasingStyle.Sine)
-                task.wait(pd)
-            end
-        end)
-
-        -- Fade OUT antes de morir
-        task.delay(life - CFG.FADE_DUR, function()
-            pulseOn = false
-            if not p.Parent then return end
-            stw(p, CFG.FADE_DUR,
-                { ImageTransparency = 1 },
-                Enum.EasingStyle.Sine, Enum.EasingDirection.In)
-        end)
-
-        -- Destruir y re-spawnear (loop infinito)
-        task.delay(life + 0.05, function()
-            if p.Parent then p:Destroy() end
-            -- respawnea inmediatamente para mantener COUNT constante
-            task.spawn(spawnParticle)
-        end)
-    end
-
-    -- Spawn inicial escalonado para que no aparezcan todas juntas
-    for i = 1, CFG.COUNT do
-        task.delay(rng(0, 2.5), spawnParticle)
-    end
-end
--- ══════════════════════════════════════════════════════════════
 
 -- ── TITLEBAR ─────────────────────────────────────────────────
 local TBar = mk("Frame", {
@@ -302,6 +179,172 @@ local function makePage()
     }, pg)
     return pg
 end
+
+-- ══════════════════════════════════════════════════════════════
+-- ── PARTÍCULAS ────────────────────────────────────────────────
+-- ══════════════════════════════════════════════════════════════
+do
+    print("[PARTICLES] Iniciando sistema de partículas...")
+
+    local CFG = {
+        COUNT    = 22,
+        IMG      = "rbxassetid://120297604949715",
+        SIZE_MIN = 5,
+        SIZE_MAX = 13,
+        COLORS   = {
+            Color3.fromRGB(255,  40,  40),
+            Color3.fromRGB(200,  20,  20),
+            Color3.fromRGB(255,  80,  80),
+            Color3.fromRGB(220,  55,  55),
+            Color3.fromRGB(180,  15,  15),
+        },
+        ALPHA     = { 0.25, 0.40, 0.50, 0.60, 0.30 },
+        SPEED_MIN = 6,
+        SPEED_MAX = 22,
+        LIFE_MIN  = 5.0,
+        LIFE_MAX  = 10.0,
+        FADE_DUR  = 1.2,
+    }
+
+    local function rng(a, b) return a + (b - a) * math.random() end
+    local function pick(t)   return t[math.random(#t)] end
+
+    local function stw(obj, dur, props, es, ed)
+        TweenService:Create(obj,
+            TweenInfo.new(dur,
+                es or Enum.EasingStyle.Sine,
+                ed or Enum.EasingDirection.InOut),
+            props):Play()
+    end
+
+    -- Contenedor en SG, misma posición y tamaño que Win
+    local StarContainer = mk("Frame", {
+        Name                   = "StarParticles",
+        Size                   = UDim2.new(0, W.WW, 0, W.WH),
+        Position               = UDim2.new(0.5, -W.WW/2, 0.5, -W.WH/2),
+        BackgroundTransparency = 1,
+        ClipsDescendants       = true,
+        ZIndex                 = 4,
+        BorderSizePixel        = 0,
+    }, SG)
+    rnd(14, StarContainer)
+
+    print("[PARTICLES] StarContainer creado — Parent:", StarContainer.Parent.Name)
+    print("[PARTICLES] StarContainer Size:", tostring(StarContainer.Size))
+    print("[PARTICLES] StarContainer Position:", tostring(StarContainer.Position))
+    print("[PARTICLES] StarContainer ZIndex:", StarContainer.ZIndex)
+    print("[PARTICLES] StarContainer Visible:", StarContainer.Visible)
+
+    -- Sincronizar con el drag
+    local _origApplyPos = applyPos
+    applyPos = function(wx, wy)
+        _origApplyPos(wx, wy)
+        StarContainer.Position = UDim2.new(0.5, wx, 0.5, wy)
+    end
+
+    local spawnCount = 0
+
+    local function spawnParticle()
+        local sz    = rng(CFG.SIZE_MIN, CFG.SIZE_MAX)
+        local life  = rng(CFG.LIFE_MIN, CFG.LIFE_MAX)
+        local color = pick(CFG.COLORS)
+        local alpha = pick(CFG.ALPHA)
+        local speed = rng(CFG.SPEED_MIN, CFG.SPEED_MAX)
+
+        local startX = rng(4, W.WW - sz - 4)
+        local startY = rng(4, W.WH - sz - 4)
+        local angle  = rng(0, math.pi * 2)
+        local endX   = startX + math.cos(angle) * speed * life
+        local endY   = startY + math.sin(angle) * speed * life
+
+        local p = mk("ImageLabel", {
+            Size                   = UDim2.new(0, sz, 0, sz),
+            Position               = UDim2.new(0, startX, 0, startY),
+            BackgroundTransparency = 1,
+            Image                  = CFG.IMG,
+            ImageColor3            = color,
+            ImageTransparency      = 0,   -- ← VISIBLE DE INMEDIATO para debug
+            Rotation               = rng(0, 360),
+            ZIndex                 = 5,
+            Visible                = true,
+        }, StarContainer)
+
+        spawnCount += 1
+        if spawnCount <= 5 then
+            print("[PARTICLES] Estrella #"..spawnCount.." creada")
+            print("  → sz="..math.floor(sz).." startX="..math.floor(startX).." startY="..math.floor(startY))
+            print("  → alpha="..alpha.." life="..string.format("%.1f", life))
+            print("  → Parent:", p.Parent and p.Parent.Name or "NIL")
+            print("  → ImageTransparency:", p.ImageTransparency)
+            print("  → Visible:", p.Visible)
+            print("  → ZIndex:", p.ZIndex)
+            print("  → Image:", p.Image)
+        end
+
+        -- Fade IN (desactivado temporalmente para debug — ya empieza visible)
+        -- stw(p, CFG.FADE_DUR, { ImageTransparency = alpha }, ...)
+
+        -- Movimiento
+        TweenService:Create(p,
+            TweenInfo.new(life, Enum.EasingStyle.Linear),
+            { Position = UDim2.new(0, endX, 0, endY) }):Play()
+
+        -- Pulso de parpadeo
+        local pulseOn = true
+        task.spawn(function()
+            while pulseOn and p.Parent do
+                local pd = rng(1.0, 2.5)
+                stw(p, pd,
+                    { ImageTransparency = math.min(0.90, alpha + rng(0.20, 0.45)) },
+                    Enum.EasingStyle.Sine)
+                task.wait(pd)
+                if not p.Parent then break end
+                stw(p, pd,
+                    { ImageTransparency = alpha },
+                    Enum.EasingStyle.Sine)
+                task.wait(pd)
+            end
+        end)
+
+        -- Fade OUT
+        task.delay(life - CFG.FADE_DUR, function()
+            pulseOn = false
+            if not p.Parent then return end
+            stw(p, CFG.FADE_DUR,
+                { ImageTransparency = 1 },
+                Enum.EasingStyle.Sine, Enum.EasingDirection.In)
+        end)
+
+        -- Destruir y re-spawnear
+        task.delay(life + 0.05, function()
+            if p.Parent then p:Destroy() end
+            task.spawn(spawnParticle)
+        end)
+    end
+
+    -- Spawn inicial escalonado
+    print("[PARTICLES] Lanzando", CFG.COUNT, "partículas...")
+    for i = 1, CFG.COUNT do
+        task.delay(rng(0, 2.5), spawnParticle)
+    end
+
+    -- Verificación 3 segundos después
+    task.delay(3, function()
+        print("[PARTICLES] === CHECK 3s ===")
+        print("  StarContainer existe:", StarContainer ~= nil)
+        print("  StarContainer.Parent:", StarContainer.Parent and StarContainer.Parent.Name or "NIL — FUE DESTRUIDO")
+        print("  StarContainer.Visible:", StarContainer.Visible)
+        print("  Hijos en StarContainer:", #StarContainer:GetChildren())
+        print("  Total spawneadas hasta ahora:", spawnCount)
+        for _, child in ipairs(StarContainer:GetChildren()) do
+            if child:IsA("ImageLabel") then
+                print("  → ImageLabel encontrada | Transparency:", child.ImageTransparency, "| Visible:", child.Visible, "| ZIndex:", child.ZIndex)
+                break
+            end
+        end
+    end)
+end
+-- ══════════════════════════════════════════════════════════════
 
 -- ── NAVBAR ───────────────────────────────────────────────────
 NavBar = mk("Frame", {
@@ -503,5 +546,18 @@ Settings.build(tPages[4], {
 
 -- ── OPEN ANIMATION ───────────────────────────────────────────
 anim.playOpen()
+
+-- Verificación final del estado de todo
+task.delay(1, function()
+    print("[DEBUG] === ESTADO FINAL (1s después de playOpen) ===")
+    print("  Win.Visible:", Win.Visible)
+    print("  Win.Size:", tostring(Win.Size))
+    print("  SG hijos totales:", #SG:GetChildren())
+    for _, child in ipairs(SG:GetChildren()) do
+        print("  → SG hijo:", child.Name, "| Class:", child.ClassName,
+              "| ZIndex:", pcall(function() return child.ZIndex end) and child.ZIndex or "n/a",
+              "| Visible:", child.Visible)
+    end
+end)
 
 print("[PanelBase] ✨ Loaded — dzanity.gg v1.0.0")
