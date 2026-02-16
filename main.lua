@@ -42,13 +42,6 @@ if old then old:Destroy() end
 local C = Settings.C
 local W = Settings.Layout
 
--- ── DEBUG: verificar que W tiene los valores esperados ───────
-print("[DEBUG] W.WW =", W.WW)
-print("[DEBUG] W.WH =", W.WH)
-print("[DEBUG] W.TH =", W.TH)
-print("[DEBUG] W.BH =", W.BH)
-print("[DEBUG] C.WIN =", tostring(C.WIN))
-
 local function mk(cls, props, parent)
     local obj = Instance.new(cls)
     for k, v in pairs(props) do pcall(function() obj[k] = v end) end
@@ -71,9 +64,8 @@ local SG = mk("ScreenGui", {
     Name           = "PanelBase",
     ResetOnSpawn   = false,
     IgnoreGuiInset = true,
-    ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+    ZIndexBehavior = Enum.ZIndexBehavior.Global, -- ✅ CAMBIADO: Global ignora jerarquía
 }, PlayerGui)
-print("[DEBUG] ScreenGui creado:", SG.Name, "Parent:", SG.Parent.Name)
 
 local Win, NavBar, BodyClip
 
@@ -89,32 +81,30 @@ Win = mk("Frame", {
     BackgroundColor3 = C.WIN,
     BorderSizePixel  = 0,
     ClipsDescendants = false,
-    ZIndex           = 3,
+    ZIndex           = 10,
 }, SG)
 rnd(14, Win)
-print("[DEBUG] Win creado — Size:", W.WW, "x", W.WH, "| ZIndex:", Win.ZIndex)
-
 local WinStroke = mk("UIStroke", { Color = C.LINE, Thickness = 1, Transparency = 0.2 }, Win)
 
 -- ── TITLEBAR ─────────────────────────────────────────────────
 local TBar = mk("Frame", {
     Size             = UDim2.new(1, 0, 0, W.TH),
     BackgroundColor3 = C.TBAR,
-    BorderSizePixel  = 0, ZIndex = 6, ClipsDescendants = false, Active = true,
+    BorderSizePixel  = 0, ZIndex = 60, ClipsDescendants = false, Active = true,
 }, Win)
 mk("UICorner", { CornerRadius = UDim.new(0, 14) }, TBar)
 mk("Frame", {
     Size             = UDim2.new(1, 0, 0, 14),
     Position         = UDim2.new(0, 0, 1, -14),
     BackgroundColor3 = C.TBAR,
-    BorderSizePixel  = 0, ZIndex = 5,
+    BorderSizePixel  = 0, ZIndex = 50,
 }, TBar)
 
 local rdot = mk("Frame", {
     Size             = UDim2.new(0, 10, 0, 10),
     Position         = UDim2.new(0, 14, 0.5, -5),
     BackgroundColor3 = C.RED,
-    BorderSizePixel  = 0, ZIndex = 8,
+    BorderSizePixel  = 0, ZIndex = 80,
 }, TBar)
 rnd(5, rdot)
 
@@ -123,7 +113,7 @@ local function tlbl(txt, font, sz, col, x, w)
         Text = txt, Font = font, TextSize = sz, TextColor3 = col,
         BackgroundTransparency = 1,
         Size = UDim2.new(0, w, 0, W.TH), Position = UDim2.new(0, x, 0, 0),
-        TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 8,
+        TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 80,
     }, TBar)
 end
 
@@ -137,14 +127,14 @@ local MinB = mk("TextButton", {
     Text = "─", Font = Enum.Font.GothamBold, TextSize = 16,
     TextColor3 = C.GRAY, BackgroundTransparency = 1, BorderSizePixel = 0,
     Size = UDim2.new(0, 36, 0, W.TH), Position = UDim2.new(0, W.WW - 72, 0, 0),
-    ZIndex = 8, AutoButtonColor = false,
+    ZIndex = 80, AutoButtonColor = false,
 }, TBar)
 
 local ClsB = mk("TextButton", {
     Text = "×", Font = Enum.Font.GothamBold, TextSize = 22,
     TextColor3 = C.GRAY, BackgroundTransparency = 1, BorderSizePixel = 0,
     Size = UDim2.new(0, 36, 0, W.TH), Position = UDim2.new(0, W.WW - 36, 0, 0),
-    ZIndex = 8, AutoButtonColor = false,
+    ZIndex = 80, AutoButtonColor = false,
 }, TBar)
 
 ClsB.MouseEnter:Connect(function() tw(ClsB, .1, { TextColor3 = C.RED   }) end)
@@ -153,39 +143,19 @@ MinB.MouseEnter:Connect(function() tw(MinB, .1, { TextColor3 = C.WHITE }) end)
 MinB.MouseLeave:Connect(function() tw(MinB, .1, { TextColor3 = C.GRAY  }) end)
 
 -- ── BODY CLIP ────────────────────────────────────────────────
+-- ZIndex 20: encima del Win(10) pero debajo de partículas(30) y TBar(60)
 BodyClip = mk("Frame", {
     Size             = UDim2.new(0, W.WW, 0, W.BH),
     Position         = UDim2.new(0, 0, 0, W.TH),
     BackgroundColor3 = C.WIN,
-    BorderSizePixel  = 0, ZIndex = 2, ClipsDescendants = true,
+    BorderSizePixel  = 0, ZIndex = 20, ClipsDescendants = true,
 }, Win)
 rnd(14, BodyClip)
 
--- ── PÁGINA HELPER ────────────────────────────────────────────
-local function makePage()
-    local scr = mk("ScrollingFrame", {
-        Size = UDim2.new(1, 0, 0, W.BH), BackgroundTransparency = 1,
-        BorderSizePixel = 0, ScrollBarThickness = 0,
-        CanvasSize = UDim2.new(0, 0, 0, 0),
-        AutomaticCanvasSize = Enum.AutomaticSize.Y, ZIndex = 3,
-    }, BodyClip)
-    local pg = mk("Frame", {
-        Size = UDim2.new(1, -24, 0, 0), Position = UDim2.new(0, 12, 0, 12),
-        AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1,
-    }, scr)
-    mk("UIListLayout", {
-        Padding = UDim.new(0, 12),
-        SortOrder = Enum.SortOrder.LayoutOrder,
-    }, pg)
-    return pg
-end
-
--- ══════════════════════════════════════════════════════════════
 -- ── PARTÍCULAS ────────────────────────────────────────────────
--- ══════════════════════════════════════════════════════════════
+-- ZIndex 30: entre BodyClip(20) y TBar(60) → visibles sobre el contenido
+-- Dentro de Win con ClipsDescendants=false → no las corta
 do
-    print("[PARTICLES] Iniciando sistema de partículas...")
-
     local CFG = {
         COUNT    = 22,
         IMG      = "rbxassetid://120297604949715",
@@ -208,7 +178,6 @@ do
 
     local function rng(a, b) return a + (b - a) * math.random() end
     local function pick(t)   return t[math.random(#t)] end
-
     local function stw(obj, dur, props, es, ed)
         TweenService:Create(obj,
             TweenInfo.new(dur,
@@ -217,32 +186,22 @@ do
             props):Play()
     end
 
-    -- Contenedor en SG, misma posición y tamaño que Win
+    -- Frame clip de partículas: hijo de Win, ClipsDescendants=true
+    -- para que las partículas no salgan del borde del panel,
+    -- con ZIndex=30 queda encima del BodyClip(20) en modo Global
     local StarContainer = mk("Frame", {
         Name                   = "StarParticles",
-        Size                   = UDim2.new(0, W.WW, 0, W.WH),
-        Position               = UDim2.new(0.5, -W.WW/2, 0.5, -W.WH/2),
+        Size                   = UDim2.new(1, 0, 1, 0),
+        Position               = UDim2.new(0, 0, 0, 0),
         BackgroundTransparency = 1,
         ClipsDescendants       = true,
-        ZIndex                 = 4,
+        ZIndex                 = 30,
         BorderSizePixel        = 0,
-    }, SG)
+    }, Win)
     rnd(14, StarContainer)
 
-    print("[PARTICLES] StarContainer creado — Parent:", StarContainer.Parent.Name)
-    print("[PARTICLES] StarContainer Size:", tostring(StarContainer.Size))
-    print("[PARTICLES] StarContainer Position:", tostring(StarContainer.Position))
     print("[PARTICLES] StarContainer ZIndex:", StarContainer.ZIndex)
-    print("[PARTICLES] StarContainer Visible:", StarContainer.Visible)
-
-    -- Sincronizar con el drag
-    local _origApplyPos = applyPos
-    applyPos = function(wx, wy)
-        _origApplyPos(wx, wy)
-        StarContainer.Position = UDim2.new(0.5, wx, 0.5, wy)
-    end
-
-    local spawnCount = 0
+    print("[PARTICLES] Win ZIndexBehavior:", SG.ZIndexBehavior)
 
     local function spawnParticle()
         local sz    = rng(CFG.SIZE_MIN, CFG.SIZE_MAX)
@@ -252,7 +211,7 @@ do
         local speed = rng(CFG.SPEED_MIN, CFG.SPEED_MAX)
 
         local startX = rng(4, W.WW - sz - 4)
-        local startY = rng(4, W.WH - sz - 4)
+        local startY = rng(W.TH + 4, W.WH - sz - 4) -- ✅ evita el titlebar
         local angle  = rng(0, math.pi * 2)
         local endX   = startX + math.cos(angle) * speed * life
         local endY   = startY + math.sin(angle) * speed * life
@@ -263,26 +222,15 @@ do
             BackgroundTransparency = 1,
             Image                  = CFG.IMG,
             ImageColor3            = color,
-            ImageTransparency      = 0,   -- ← VISIBLE DE INMEDIATO para debug
+            ImageTransparency      = 1,
             Rotation               = rng(0, 360),
-            ZIndex                 = 5,
-            Visible                = true,
+            ZIndex                 = 30,
         }, StarContainer)
 
-        spawnCount += 1
-        if spawnCount <= 5 then
-            print("[PARTICLES] Estrella #"..spawnCount.." creada")
-            print("  → sz="..math.floor(sz).." startX="..math.floor(startX).." startY="..math.floor(startY))
-            print("  → alpha="..alpha.." life="..string.format("%.1f", life))
-            print("  → Parent:", p.Parent and p.Parent.Name or "NIL")
-            print("  → ImageTransparency:", p.ImageTransparency)
-            print("  → Visible:", p.Visible)
-            print("  → ZIndex:", p.ZIndex)
-            print("  → Image:", p.Image)
-        end
-
-        -- Fade IN (desactivado temporalmente para debug — ya empieza visible)
-        -- stw(p, CFG.FADE_DUR, { ImageTransparency = alpha }, ...)
+        -- Fade IN
+        stw(p, CFG.FADE_DUR,
+            { ImageTransparency = alpha },
+            Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 
         -- Movimiento
         TweenService:Create(p,
@@ -322,36 +270,55 @@ do
         end)
     end
 
-    -- Spawn inicial escalonado
-    print("[PARTICLES] Lanzando", CFG.COUNT, "partículas...")
     for i = 1, CFG.COUNT do
         task.delay(rng(0, 2.5), spawnParticle)
     end
 
-    -- Verificación 3 segundos después
-    task.delay(3, function()
-        print("[PARTICLES] === CHECK 3s ===")
-        print("  StarContainer existe:", StarContainer ~= nil)
-        print("  StarContainer.Parent:", StarContainer.Parent and StarContainer.Parent.Name or "NIL — FUE DESTRUIDO")
-        print("  StarContainer.Visible:", StarContainer.Visible)
-        print("  Hijos en StarContainer:", #StarContainer:GetChildren())
-        print("  Total spawneadas hasta ahora:", spawnCount)
-        for _, child in ipairs(StarContainer:GetChildren()) do
-            if child:IsA("ImageLabel") then
-                print("  → ImageLabel encontrada | Transparency:", child.ImageTransparency, "| Visible:", child.Visible, "| ZIndex:", child.ZIndex)
+    task.delay(4, function()
+        print("[PARTICLES CHECK] Hijos en StarContainer:", #StarContainer:GetChildren())
+        local found = false
+        for _, c in ipairs(StarContainer:GetChildren()) do
+            if c:IsA("ImageLabel") then
+                print("  ImageLabel | ZIndex:", c.ZIndex,
+                      "| Transparency:", c.ImageTransparency,
+                      "| Visible:", c.Visible)
+                found = true
                 break
             end
         end
+        if not found then print("  ⚠ NO HAY ImageLabels") end
+        print("  BodyClip ZIndex:", BodyClip.ZIndex)
+        print("  StarContainer ZIndex:", StarContainer.ZIndex)
+        print("  SG.ZIndexBehavior:", tostring(SG.ZIndexBehavior))
     end)
 end
--- ══════════════════════════════════════════════════════════════
+
+-- ── PÁGINA HELPER ────────────────────────────────────────────
+local function makePage()
+    local scr = mk("ScrollingFrame", {
+        Size = UDim2.new(1, 0, 0, W.BH), BackgroundTransparency = 1,
+        BorderSizePixel = 0, ScrollBarThickness = 0,
+        CanvasSize = UDim2.new(0, 0, 0, 0),
+        AutomaticCanvasSize = Enum.AutomaticSize.Y, ZIndex = 25,
+    }, BodyClip)
+    local pg = mk("Frame", {
+        Size = UDim2.new(1, -24, 0, 0), Position = UDim2.new(0, 12, 0, 12),
+        AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1,
+        ZIndex = 25,
+    }, scr)
+    mk("UIListLayout", {
+        Padding = UDim.new(0, 12),
+        SortOrder = Enum.SortOrder.LayoutOrder,
+    }, pg)
+    return pg
+end
 
 -- ── NAVBAR ───────────────────────────────────────────────────
 NavBar = mk("Frame", {
     Size     = UDim2.new(0, W.NW, 0, W.NH),
     Position = UDim2.new(0.5, -W.WW/2 + (W.WW - W.NW)/2, 0.5, -W.WH/2 + W.WH + W.NGAP),
     BackgroundColor3 = C.NAV,
-    BorderSizePixel = 0, ZIndex = 8, ClipsDescendants = true,
+    BorderSizePixel = 0, ZIndex = 80, ClipsDescendants = true,
 }, SG)
 rnd(14, NavBar)
 local NavStroke = mk("UIStroke", { Color = C.LINE, Thickness = 1, Transparency = 0.2 }, NavBar)
@@ -397,7 +364,7 @@ for i, td in ipairs(TDEFS) do
         Size             = UDim2.new(0, isF and TBW_EXP or TBW, 0, W.NH - 8),
         Position         = UDim2.new(0, 0, 0, 4),
         BackgroundColor3 = isF and C.NAVPIL or C.NAV,
-        BorderSizePixel  = 0, ZIndex = isF and 15 or 10,
+        BorderSizePixel  = 0, ZIndex = isF and 150 or 100,
     }, NavBar)
     rnd(10, pill)
 
@@ -409,7 +376,7 @@ for i, td in ipairs(TDEFS) do
         BackgroundTransparency = 1,
         Image                  = td.img,
         ImageColor3            = isF and C.RED or C.MUTED,
-        ZIndex                 = 11,
+        ZIndex                 = 110,
     }, pill)
 
     local lbl = mk("TextLabel", {
@@ -417,12 +384,12 @@ for i, td in ipairs(TDEFS) do
         TextColor3 = C.WHITE, BackgroundTransparency = 1,
         Size = UDim2.new(0, 64, 1, 0), Position = UDim2.new(0, 36, 0, 0),
         TextXAlignment = Enum.TextXAlignment.Left,
-        TextTransparency = isF and 0 or 1, ZIndex = 11,
+        TextTransparency = isF and 0 or 1, ZIndex = 110,
     }, pill)
 
     local hit = mk("TextButton", {
         Text = "", BackgroundTransparency = 1,
-        Size = UDim2.new(1, 0, 1, 0), ZIndex = 16, AutoButtonColor = false,
+        Size = UDim2.new(1, 0, 1, 0), ZIndex = 160, AutoButtonColor = false,
     }, pill)
 
     navT[i] = {
@@ -432,7 +399,7 @@ for i, td in ipairs(TDEFS) do
 
     hit.MouseButton1Click:Connect(function()
         if actNav == i then return end
-        local pv = navT[actNav]; pv.pill.ZIndex = 10
+        local pv = navT[actNav]; pv.pill.ZIndex = 100
         tw(pv.pill, .25, { BackgroundColor3 = C.NAV },  Enum.EasingStyle.Quint)
         tw(pv.img,  .25, {
             Position    = UDim2.new(0.5, -IMGS/2, 0.5, -IMGS/2),
@@ -443,7 +410,7 @@ for i, td in ipairs(TDEFS) do
 
         actNav = i
         tPages[i].Parent.Visible = true
-        pill.ZIndex = 15
+        pill.ZIndex = 150
         updateTabPositions(i)
 
         for j = 1, NT do
@@ -478,7 +445,7 @@ do
     local mStart, wStart = Vector2.new(), Vector2.new()
     local DragHit = mk("TextButton", {
         Text = "", BackgroundTransparency = 1, BorderSizePixel = 0,
-        Size = UDim2.new(1, -72, 1, 0), ZIndex = 50, AutoButtonColor = false,
+        Size = UDim2.new(1, -72, 1, 0), ZIndex = 500, AutoButtonColor = false,
     }, TBar)
     DragHit.MouseButton1Down:Connect(function()
         local mp = UIS:GetMouseLocation()
@@ -546,18 +513,5 @@ Settings.build(tPages[4], {
 
 -- ── OPEN ANIMATION ───────────────────────────────────────────
 anim.playOpen()
-
--- Verificación final del estado de todo
-task.delay(1, function()
-    print("[DEBUG] === ESTADO FINAL (1s después de playOpen) ===")
-    print("  Win.Visible:", Win.Visible)
-    print("  Win.Size:", tostring(Win.Size))
-    print("  SG hijos totales:", #SG:GetChildren())
-    for _, child in ipairs(SG:GetChildren()) do
-        print("  → SG hijo:", child.Name, "| Class:", child.ClassName,
-              "| ZIndex:", pcall(function() return child.ZIndex end) and child.ZIndex or "n/a",
-              "| Visible:", child.Visible)
-    end
-end)
 
 print("[PanelBase] ✨ Loaded — dzanity.gg v1.0.0")
