@@ -799,7 +799,7 @@ function Settings.build(page, r)
         -- Padding para la fila completa
         mk("UIPadding", {
             PaddingLeft = UDim.new(0, 0),    -- Custom Panel pegado a la izquierda (NO SE MUEVE)
-            PaddingRight = UDim.new(0, 200),  -- ⬅️ AUMENTADO DRÁSTICAMENTE a 200px para mover Keybinds muy a la derecha
+            PaddingRight = UDim.new(0, 0),  -- ⬅️ AUMENTADO DRÁSTICAMENTE a 200px para mover Keybinds muy a la derecha
         }, topRow)
         
         mk("UIListLayout", {
