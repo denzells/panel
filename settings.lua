@@ -972,7 +972,7 @@ function Settings.build(page, r)
         mk("UIPadding", { 
             PaddingTop = UDim.new(0, 0),     -- Espacio superior
             PaddingLeft = UDim.new(0, 0),    -- MISMO margen izquierdo reducido
-            PaddingRight = UDim.new(0, 8),   -- MISMO margen derecho
+            PaddingRight = UDim.new(0, 0),   -- MISMO margen derecho
         }, transparencyContainer)
 
         -- Panel de Transparency (ancho fijo de 500)
