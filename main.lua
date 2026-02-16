@@ -4,7 +4,7 @@
 -- Uso: loadstring(game:HttpGet("RAW_URL/main.lua"))()
 -- ============================================================
 
-local RAW_BASE = "https://raw.githubusercontent.com/dzanity-gg/dzanity.gg/main/"
+local RAW_BASE = "https://raw.githubusercontent.com/denzells/serios.gg/main/"
 
 local function loadModule(path)
     local ok, result = pcall(function()
