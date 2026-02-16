@@ -113,9 +113,6 @@ function Settings.build(page, r)
         }, parent)
         mk("UIListLayout", { Padding = UDim.new(0, 5), SortOrder = Enum.SortOrder.LayoutOrder }, root)
 
-        -- ─────────────────────────────────────────────────────
-        -- ROW 1 – Accent Color  (checkbox para habilitar picker)
-        -- ─────────────────────────────────────────────────────
         local row1 = mk("Frame", {
             Size = UDim2.new(0, PW, 0, 22), BackgroundTransparency = 1, LayoutOrder = 1,
         }, root)
@@ -146,9 +143,6 @@ function Settings.build(page, r)
             Size = UDim2.new(1, 0, 1, 0), ZIndex = 7, AutoButtonColor = false,
         }, chkBg)
 
-        -- ─────────────────────────────────────────────────────
-        -- ROW 2 – RGB Mode  (animación arcoíris tipo tira LED)
-        -- ─────────────────────────────────────────────────────
         local rgbModeOn = false
         local rgbHue    = 0
         local rgbConn   = nil
@@ -159,7 +153,7 @@ function Settings.build(page, r)
         local function startRGBMode()
             stopRGBMode()
             rgbConn = RunService.RenderStepped:Connect(function(dt)
-                rgbHue = (rgbHue + dt * 0.4) % 1   -- vuelta completa ~2.5 s
+                rgbHue = (rgbHue + dt * 0.4) % 1
                 applyAccent(Color3.fromHSV(rgbHue, 1, 1))
             end)
         end
@@ -173,7 +167,6 @@ function Settings.build(page, r)
             Size = UDim2.new(0, PW - 26, 1, 0), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 5,
         }, row2)
 
-        -- badge decorativo "LED"
         local ledBadge = mk("Frame", {
             Size = UDim2.new(0, 28, 0, 13), Position = UDim2.new(0, 74, 0.5, -6),
             BackgroundColor3 = Color3.fromRGB(22, 22, 22), BorderSizePixel = 0, ZIndex = 6,
@@ -222,9 +215,6 @@ function Settings.build(page, r)
             end
         end)
 
-        -- ─────────────────────────────────────────────────────
-        -- ROW 3 – botón desplegable del color picker
-        -- ─────────────────────────────────────────────────────
         local palBtn = mk("TextButton", {
             Text = "", BackgroundTransparency = 1,
             Size = UDim2.new(0, PW, 0, 26), BorderSizePixel = 0,
@@ -261,9 +251,6 @@ function Settings.build(page, r)
         palBtn.MouseEnter:Connect(function() tw(palBg,.1,{BackgroundColor3=Color3.fromRGB(27,27,27)}) end)
         palBtn.MouseLeave:Connect(function() tw(palBg,.1,{BackgroundColor3=Color3.fromRGB(22,22,22)}) end)
 
-        -- ─────────────────────────────────────────────────────
-        -- ROW 4 – panel colapsable del picker HSV
-        -- ─────────────────────────────────────────────────────
         local pickerPanel = mk("Frame", {
             Size = UDim2.new(0, PW, 0, 0),
             BackgroundColor3 = Color3.fromRGB(16,16,16),
@@ -278,7 +265,6 @@ function Settings.build(page, r)
             BackgroundTransparency = 1, ZIndex = 6,
         }, pickerPanel)
 
-        -- SV Square
         local svSq = mk("Frame", {
             Size = UDim2.new(0, SV, 0, SV),
             BackgroundColor3 = Color3.fromHSV(currentH,1,1),
@@ -299,7 +285,6 @@ function Settings.build(page, r)
 
         local svHit = mk("TextButton", {Text="", BackgroundTransparency=1, Size=UDim2.new(0,SV,0,SV), ZIndex=13, AutoButtonColor=false}, inner)
 
-        -- Hue bar
         local hueBg = mk("Frame", {
             Size=UDim2.new(0,HW,0,SV), Position=UDim2.new(0,SV+PAD,0,0),
             BackgroundColor3=Color3.new(1,0,0), BorderSizePixel=0, ZIndex=7,
@@ -327,7 +312,6 @@ function Settings.build(page, r)
             ZIndex=13, AutoButtonColor=false,
         }, inner)
 
-        -- Preview + hex
         local rx      = SV + HW + PAD*2
         local bigPrev = mk("Frame", {
             Size=UDim2.new(0,PREVW,0,SV-20), Position=UDim2.new(0,rx,0,0),
@@ -368,7 +352,6 @@ function Settings.build(page, r)
             hueCur.Position = UDim2.new(0, SV+PAD-2, 0, currentH*SV - 1)
         end
 
-        -- Checkbox Accent Color
         chkBtn.MouseButton1Click:Connect(function()
             checked = not checked
             tw(chkBg,.15,{BackgroundColor3=checked and Color3.fromRGB(28,28,28) or C.MUTED})
@@ -386,7 +369,6 @@ function Settings.build(page, r)
             end
         end)
 
-        -- Apply Color
         applyBtn.MouseButton1Click:Connect(function()
             if not checked then
                 tw(chkBg,.1,{BackgroundColor3=Color3.fromRGB(80,40,40)})
@@ -405,7 +387,6 @@ function Settings.build(page, r)
             task.delay(.6,function() tw(applyBtn,.25,{TextColor3=newCol}) end)
         end)
 
-        -- SV drag
         local svDrag = false
         svHit.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then svDrag=true end end)
         UIS.InputEnded:Connect(function(i)  if i.UserInputType==Enum.UserInputType.MouseButton1 then svDrag=false end end)
@@ -417,7 +398,6 @@ function Settings.build(page, r)
             refreshPicker()
         end)
 
-        -- Hue drag
         local hueDrag = false
         hueHit.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then hueDrag=true end end)
         UIS.InputEnded:Connect(function(i)   if i.UserInputType==Enum.UserInputType.MouseButton1 then hueDrag=false end end)
@@ -428,7 +408,6 @@ function Settings.build(page, r)
             refreshPicker()
         end)
 
-        -- Toggle picker
         palBtn.MouseButton1Click:Connect(function()
             if pickerAnim then return end
             pickerAnim = true; pickerOpen = not pickerOpen
@@ -632,11 +611,9 @@ function Settings.build(page, r)
         }, parent)
         mk("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, root)
 
-        -- ✅ FLAGS PARA PREVENIR EJECUCIÓN INMEDIATA
-        local justAssignedMin = false
+        local justAssignedMin   = false
         local justAssignedClose = false
 
-        -- Nombre corto legible para CUALQUIER tecla
         local function keyName(kc)
             local names = {
                 [Enum.KeyCode.LeftControl]  = "L.Ctrl",
@@ -658,29 +635,16 @@ function Settings.build(page, r)
                 [Enum.KeyCode.PageUp]       = "PgUp",
                 [Enum.KeyCode.PageDown]     = "PgDn",
             }
-            
             if names[kc] then return names[kc] end
-            
             local raw = tostring(kc):gsub("Enum%.KeyCode%.", "")
-            
-            if raw:match("^[A-Z]$") or raw:match("^[0-9]$") then
-                return raw
-            end
-            
-            if #raw <= 6 then 
-                return raw 
-            else
-                return raw:sub(1, 5) .. "."
-            end
+            if raw:match("^[A-Z]$") or raw:match("^[0-9]$") then return raw end
+            if #raw <= 6 then return raw else return raw:sub(1, 5) .. "." end
         end
 
-        -- ══════════════════════════════════════════════════════
-        -- MINIMIZE KEY (✅ CAMBIADO A L.CTRL POR DEFECTO)
-        -- ══════════════════════════════════════════════════════
+        -- MINIMIZE KEY
         local row1 = mk("Frame", {
             Size = UDim2.new(0, PW, 0, 22), BackgroundTransparency = 1, LayoutOrder = 1,
         }, root)
-
         mk("TextLabel", {
             Text = "Minimize Key", Font = Enum.Font.GothamSemibold, TextSize = 10,
             TextColor3 = C.WHITE, BackgroundTransparency = 1,
@@ -695,8 +659,7 @@ function Settings.build(page, r)
         mk("UIStroke", { Color = C.LINE, Thickness = 1, Transparency = 0.3 }, minKeyBg)
 
         local minKeyLbl = mk("TextLabel", {
-            Text = "L.Ctrl", -- ✅ CAMBIADO DE "L.Alt" A "L.Ctrl"
-            Font = Enum.Font.Code, TextSize = 8,
+            Text = "L.Ctrl", Font = Enum.Font.Code, TextSize = 8,
             TextColor3 = C.WHITE, BackgroundTransparency = 1,
             Size = UDim2.new(1, 0, 1, 0), ZIndex = 6,
             TextXAlignment = Enum.TextXAlignment.Center,
@@ -708,36 +671,23 @@ function Settings.build(page, r)
         }, minKeyBg)
 
         local minListening  = false
-        local currentMinKey = Enum.KeyCode.LeftControl  -- ✅ CAMBIADO DE LeftAlt A LeftControl
-
+        local currentMinKey = Enum.KeyCode.LeftControl
         local minListenConn = nil
+
         local function startMinListening()
             if minListenConn then minListenConn:Disconnect() end
-            
             minListenConn = UIS.InputBegan:Connect(function(input, gpe)
                 if input.UserInputType ~= Enum.UserInputType.Keyboard then return end
-                
                 minListening = false
                 currentMinKey = input.KeyCode
-                
-                -- ✅ ACTIVAR FLAG PARA NO EJECUTAR ACCIÓN INMEDIATAMENTE
                 justAssignedMin = true
                 task.delay(0.1, function() justAssignedMin = false end)
-                
-                if minListenConn then 
-                    minListenConn:Disconnect()
-                    minListenConn = nil 
-                end
-                
+                if minListenConn then minListenConn:Disconnect(); minListenConn = nil end
                 minKeyLbl.Text = keyName(currentMinKey)
                 minKeyLbl.TextColor3 = C.WHITE
-                
                 tw(minKeyBg, .08, { BackgroundColor3 = Color3.fromRGB(25, 55, 25) })
-                task.delay(.35, function()
-                    tw(minKeyBg, .2, { BackgroundColor3 = Color3.fromRGB(22, 22, 22) })
-                end)
-                
-                print("[Keybind] ✓ Minimize Key asignada:", keyName(currentMinKey), "- Presiona nuevamente para ejecutar")
+                task.delay(.35, function() tw(minKeyBg, .2, { BackgroundColor3 = Color3.fromRGB(22, 22, 22) }) end)
+                print("[Keybind] ✓ Minimize Key asignada:", keyName(currentMinKey))
             end)
         end
 
@@ -745,29 +695,16 @@ function Settings.build(page, r)
             if minListening then return end
             minListening = true
             tw(minKeyBg, .1, { BackgroundColor3 = Color3.fromRGB(38, 30, 12) })
-            minKeyLbl.Text = "..."
-            minKeyLbl.TextColor3 = C.GRAY
+            minKeyLbl.Text = "..."; minKeyLbl.TextColor3 = C.GRAY
             startMinListening()
         end)
+        minKeyBtn.MouseEnter:Connect(function() if not minListening then tw(minKeyBg,.1,{BackgroundColor3=Color3.fromRGB(30,30,30)}) end end)
+        minKeyBtn.MouseLeave:Connect(function() if not minListening then tw(minKeyBg,.1,{BackgroundColor3=Color3.fromRGB(22,22,22)}) end end)
 
-        minKeyBtn.MouseEnter:Connect(function()
-            if not minListening then 
-                tw(minKeyBg, .1, { BackgroundColor3 = Color3.fromRGB(30, 30, 30) }) 
-            end
-        end)
-        minKeyBtn.MouseLeave:Connect(function()
-            if not minListening then 
-                tw(minKeyBg, .1, { BackgroundColor3 = Color3.fromRGB(22, 22, 22) }) 
-            end
-        end)
-
-        -- ══════════════════════════════════════════════════════
         -- CLOSE KEY
-        -- ══════════════════════════════════════════════════════
         local row2 = mk("Frame", {
             Size = UDim2.new(0, PW, 0, 22), BackgroundTransparency = 1, LayoutOrder = 2,
         }, root)
-
         mk("TextLabel", {
             Text = "Close Key", Font = Enum.Font.GothamSemibold, TextSize = 10,
             TextColor3 = C.WHITE, BackgroundTransparency = 1,
@@ -782,8 +719,7 @@ function Settings.build(page, r)
         mk("UIStroke", { Color = C.LINE, Thickness = 1, Transparency = 0.3 }, closeKeyBg)
 
         local closeKeyLbl = mk("TextLabel", {
-            Text = "L.Alt",
-            Font = Enum.Font.Code, TextSize = 8,
+            Text = "L.Alt", Font = Enum.Font.Code, TextSize = 8,
             TextColor3 = C.WHITE, BackgroundTransparency = 1,
             Size = UDim2.new(1, 0, 1, 0), ZIndex = 6,
             TextXAlignment = Enum.TextXAlignment.Center,
@@ -796,35 +732,22 @@ function Settings.build(page, r)
 
         local closeListening  = false
         local currentCloseKey = Enum.KeyCode.LeftAlt
-
         local closeListenConn = nil
+
         local function startCloseListening()
             if closeListenConn then closeListenConn:Disconnect() end
-            
             closeListenConn = UIS.InputBegan:Connect(function(input, gpe)
                 if input.UserInputType ~= Enum.UserInputType.Keyboard then return end
-                
                 closeListening = false
                 currentCloseKey = input.KeyCode
-                
-                -- ✅ ACTIVAR FLAG PARA NO EJECUTAR ACCIÓN INMEDIATAMENTE
                 justAssignedClose = true
                 task.delay(0.1, function() justAssignedClose = false end)
-                
-                if closeListenConn then 
-                    closeListenConn:Disconnect()
-                    closeListenConn = nil 
-                end
-                
+                if closeListenConn then closeListenConn:Disconnect(); closeListenConn = nil end
                 closeKeyLbl.Text = keyName(currentCloseKey)
                 closeKeyLbl.TextColor3 = C.WHITE
-                
                 tw(closeKeyBg, .08, { BackgroundColor3 = Color3.fromRGB(25, 55, 25) })
-                task.delay(.35, function()
-                    tw(closeKeyBg, .2, { BackgroundColor3 = Color3.fromRGB(22, 22, 22) })
-                end)
-                
-                print("[Keybind] ✓ Close Key asignada:", keyName(currentCloseKey), "- Presiona nuevamente para ejecutar")
+                task.delay(.35, function() tw(closeKeyBg, .2, { BackgroundColor3 = Color3.fromRGB(22, 22, 22) }) end)
+                print("[Keybind] ✓ Close Key asignada:", keyName(currentCloseKey))
             end)
         end
 
@@ -832,51 +755,29 @@ function Settings.build(page, r)
             if closeListening then return end
             closeListening = true
             tw(closeKeyBg, .1, { BackgroundColor3 = Color3.fromRGB(38, 30, 12) })
-            closeKeyLbl.Text = "..."
-            closeKeyLbl.TextColor3 = C.GRAY
+            closeKeyLbl.Text = "..."; closeKeyLbl.TextColor3 = C.GRAY
             startCloseListening()
         end)
+        closeKeyBtn.MouseEnter:Connect(function() if not closeListening then tw(closeKeyBg,.1,{BackgroundColor3=Color3.fromRGB(30,30,30)}) end end)
+        closeKeyBtn.MouseLeave:Connect(function() if not closeListening then tw(closeKeyBg,.1,{BackgroundColor3=Color3.fromRGB(22,22,22)}) end end)
 
-        closeKeyBtn.MouseEnter:Connect(function()
-            if not closeListening then 
-                tw(closeKeyBg, .1, { BackgroundColor3 = Color3.fromRGB(30, 30, 30) }) 
-            end
-        end)
-        closeKeyBtn.MouseLeave:Connect(function()
-            if not closeListening then 
-                tw(closeKeyBg, .1, { BackgroundColor3 = Color3.fromRGB(22, 22, 22) }) 
-            end
-        end)
-
-        -- ══════════════════════════════════════════════════════
-        -- GLOBAL INPUT HANDLER - EJECUTA LAS ACCIONES
-        -- ══════════════════════════════════════════════════════
+        -- GLOBAL INPUT HANDLER
         local toggleConn = UIS.InputBegan:Connect(function(input, gpe)
             if gpe then return end
             if minListening or closeListening then return end
-            
             if input.UserInputType == Enum.UserInputType.Keyboard then
-                -- ✅ MINIMIZE KEY - NO EJECUTAR SI ACABAMOS DE ASIGNARLA
                 if input.KeyCode == currentMinKey and not justAssignedMin then
                     print("[Keybind] ✓ Minimize ejecutado con:", keyName(currentMinKey))
-                    if r.anim and r.anim.toggleMinimize then
-                        r.anim.toggleMinimize()
-                    elseif r.Win then
-                        r.Win.Visible = not r.Win.Visible
-                    end
+                    if r.anim and r.anim.toggleMinimize then r.anim.toggleMinimize()
+                    elseif r.Win then r.Win.Visible = not r.Win.Visible end
                 end
-                
-                -- ✅ CLOSE KEY - NO EJECUTAR SI ACABAMOS DE ASIGNARLA
                 if input.KeyCode == currentCloseKey and not justAssignedClose then
                     print("[Keybind] ✓ Close ejecutado con:", keyName(currentCloseKey))
-                    if r.anim and r.anim.doClose then
-                        r.anim.doClose()
-                    end
+                    if r.anim and r.anim.doClose then r.anim.doClose() end
                 end
             end
         end)
-        
-        -- Cleanup
+
         root.Destroying:Connect(function()
             if minListenConn then minListenConn:Disconnect() end
             if closeListenConn then closeListenConn:Disconnect() end
@@ -887,14 +788,13 @@ function Settings.build(page, r)
 
     -- ── Construir la página ──────────────────────────────────
     task.delay(1, function()
-        -- Fila superior: Accent Color  +  Keybinds  (lado a lado)
         local topRow = mk("Frame", {
             Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
             BackgroundTransparency = 1, LayoutOrder = SO(),
         }, page)
         mk("UIListLayout", {
             FillDirection     = Enum.FillDirection.Horizontal,
-            Padding           = UDim.new(0, 8),
+            Padding           = UDim.new(0, 80),  -- ← CAMBIADO DE 8 A 80
             SortOrder         = Enum.SortOrder.LayoutOrder,
             VerticalAlignment = Enum.VerticalAlignment.Top,
         }, topRow)
