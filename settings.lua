@@ -938,11 +938,18 @@ function Settings.build(page, r)
             Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
             BackgroundTransparency = 1, LayoutOrder = SO(),
         }, page)
+        
+        -- Añadir padding para márgenes izquierdo y derecho iguales
+        mk("UIPadding", {
+            PaddingLeft = UDim.new(0, 10),   -- Margen izquierdo (igual al padding interno del panel)
+            PaddingRight = UDim.new(0, 10),  -- Margen derecho (ahora igual al izquierdo)
+        }, topRow)
+        
         mk("UIListLayout", {
             FillDirection     = Enum.FillDirection.Horizontal,
-            Padding           = UDim.new(0, 4),  -- ✅ Reducido de 8 a 4 para acercar los paneles
+            Padding           = UDim.new(0, 4),  -- Espacio reducido entre paneles
             SortOrder         = Enum.SortOrder.LayoutOrder,
-            VerticalAlignment = Enum.VerticalAlignment.Top,
+            HorizontalAlignment = Enum.HorizontalAlignment.Left,
         }, topRow)
 
         -- Panel unificado: Custom Panel (Accent Color + Font)
@@ -962,7 +969,7 @@ function Settings.build(page, r)
             LayoutOrder = SO(),
         }, page)
         mk("UIPadding", { 
-            PaddingTop = UDim.new(0, 8)  -- ✅ Añade 8 píxeles de margen superior
+            PaddingTop = UDim.new(0, 8)  -- Margen superior
         }, transparencyContainer)
 
         -- Panel de Transparency (ancho fijo de 500)
