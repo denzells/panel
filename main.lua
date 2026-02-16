@@ -1,7 +1,5 @@
 -- ============================================================
 -- main.lua  –  PanelBase | dzanity.gg
--- Carga: animations.lua y settings.lua desde GitHub Raw
--- Uso: loadstring(game:HttpGet("RAW_URL/main.lua"))()
 -- ============================================================
 
 local RAW_BASE = "https://raw.githubusercontent.com/dzanity-gg/dzanity.gg/main/"
@@ -28,7 +26,6 @@ if not Animations or not Settings then
     return
 end
 
--- ── Servicios ────────────────────────────────────────────────
 local Players      = game:GetService("Players")
 local UIS          = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
@@ -42,11 +39,9 @@ if not PlayerGui then return end
 local old = PlayerGui:FindFirstChild("PanelBase")
 if old then old:Destroy() end
 
--- ── Colores y constantes vienen de Settings ──────────────────
 local C = Settings.C
 local W = Settings.Layout
 
--- ── Helpers ──────────────────────────────────────────────────
 local function mk(cls, props, parent)
     local obj = Instance.new(cls)
     for k, v in pairs(props) do pcall(function() obj[k] = v end) end
@@ -90,29 +85,38 @@ rnd(14, Win)
 local WinStroke = mk("UIStroke", { Color = C.LINE, Thickness = 1, Transparency = 0.2 }, Win)
 
 -- ══════════════════════════════════════════════════════════════
--- ── PARTÍCULAS DE ESTRELLAS ───────────────────────────────────
+-- ── PARTÍCULAS ESTILO STARSPACE ───────────────────────────────
+-- Pequeñas, rojas, flotando por todo el panel sin dirección fija
 -- ══════════════════════════════════════════════════════════════
 do
-    local STAR_CFG = {
-        MAX_STARS  = 20,
-        SPAWN_RATE = 0.16,
-        FALL_TIME  = { 2.4, 4.0 },
-        SIZE       = { 7, 15 },
-        DRIFT      = { -20, 20 },
-        ALPHA_PEAK = { 0.08, 0.42 },
-        COLORS     = {
-            Color3.fromRGB(255, 255, 255),
+    local CFG = {
+        COUNT      = 22,          -- total de partículas vivas al mismo tiempo
+        IMG        = "rbxassetid://120297604949715",
+        SIZE_MIN   = 5,
+        SIZE_MAX   = 13,
+        -- Colores: rojo intenso, rojo oscuro, rojo rosado, naranja rojizo
+        COLORS = {
+            Color3.fromRGB(255,  40,  40),
+            Color3.fromRGB(200,  20,  20),
             Color3.fromRGB(255,  80,  80),
-            Color3.fromRGB(255, 170, 170),
-            Color3.fromRGB(210, 210, 255),
-            Color3.fromRGB(255, 225, 130),
+            Color3.fromRGB(220,  55,  55),
+            Color3.fromRGB(180,  15,  15),
         },
-        IMG = "rbxassetid://120297604949715",
+        -- Transparencia: la mayoría semi-invisibles, pocas muy brillantes
+        ALPHA = { 0.25, 0.45, 0.55, 0.65, 0.30 },
+        -- Velocidad de movimiento (píxeles por segundo, muy lento)
+        SPEED_MIN  = 6,
+        SPEED_MAX  = 22,
+        -- Duración del ciclo de vida completo de cada partícula
+        LIFE_MIN   = 5.0,
+        LIFE_MAX   = 10.0,
+        -- Fade in / fade out
+        FADE_DUR   = 1.2,
     }
 
-    local function lrp(a, b, t) return a + (b - a) * t end
-    local function rng(a, b)    return lrp(a, b, math.random()) end
-    local function pick(t)      return t[math.random(#t)] end
+    local function rng(a, b) return a + (b - a) * math.random() end
+    local function pick(t)   return t[math.random(#t)] end
+
     local function stw(obj, dur, props, es, ed)
         TweenService:Create(obj,
             TweenInfo.new(dur,
@@ -121,108 +125,105 @@ do
             props):Play()
     end
 
-    -- Contenedor detrás de todo el contenido del panel
+    -- Contenedor que cubre todo el Win, detrás del contenido
     local StarContainer = mk("Frame", {
         Name                   = "StarParticles",
         Size                   = UDim2.new(1, 0, 1, 0),
+        Position               = UDim2.new(0, 0, 0, 0),
         BackgroundTransparency = 1,
         ClipsDescendants       = true,
         ZIndex                 = 1,
     }, Win)
 
-    local activeCount = 0
-    local spawnTimer  = 0
+    local function spawnParticle()
+        local sz    = rng(CFG.SIZE_MIN, CFG.SIZE_MAX)
+        local life  = rng(CFG.LIFE_MIN, CFG.LIFE_MAX)
+        local color = pick(CFG.COLORS)
+        local alpha = pick(CFG.ALPHA)
+        local speed = rng(CFG.SPEED_MIN, CFG.SPEED_MAX)
 
-    local function spawnStar()
-        if activeCount >= STAR_CFG.MAX_STARS then return end
-        activeCount += 1
+        -- Posición inicial: aleatoria dentro del panel
+        local startX = rng(4, W.WW - sz - 4)
+        local startY = rng(4, W.WH - sz - 4)
 
-        local sz      = rng(STAR_CFG.SIZE[1],       STAR_CFG.SIZE[2])
-        local startX  = rng(sz,                      W.WW - sz)
-        local fallDur = rng(STAR_CFG.FALL_TIME[1],   STAR_CFG.FALL_TIME[2])
-        local drift   = rng(STAR_CFG.DRIFT[1],       STAR_CFG.DRIFT[2])
-        local peakA   = rng(STAR_CFG.ALPHA_PEAK[1],  STAR_CFG.ALPHA_PEAK[2])
-        local color   = pick(STAR_CFG.COLORS)
-        local rotSpd  = rng(-80, 80)
+        -- Dirección de movimiento: ángulo completamente aleatorio
+        local angle  = rng(0, math.pi * 2)
+        local dx     = math.cos(angle) * speed * life
+        local dy     = math.sin(angle) * speed * life
 
-        local star = mk("ImageLabel", {
+        -- Destino final (puede salirse del borde, el clip lo oculta)
+        local endX = startX + dx
+        local endY = startY + dy
+
+        local p = mk("ImageLabel", {
             Size                   = UDim2.new(0, sz, 0, sz),
-            Position               = UDim2.new(0, startX - sz/2, 0, -sz - 4),
+            Position               = UDim2.new(0, startX, 0, startY),
             BackgroundTransparency = 1,
-            Image                  = STAR_CFG.IMG,
+            Image                  = CFG.IMG,
             ImageColor3            = color,
-            ImageTransparency      = 1,
+            ImageTransparency      = 1,           -- empieza invisible
             Rotation               = rng(0, 360),
             ZIndex                 = 2,
         }, StarContainer)
 
-        -- Fase 1 ── aparece suavemente (primero 30% de la caída)
-        stw(star, fallDur * 0.30,
-            { ImageTransparency = peakA },
+        -- Fade IN
+        stw(p, CFG.FADE_DUR,
+            { ImageTransparency = alpha },
             Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 
-        -- Fase 2 ── desvanece antes de salir (último 40%)
-        task.delay(fallDur * 0.60, function()
-            if not star.Parent then return end
-            stw(star, fallDur * 0.40,
-                { ImageTransparency = 1 },
-                Enum.EasingStyle.Sine, Enum.EasingDirection.In)
-        end)
+        -- Movimiento suave durante toda la vida
+        TweenService:Create(p,
+            TweenInfo.new(life, Enum.EasingStyle.Linear),
+            { Position = UDim2.new(0, endX, 0, endY) }):Play()
 
-        -- Caída principal con curva natural + deriva + giro
-        TweenService:Create(star,
-            TweenInfo.new(fallDur, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
-            {
-                Position = UDim2.new(0, startX - sz/2 + drift, 0, W.WH + sz + 8),
-                Rotation = star.Rotation + rotSpd,
-            }):Play()
-
-        -- Centelleo pulsante suave durante la vida de la estrella
+        -- Pulso de brillo suave (parpadeo lento)
         local pulseOn = true
         task.spawn(function()
-            while pulseOn and star.Parent do
-                local pd = rng(0.35, 0.80)
-                stw(star, pd,
-                    { ImageTransparency = math.min(1, peakA + 0.30) },
+            while pulseOn and p.Parent do
+                local pd = rng(1.0, 2.5)
+                -- se oscurece un poco
+                stw(p, pd,
+                    { ImageTransparency = math.min(0.92, alpha + rng(0.20, 0.45)) },
                     Enum.EasingStyle.Sine)
                 task.wait(pd)
-                if not star.Parent then break end
-                stw(star, pd,
-                    { ImageTransparency = peakA },
+                if not p.Parent then break end
+                -- vuelve al brillo base
+                stw(p, pd,
+                    { ImageTransparency = alpha },
                     Enum.EasingStyle.Sine)
                 task.wait(pd)
             end
         end)
 
-        -- Limpieza al terminar
-        task.delay(fallDur + 0.15, function()
+        -- Fade OUT antes de morir
+        task.delay(life - CFG.FADE_DUR, function()
             pulseOn = false
-            if star.Parent then star:Destroy() end
-            activeCount -= 1
+            if not p.Parent then return end
+            stw(p, CFG.FADE_DUR,
+                { ImageTransparency = 1 },
+                Enum.EasingStyle.Sine, Enum.EasingDirection.In)
+        end)
+
+        -- Destruir y re-spawnear (loop infinito)
+        task.delay(life + 0.05, function()
+            if p.Parent then p:Destroy() end
+            -- respawnea inmediatamente para mantener COUNT constante
+            task.spawn(spawnParticle)
         end)
     end
 
-    -- Loop de spawn continuo
-    RunService.Heartbeat:Connect(function(dt)
-        spawnTimer += dt
-        if spawnTimer >= STAR_CFG.SPAWN_RATE then
-            spawnTimer = 0
-            spawnStar()
-        end
-    end)
-
-    -- Ráfaga inicial al cargar el panel
-    for _ = 1, 12 do
-        task.delay(lrp(0, 0.8, math.random()), spawnStar)
+    -- Spawn inicial escalonado para que no aparezcan todas juntas
+    for i = 1, CFG.COUNT do
+        task.delay(rng(0, 2.5), spawnParticle)
     end
 end
 -- ══════════════════════════════════════════════════════════════
 
 -- ── TITLEBAR ─────────────────────────────────────────────────
 local TBar = mk("Frame", {
-    Size            = UDim2.new(1, 0, 0, W.TH),
+    Size             = UDim2.new(1, 0, 0, W.TH),
     BackgroundColor3 = C.TBAR,
-    BorderSizePixel = 0, ZIndex = 6, ClipsDescendants = false, Active = true,
+    BorderSizePixel  = 0, ZIndex = 6, ClipsDescendants = false, Active = true,
 }, Win)
 mk("UICorner", { CornerRadius = UDim.new(0, 14) }, TBar)
 mk("Frame", {
@@ -484,8 +485,8 @@ UIS.InputBegan:Connect(function(i, gp)
 end)
 
 -- ── PÁGINAS ──────────────────────────────────────────────────
-Combat.build(tPages[1], { C = C, mk = mk, rnd = rnd, tw = tw })
-Visuals.build(tPages[2], { C = C, mk = mk, rnd = rnd, tw = tw })
+Combat.build(tPages[1],   { C = C, mk = mk, rnd = rnd, tw = tw })
+Visuals.build(tPages[2],  { C = C, mk = mk, rnd = rnd, tw = tw })
 Commands.build(tPages[3], { C = C, mk = mk, rnd = rnd, tw = tw })
 
 Settings.build(tPages[4], {
