@@ -931,7 +931,7 @@ function Settings.build(page, r)
         end)
     end
 
-     -- ── Construir la página ──────────────────────────────────
+    -- ── Construir la página ──────────────────────────────────
     task.delay(1, function()
         -- Fila superior: dos paneles lado a lado
         local topRow = mk("Frame", {
@@ -939,15 +939,16 @@ function Settings.build(page, r)
             BackgroundTransparency = 1, LayoutOrder = SO(),
         }, page)
         
-        -- Padding para la fila completa - VALORES REDUCIDOS
+        -- Padding: izquierdo PEQUEÑO (4px) para acercar Custom Panel al borde,
+        -- derecho se mantiene en 8px (el que ya funcionaba para Keybinds)
         mk("UIPadding", {
-            PaddingLeft = UDim.new(0, 8),    -- Reducido de 16 a 8px
-            PaddingRight = UDim.new(0, 8),   -- Reducido de 16 a 8px
+            PaddingLeft = UDim.new(0, 4),    -- <-- REDUCIDO para mover Custom Panel a la izquierda
+            PaddingRight = UDim.new(0, 8),   -- Se mantiene
         }, topRow)
         
         mk("UIListLayout", {
             FillDirection     = Enum.FillDirection.Horizontal,
-            Padding           = UDim.new(0, 8),  -- Reducido de 16 a 8px
+            Padding           = UDim.new(0, 8),  -- Espacio entre paneles (puedes ajustar)
             SortOrder         = Enum.SortOrder.LayoutOrder,
             HorizontalAlignment = Enum.HorizontalAlignment.Left,
         }, topRow)
@@ -969,9 +970,9 @@ function Settings.build(page, r)
             LayoutOrder = SO(),
         }, page)
         mk("UIPadding", { 
-            PaddingTop = UDim.new(0, 8),     -- Reducido de 16 a 8px
-            PaddingLeft = UDim.new(0, 8),    -- Reducido de 16 a 8px
-            PaddingRight = UDim.new(0, 8),   -- Reducido de 16 a 8px
+            PaddingTop = UDim.new(0, 8),     -- Espacio superior
+            PaddingLeft = UDim.new(0, 4),    -- MISMO margen izquierdo reducido
+            PaddingRight = UDim.new(0, 8),   -- MISMO margen derecho
         }, transparencyContainer)
 
         -- Panel de Transparency (ancho fijo de 500)
