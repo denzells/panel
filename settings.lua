@@ -898,9 +898,10 @@ function Settings.build(page, r)
             Size = UDim2.new(0, 18, 0, 18),
             Position = UDim2.new(1, -26, 0, 7),
             BackgroundTransparency = 1,
-            ImageColor3 = C.MUTED,
+            ImageColor3 = C.RED,
             ZIndex = 6,
         }, customPanel.Parent)
+        table.insert(accentEls, { el = cpIcon, prop = "ImageColor3" })
         CreateAccentPicker(customPanel)
         CreateFontPicker(customPanel)
 
@@ -912,9 +913,10 @@ function Settings.build(page, r)
             Size = UDim2.new(0, 18, 0, 18),
             Position = UDim2.new(1, -26, 0, 7),
             BackgroundTransparency = 1,
-            ImageColor3 = C.MUTED,
+            ImageColor3 = C.RED,
             ZIndex = 6,
         }, keybindPanel.Parent)
+        table.insert(accentEls, { el = kbIcon, prop = "ImageColor3" })
         CreateKeybinds(keybindPanel)
 
         -- Panel Info Sesion con badge "✓ Verified" en la barra del título
