@@ -869,6 +869,23 @@ function Settings.build(page, r)
     end
 
     task.delay(1, function()
+        -- Ocultar "Base Panel" y poner badge ✓ Verified en su lugar
+        local verifiedInBar = mk("Frame", {
+            Size     = UDim2.new(0, 80, 0, 20),
+            Position = title3.Position,
+            AnchorPoint = title3.AnchorPoint,
+            BackgroundColor3 = Color3.fromRGB(16, 42, 16),
+            BorderSizePixel = 0, ZIndex = title3.ZIndex,
+        }, title3.Parent)
+        rnd(5, verifiedInBar)
+        mk("UIStroke", { Color = Color3.fromRGB(40, 180, 70), Thickness = 1, Transparency = 0.35 }, verifiedInBar)
+        mk("TextLabel", {
+            Text = "✓  Verified", Font = Enum.Font.GothamBold, TextSize = 9,
+            TextColor3 = Color3.fromRGB(60, 210, 90),
+            BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0),
+            ZIndex = title3.ZIndex + 1, TextXAlignment = Enum.TextXAlignment.Center,
+        }, verifiedInBar)
+        title3.Visible = false
         mk("UIListLayout", {
             Padding   = UDim.new(0, 10),
             SortOrder = Enum.SortOrder.LayoutOrder,
@@ -919,7 +936,7 @@ function Settings.build(page, r)
         table.insert(accentEls, { el = kbIcon, prop = "ImageColor3" })
         CreateKeybinds(keybindPanel)
 
-        -- Panel Info Sesion con badge "✓ Verified" en la barra del título
+        -- Panel Info Sesion
         local sessionOuterPanel = mk("Frame", {
             Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
             BackgroundColor3 = C.PANEL, BorderSizePixel = 0, LayoutOrder = SO(),
@@ -930,25 +947,9 @@ function Settings.build(page, r)
         mk("TextLabel", {
             Text = "Info Sesion", Font = Enum.Font.GothamBold, TextSize = 11,
             TextColor3 = C.WHITE, BackgroundTransparency = 1,
-            Size = UDim2.new(1, -110, 0, 32), Position = UDim2.new(0, 10, 0, 0),
+            Size = UDim2.new(1, -16, 0, 32), Position = UDim2.new(0, 10, 0, 0),
             TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 5,
         }, sessionOuterPanel)
-
-        -- Badge en la barra de título
-        local verifiedBadge = mk("Frame", {
-            Size = UDim2.new(0, 74, 0, 20),
-            Position = UDim2.new(1, -84, 0, 6),
-            BackgroundColor3 = Color3.fromRGB(16, 42, 16),
-            BorderSizePixel = 0, ZIndex = 6,
-        }, sessionOuterPanel)
-        rnd(5, verifiedBadge)
-        mk("UIStroke", { Color = Color3.fromRGB(40, 180, 70), Thickness = 1, Transparency = 0.35 }, verifiedBadge)
-        mk("TextLabel", {
-            Text = "✓  Verified", Font = Enum.Font.GothamBold, TextSize = 8,
-            TextColor3 = Color3.fromRGB(60, 210, 90),
-            BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0),
-            ZIndex = 7, TextXAlignment = Enum.TextXAlignment.Center,
-        }, verifiedBadge)
 
         mk("Frame", {
             Size = UDim2.new(1, 0, 0, 1), Position = UDim2.new(0, 0, 0, 32),
