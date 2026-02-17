@@ -860,9 +860,11 @@ function Settings.build(page, r)
             Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder,
         }, gridRow)
 
-        local function makeCompactField(parent, label, value, icon, isPassword, lo, overrideColor)
+        local function makeCompactField(parent, label, value, icon, isPassword, lo, overrideColor, isExpiry)
+            -- Si es el campo EXPIRY, hacerlo más ancho
+            local fieldWidth = isExpiry and UDim2.new(0.4, -6, 1, 0) or UDim2.new(0.3, -6, 1, 0)
             local container = mk("Frame", {
-                Size = UDim2.new(0.333, -6, 1, 0),
+                Size = fieldWidth,
                 BackgroundTransparency = 1, LayoutOrder = lo,
             }, parent)
             mk("TextLabel", {
@@ -892,13 +894,17 @@ function Settings.build(page, r)
                 table.insert(accentEls, { el = img, prop = "ImageColor3" })
             end
             local displayText = isPassword and string.rep("•", math.min(#value, 18)) or value
+            -- Si es EXPIRY, usar texto más pequeño para que quepa todo
+            local fontSize = isExpiry and 7 or 8
             local textLbl = mk("TextLabel", {
-                Text = displayText, Font = Enum.Font.Code, TextSize = 8,
+                Text = displayText, Font = Enum.Font.Code, TextSize = fontSize,
                 TextColor3 = overrideColor or C.WHITE, BackgroundTransparency = 1,
                 Size = UDim2.new(1, icon and -54 or -10, 1, 0),
                 Position = UDim2.new(0, icon and 36 or 8, 0, 0),
                 TextXAlignment = Enum.TextXAlignment.Left,
-                TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 6,
+                TextTruncate = isExpiry and Enum.TextTruncate.None or Enum.TextTruncate.AtEnd,
+                TextScaled = isExpiry and false or false,
+                ZIndex = 6,
             }, box)
             if isPassword then
                 local showKey = false
@@ -925,10 +931,10 @@ function Settings.build(page, r)
             return textLbl
         end
 
-        makeCompactField(gridRow, "USERNAME", username,              "rbxassetid://75066739039083",  false, 1, nil)
-        makeCompactField(gridRow, "KEY",      key,                   "rbxassetid://126448589402910", true,  2, nil)
-        -- Guardar referencia al label de EXPIRY
-        expiryLabelRef = makeCompactField(gridRow, "EXPIRY", shortExpiryText, "rbxassetid://78475382175834", false, 3, expiryColor)
+        makeCompactField(gridRow, "USERNAME", username,              "rbxassetid://75066739039083",  false, 1, nil, false)
+        makeCompactField(gridRow, "KEY",      key,                   "rbxassetid://126448589402910", true,  2, nil, false)
+        -- Guardar referencia al label de EXPIRY con isExpiry = true para que sea más ancho
+        expiryLabelRef = makeCompactField(gridRow, "EXPIRY", shortExpiryText, "rbxassetid://78475382175834", false, 3, expiryColor, true)
     end
 
     task.delay(1, function()
