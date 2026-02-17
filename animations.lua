@@ -19,7 +19,7 @@ function Animations.init(r)
     local rdot     = r.rdot
     local title1   = r.title1
     local title2   = r.title2
-    local title3   = r.title3
+    local title3   = r.title3  -- puede ser nil
     local title4   = r.title4
     local title5   = r.title5
     local MinB     = r.MinB
@@ -67,9 +67,12 @@ function Animations.init(r)
         BodyClip.Position             = UDim2.new(0, 0, 0, W.TH)
         rdot.BackgroundTransparency   = 1
 
-        for _, el in ipairs({ title1, title2, title3, title4, title5, MinB, ClsB }) do
+        -- Ocultar títulos (title3 puede ser nil)
+        for _, el in ipairs({ title1, title2, title4, title5, MinB, ClsB }) do
             el.TextTransparency = 1
         end
+        if title3 then title3.TextTransparency = 1 end
+
         for _, tab in ipairs(navT) do
             tab.pill.BackgroundTransparency = 1
             tab.img.ImageTransparency       = 1
@@ -81,10 +84,15 @@ function Animations.init(r)
 
         task.delay(0.1, function()
             tw(rdot, 0.3, { BackgroundTransparency = 0 }, Enum.EasingStyle.Sine)
-            local lbls = { title1, title2, title3, title4, title5 }
+            local lbls = { title1, title2, title4, title5 }
             for idx, el in ipairs(lbls) do
                 task.delay(0.05 + (idx - 1) * 0.03, function()
                     tw(el, 0.3, { TextTransparency = 0 }, Enum.EasingStyle.Sine)
+                end)
+            end
+            if title3 then
+                task.delay(0.11, function()
+                    tw(title3, 0.3, { TextTransparency = 0 }, Enum.EasingStyle.Sine)
                 end)
             end
             task.delay(0.2, function()
@@ -113,11 +121,11 @@ function Animations.init(r)
 
         if minimized then
             hideAllTabs(true)
-            tw(BodyClip,  0.3,  { Size = UDim2.new(0, W.WW, 0, 0)  }, Enum.EasingStyle.Quint)
+            tw(BodyClip,  0.3,  { Size = UDim2.new(0, W.WW, 0, 0)    }, Enum.EasingStyle.Quint)
             tw(Win,       0.3,  { Size = UDim2.new(0, W.WW, 0, W.TH) }, Enum.EasingStyle.Quint)
             tw(WinStroke, 0.25, { Transparency = 0.5 })
             tw(title1, 0.2, { TextTransparency = 0.5 })
-            tw(title3, 0.2, { TextTransparency = 0.7 })
+            if title3 then tw(title3, 0.2, { TextTransparency = 0.7 }) end
             tw(title5, 0.2, { TextTransparency = 0.8 })
             task.delay(0.1, function()
                 tw(NavBar,    0.25, { Size = UDim2.new(0, W.NW, 0, 0), BackgroundTransparency = 1 }, Enum.EasingStyle.Quint)
@@ -141,7 +149,7 @@ function Animations.init(r)
                 tw(NavBar,    0.35, { Size = UDim2.new(0, W.NW, 0, W.NH), BackgroundTransparency = 0 }, Enum.EasingStyle.Quint)
                 tw(NavStroke, 0.3,  { Transparency = 0.2 })
                 tw(title1, 0.25, { TextTransparency = 0 })
-                tw(title3, 0.25, { TextTransparency = 0 })
+                if title3 then tw(title3, 0.25, { TextTransparency = 0 }) end
                 tw(title5, 0.25, { TextTransparency = 0 })
             end)
             showAllTabs(0.3)
@@ -170,9 +178,11 @@ function Animations.init(r)
                 Position = UDim2.new(0, W.WW/2, 0, W.TH),
             }, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
             tw(rdot, 0.2, { BackgroundTransparency = 1 })
-            for _, el in ipairs({ title1, title2, title3, title4, title5, MinB, ClsB }) do
+            -- Animar títulos (title3 puede ser nil)
+            for _, el in ipairs({ title1, title2, title4, title5, MinB, ClsB }) do
                 tw(el, 0.2, { TextTransparency = 1 })
             end
+            if title3 then tw(title3, 0.2, { TextTransparency = 1 }) end
         end)
         task.delay(0.4, function()
             tw(Win,       0.35, { Size = UDim2.new(0, 0, 0, 0), BackgroundTransparency = 1 }, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
