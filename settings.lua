@@ -866,7 +866,7 @@ function Settings.build(page, r)
             Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
             BackgroundTransparency = 1, LayoutOrder = SO(),
         }, page)
-        mk("UIPadding", { PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 10), PaddingTop = UDim.new(0, -6) }, bottomRow)
+        mk("UIPadding", { PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 10) }, bottomRow)
 
         local sessionPanel = MiniPanel(bottomRow, "Info Sesion", nil)
         CreateSessionInfo(sessionPanel)
