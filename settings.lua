@@ -29,42 +29,6 @@ Settings.Layout = {
     BH   = 440 - 42,
 }
 
--- ── Helper: actualiza el badge según expiry ───────────────────
--- Si expiry es timestamp y quedan MÁS de 3 meses → Admin (blanco)
--- Si quedan 3 meses o menos, o no hay dato válido  → Verified (verde)
-local function applyBadgeStyle(verifiedBadge, verifiedStroke, verifiedLabel, expiry)
-    if not verifiedBadge or not verifiedStroke or not verifiedLabel then return end
-
-    local ts      = tonumber(expiry)
-    local isAdmin = ts and ((ts - os.time()) > 60 * 60 * 24 * 90)
-
-    if isAdmin then
-        verifiedBadge.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
-        verifiedStroke.Color           = Color3.fromRGB(180, 180, 180)
-        verifiedStroke.Transparency    = 0.4
-        verifiedLabel.Text             = "⭐  Admin"
-        verifiedLabel.TextColor3       = Color3.fromRGB(235, 235, 235)
-    else
-        verifiedBadge.BackgroundColor3 = Color3.fromRGB(16, 42, 16)
-        verifiedStroke.Color           = Color3.fromRGB(40, 180, 70)
-        verifiedStroke.Transparency    = 0.3
-        verifiedLabel.Text             = "✓  Verified"
-        verifiedLabel.TextColor3       = Color3.fromRGB(60, 210, 90)
-    end
-end
-
--- ── Helper: leer expiry del archivo guardado ─────────────────
-local function readSavedExpiry()
-    local canRead = typeof(readfile) == "function" and typeof(isfile) == "function"
-    if not canRead then return nil end
-    local ok, result = pcall(function()
-        if not isfile("serios_saved.json") then return nil end
-        return HttpService:JSONDecode(readfile("serios_saved.json"))
-    end)
-    if ok and result then return result.expiry end
-    return nil
-end
-
 function Settings.build(page, r)
     local C   = Settings.C
     local mk  = r.mk
@@ -78,14 +42,9 @@ function Settings.build(page, r)
     local title1   = r.title1
     local title3   = r.title3
 
-    local verifiedBadge  = r.verifiedBadge
-    local verifiedStroke = r.verifiedStroke
-    local verifiedLabel  = r.verifiedLabel
-
-    -- ── Aplicar badge INMEDIATAMENTE, sin ningún delay ───────
-    -- Se lee el archivo aquí mismo, antes de construir la UI
-    local savedExpiry = readSavedExpiry()
-    applyBadgeStyle(verifiedBadge, verifiedStroke, verifiedLabel, savedExpiry)
+    -- Datos de sesión precalculados en main.lua (NO modificamos el badge aquí)
+    local isAdmin     = r.isAdmin     or false
+    local savedExpiry = r.savedExpiry
 
     local accentEls = {}
     local so = 0
@@ -779,7 +738,7 @@ function Settings.build(page, r)
         end)
 
         root.Destroying:Connect(function()
-            if minListenConn  then minListenConn:Disconnect()  end
+            if minListenConn   then minListenConn:Disconnect()   end
             if closeListenConn then closeListenConn:Disconnect() end
             if sesionListenConn then sesionListenConn:Disconnect() end
             if toggleConn then toggleConn:Disconnect() end
@@ -787,12 +746,38 @@ function Settings.build(page, r)
     end
 
     -- ── INFO SESION ───────────────────────────────────────────
-    local function CreateSessionInfo(parent, sessionData)
-        local username   = sessionData.username
-        local key        = sessionData.key
-        local expiry     = sessionData.expiry
-        local expiryText = sessionData.expiryText
-        local isAdmin    = sessionData.isAdmin
+    local function CreateSessionInfo(parent)
+        local SAVE_FILE = "serios_saved.json"
+        local canRead   = typeof(readfile) == "function" and typeof(isfile) == "function"
+
+        local username, key, expiry = "N/A", "N/A", "N/A"
+        if canRead then
+            local ok, result = pcall(function()
+                if not isfile(SAVE_FILE) then return nil end
+                return HttpService:JSONDecode(readfile(SAVE_FILE))
+            end)
+            if ok and result and result.username and result.key then
+                username = result.username
+                key      = result.key
+                expiry   = result.expiry or "N/A"
+            else
+                username = "Not Found"
+                key      = "Not Found"
+            end
+        end
+
+        local function formatExpiry(exp)
+            if exp == "N/A" or exp == "Not Found" then return "N/A" end
+            local ts = tonumber(exp)
+            if ts then
+                local d = os.date("*t", ts)
+                return string.format("%02d/%02d/%04d, %02d:%02d:%02d",
+                    d.day, d.month, d.year, d.hour, d.min, d.sec)
+            end
+            return tostring(exp)
+        end
+
+        -- Color del campo EXPIRY: blanco si Admin, verde si Verified
         local expiryColor = isAdmin
             and Color3.fromRGB(235, 235, 235)
             or  Color3.fromRGB(60,  210,  90)
@@ -857,7 +842,7 @@ function Settings.build(page, r)
                 eyeBtn.MouseButton1Click:Connect(function()
                     showKey = not showKey
                     textLbl.Text = showKey and value or displayText
-                    eyeBtn.Text = showKey and "●" or "○"
+                    eyeBtn.Text  = showKey and "●" or "○"
                     tw(eyeBtn, 0.1, { TextColor3 = showKey and C.RED or C.MUTED })
                 end)
                 eyeBtn.MouseEnter:Connect(function()
@@ -869,51 +854,10 @@ function Settings.build(page, r)
             end
         end
 
-        makeCompactField(gridRow, "USERNAME", username,   "rbxassetid://75066739039083",  false, 1, nil)
-        makeCompactField(gridRow, "KEY",      key,        "rbxassetid://126448589402910", true,  2, nil)
-        makeCompactField(gridRow, "EXPIRY",   expiryText, "rbxassetid://78475382175834",  false, 3, expiryColor)
+        makeCompactField(gridRow, "USERNAME", username,              "rbxassetid://75066739039083",  false, 1, nil)
+        makeCompactField(gridRow, "KEY",      key,                   "rbxassetid://126448589402910", true,  2, nil)
+        makeCompactField(gridRow, "EXPIRY",   formatExpiry(expiry),  "rbxassetid://78475382175834",  false, 3, expiryColor)
     end
-
-    -- ── Leer sesión una sola vez aquí (sin delay) ─────────────
-    local SAVE_FILE = "serios_saved.json"
-    local canRead   = typeof(readfile) == "function" and typeof(isfile) == "function"
-
-    local sessionUsername, sessionKey, sessionExpiry = "N/A", "N/A", "N/A"
-    if canRead then
-        local ok, result = pcall(function()
-            if not isfile(SAVE_FILE) then return nil end
-            return HttpService:JSONDecode(readfile(SAVE_FILE))
-        end)
-        if ok and result and result.username and result.key then
-            sessionUsername = result.username
-            sessionKey      = result.key
-            sessionExpiry   = result.expiry or "N/A"
-        else
-            sessionUsername = "Not Found"
-            sessionKey      = "Not Found"
-        end
-    end
-
-    local function formatExpiry(exp)
-        if exp == "N/A" or exp == "Not Found" then return "N/A" end
-        local ts = tonumber(exp)
-        if ts then
-            local d = os.date("*t", ts)
-            return string.format("%02d/%02d/%04d, %02d:%02d:%02d",
-                d.day, d.month, d.year, d.hour, d.min, d.sec)
-        end
-        return tostring(exp)
-    end
-
-    local sessionTs      = tonumber(sessionExpiry)
-    local sessionIsAdmin = sessionTs and ((sessionTs - os.time()) > 60 * 60 * 24 * 90)
-    local sessionData    = {
-        username    = sessionUsername,
-        key         = sessionKey,
-        expiry      = sessionExpiry,
-        expiryText  = formatExpiry(sessionExpiry),
-        isAdmin     = sessionIsAdmin,
-    }
 
     task.delay(1, function()
         mk("UIListLayout", {
@@ -981,8 +925,7 @@ function Settings.build(page, r)
         }, sessionOuterPanel)
         mk("UIPadding", { PaddingBottom = UDim.new(0, 12) }, sessionOuterPanel)
 
-        -- Pasar sessionData ya calculado, sin leer el archivo de nuevo
-        CreateSessionInfo(sessionContent, sessionData)
+        CreateSessionInfo(sessionContent)
     end)
 end
 
