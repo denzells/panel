@@ -109,20 +109,30 @@ end
 local title1 = tlbl("serios.gg", Enum.Font.GothamBold, 13, C.WHITE,  30,  80)
 local title2 = tlbl("|",          Enum.Font.GothamBold, 16, C.RED,   113,  14)
 
--- Badge ✓ Verified
+-- ── BADGE DINÁMICO (Verified verde / Admin blanco) ────────────
+-- Por defecto arranca en "Verified" verde.
+-- Settings lo cambiará a "Admin" blanco si expiry > 3 meses desde hoy.
 local verifiedBadge = mk("Frame", {
     Size             = UDim2.new(0, 84, 0, 22),
     Position         = UDim2.new(0, 129, 0.5, -11),
-    BackgroundColor3 = Color3.fromRGB(16, 42, 16),
+    BackgroundColor3 = Color3.fromRGB(16, 42, 16),  -- fondo verde oscuro
     BorderSizePixel  = 0, ZIndex = 8,
 }, TBar)
 rnd(5, verifiedBadge)
-mk("UIStroke", { Color = Color3.fromRGB(40, 180, 70), Thickness = 1, Transparency = 0.3 }, verifiedBadge)
-mk("TextLabel", {
-    Text = "✓  Verified", Font = Enum.Font.GothamBold, TextSize = 9,
-    TextColor3 = Color3.fromRGB(60, 210, 90),
-    BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0),
-    ZIndex = 9, TextXAlignment = Enum.TextXAlignment.Center,
+local verifiedStroke = mk("UIStroke", {
+    Color        = Color3.fromRGB(40, 180, 70),     -- borde verde
+    Thickness    = 1,
+    Transparency = 0.3,
+}, verifiedBadge)
+local verifiedLabel = mk("TextLabel", {
+    Text               = "✓  Verified",
+    Font               = Enum.Font.GothamBold,
+    TextSize           = 9,
+    TextColor3         = Color3.fromRGB(60, 210, 90), -- texto verde
+    BackgroundTransparency = 1,
+    Size               = UDim2.new(1, 0, 1, 0),
+    ZIndex             = 9,
+    TextXAlignment     = Enum.TextXAlignment.Center,
 }, verifiedBadge)
 
 -- title3 = nil (no existe "Base Panel")
@@ -316,7 +326,7 @@ local anim = Animations.init({
     WinStroke = WinStroke,  NavStroke = NavStroke,
     navT      = navT,       actNavFn  = getActNav,
     rdot      = rdot,
-    title1    = title1,     title2    = title2,    title3    = nil,   -- title3 es nil (badge Frame, no TextLabel)
+    title1    = title1,     title2    = title2,    title3    = nil,
     title4    = title4,     title5    = title5,
     MinB      = MinB,       ClsB      = ClsB,
     SG        = SG,
@@ -345,16 +355,20 @@ Commands.build(tPages[3], {
 })
 
 Settings.build(tPages[4], {
-    navT      = navT,
-    actNavFn  = getActNav,
-    rdot      = rdot,
-    title1    = title1,  title2 = title2,  title3 = nil,
-    tw        = tw,
-    mk        = mk,
-    rnd       = rnd,
-    Win       = Win,
-    NavBar    = NavBar,
-    anim      = anim,
+    navT           = navT,
+    actNavFn       = getActNav,
+    rdot           = rdot,
+    title1         = title1,  title2 = title2,  title3 = nil,
+    tw             = tw,
+    mk             = mk,
+    rnd            = rnd,
+    Win            = Win,
+    NavBar         = NavBar,
+    anim           = anim,
+    -- Referencias del badge para actualización dinámica desde Settings
+    verifiedBadge  = verifiedBadge,
+    verifiedStroke = verifiedStroke,
+    verifiedLabel  = verifiedLabel,
 })
 
 anim.playOpen()
