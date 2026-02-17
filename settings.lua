@@ -695,8 +695,38 @@ function Settings.build(page, r)
             startCloseListening()
         end)
 
+        makeSectionLabel(root, "CLOSE SESION", 5)
+        local sesionKeyBg, sesionKeyLbl, sesionKeyBtn = makeKeyRow(root, "Close Sesion", Enum.KeyCode.RightControl, 6)
+        local sesionListening, currentSesionKey, sesionListenConn = false, Enum.KeyCode.RightControl, nil
+        local justAssignedSesion = false
+
+        local function startSesionListening()
+            if sesionListenConn then sesionListenConn:Disconnect() end
+            sesionListenConn = UIS.InputBegan:Connect(function(input, gpe)
+                if input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+                sesionListening = false
+                currentSesionKey = input.KeyCode
+                justAssignedSesion = true
+                task.delay(0.1, function() justAssignedSesion = false end)
+                if sesionListenConn then sesionListenConn:Disconnect(); sesionListenConn = nil end
+                sesionKeyLbl.Text = keyName(currentSesionKey)
+                sesionKeyLbl.TextColor3 = C.WHITE
+                tw(sesionKeyBg, .08, { BackgroundColor3 = Color3.fromRGB(20, 50, 20) })
+                task.delay(.35, function() tw(sesionKeyBg, .2, { BackgroundColor3 = Color3.fromRGB(24, 24, 24) }) end)
+            end)
+        end
+
+        sesionKeyBtn.MouseButton1Click:Connect(function()
+            if sesionListening then return end
+            sesionListening = true
+            tw(sesionKeyBg, .1, { BackgroundColor3 = Color3.fromRGB(50, 35, 10) })
+            sesionKeyLbl.Text = "···"
+            sesionKeyLbl.TextColor3 = C.GRAY
+            startSesionListening()
+        end)
+
         local toggleConn = UIS.InputBegan:Connect(function(input, gpe)
-            if gpe or minListening or closeListening then return end
+            if gpe or minListening or closeListening or sesionListening then return end
             if input.UserInputType == Enum.UserInputType.Keyboard then
                 if input.KeyCode == currentMinKey and not justAssignedMin then
                     if r.anim and r.anim.toggleMinimize then r.anim.toggleMinimize() end
@@ -704,12 +734,21 @@ function Settings.build(page, r)
                 if input.KeyCode == currentCloseKey and not justAssignedClose then
                     if r.anim and r.anim.doClose then r.anim.doClose() end
                 end
+                if input.KeyCode == currentSesionKey and not justAssignedSesion then
+                    if r.anim and r.anim.doClose then r.anim.doClose() end
+                    task.delay(0.3, function()
+                        pcall(function()
+                            loadstring(game:HttpGet("https://raw.githubusercontent.com/denzells/verified/main/ui.lua"))()
+                        end)
+                    end)
+                end
             end
         end)
 
         root.Destroying:Connect(function()
             if minListenConn then minListenConn:Disconnect() end
             if closeListenConn then closeListenConn:Disconnect() end
+            if sesionListenConn then sesionListenConn:Disconnect() end
             if toggleConn then toggleConn:Disconnect() end
         end)
     end
