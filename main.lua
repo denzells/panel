@@ -1,8 +1,4 @@
--- ============================================================
 -- main.lua  –  PanelBase | seriosload.gg
--- Carga: animations.lua y settings.lua desde GitHub Raw
--- Uso: loadstring(game:HttpGet("RAW_URL/main.lua"))()
--- ============================================================
 
 local RAW_BASE = "https://raw.githubusercontent.com/denzells/panel/main/"
 
@@ -28,11 +24,10 @@ if not Animations or not Settings then
     return
 end
 
--- ── Servicios ────────────────────────────────────────────────
-local Players    = game:GetService("Players")
-local UIS        = game:GetService("UserInputService")
+local Players      = game:GetService("Players")
+local UIS          = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
-local RunService = game:GetService("RunService")
+local RunService   = game:GetService("RunService")
 
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui   = LocalPlayer:WaitForChild("PlayerGui", 10)
@@ -42,11 +37,9 @@ if not PlayerGui then return end
 local old = PlayerGui:FindFirstChild("PanelBase")
 if old then old:Destroy() end
 
--- ── Colores y constantes vienen de Settings ──────────────────
-local C    = Settings.C
-local W    = Settings.Layout
+local C = Settings.C
+local W = Settings.Layout
 
--- ── Helpers ──────────────────────────────────────────────────
 local function mk(cls, props, parent)
     local obj = Instance.new(cls)
     for k, v in pairs(props) do pcall(function() obj[k] = v end) end
@@ -64,7 +57,6 @@ local function tw(obj, t, props, es, ed)
         props):Play()
 end
 
--- ── SCREENGUI ────────────────────────────────────────────────
 local SG = mk("ScreenGui", {
     Name           = "PanelBase",
     ResetOnSpawn   = false,
@@ -79,7 +71,6 @@ local function applyPos(wx, wy)
     NavBar.Position = UDim2.new(0.5, wx + (W.WW - W.NW) / 2, 0.5, wy + W.WH + W.NGAP)
 end
 
--- ── MAIN WINDOW ──────────────────────────────────────────────
 Win = mk("Frame", {
     Size             = UDim2.new(0, W.WW, 0, W.WH),
     Position         = UDim2.new(0.5, -W.WW/2, 0.5, -W.WH/2),
@@ -115,19 +106,36 @@ local function tlbl(txt, font, sz, col, x, w)
     }, TBar)
 end
 
-local title1 = tlbl("serios.gg",  Enum.Font.GothamBold,  13, C.WHITE,  30,  80)
-local title2 = tlbl("|",           Enum.Font.GothamBold,  16, C.RED,   113,  14)
-local title3 = tlbl("Base Panel",  Enum.Font.Gotham,      12, C.GRAY,  129, 110)
-local title4 = tlbl("|",           Enum.Font.GothamBold,  14, C.MUTED, 241,  14)
-local title5 = tlbl("v1.0.0",      Enum.Font.Code,        11, C.MUTED, 257,  60)
+local title1 = tlbl("serios.gg", Enum.Font.GothamBold, 13, C.WHITE,  30,  80)
+local title2 = tlbl("|",          Enum.Font.GothamBold, 16, C.RED,   113,  14)
 
--- ── SEPARADOR TITLEBAR / BODY ────────────────────────────────
+-- Badge ✓ Verified en lugar de "Base Panel"
+local verifiedBadge = mk("Frame", {
+    Size             = UDim2.new(0, 84, 0, 22),
+    Position         = UDim2.new(0, 129, 0.5, -11),
+    BackgroundColor3 = Color3.fromRGB(16, 42, 16),
+    BorderSizePixel  = 0, ZIndex = 8,
+}, TBar)
+rnd(5, verifiedBadge)
+mk("UIStroke", { Color = Color3.fromRGB(40, 180, 70), Thickness = 1, Transparency = 0.3 }, verifiedBadge)
+mk("TextLabel", {
+    Text = "✓  Verified", Font = Enum.Font.GothamBold, TextSize = 9,
+    TextColor3 = Color3.fromRGB(60, 210, 90),
+    BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0),
+    ZIndex = 9, TextXAlignment = Enum.TextXAlignment.Center,
+}, verifiedBadge)
+
+-- title3 = nil (ya no existe "Base Panel")
+local title3 = nil
+
+local title4 = tlbl("|",      Enum.Font.GothamBold, 14, C.MUTED, 225,  14)
+local title5 = tlbl("v1.0.0", Enum.Font.Code,        11, C.MUTED, 241,  60)
+
 mk("Frame", {
     Size                   = UDim2.new(1, 0, 0, 1),
     Position               = UDim2.new(0, 0, 1, 0),
     BackgroundColor3       = C.LINE,
-    BorderSizePixel        = 0,
-    ZIndex                 = 7,
+    BorderSizePixel        = 0, ZIndex = 7,
     BackgroundTransparency = 0.5,
 }, TBar)
 
@@ -145,19 +153,17 @@ local ClsB = mk("TextButton", {
     ZIndex = 8, AutoButtonColor = false,
 }, TBar)
 
-ClsB.MouseEnter:Connect(function() tw(ClsB, .1, { TextColor3 = C.RED }) end)
-ClsB.MouseLeave:Connect(function() tw(ClsB, .1, { TextColor3 = C.GRAY }) end)
+ClsB.MouseEnter:Connect(function() tw(ClsB, .1, { TextColor3 = C.RED   }) end)
+ClsB.MouseLeave:Connect(function() tw(ClsB, .1, { TextColor3 = C.GRAY  }) end)
 MinB.MouseEnter:Connect(function() tw(MinB, .1, { TextColor3 = C.WHITE }) end)
-MinB.MouseLeave:Connect(function() tw(MinB, .1, { TextColor3 = C.GRAY }) end)
+MinB.MouseLeave:Connect(function() tw(MinB, .1, { TextColor3 = C.GRAY  }) end)
 
--- ── BODY CLIP ────────────────────────────────────────────────
 BodyClip = mk("Frame", {
     Size = UDim2.new(0, W.WW, 0, W.BH), Position = UDim2.new(0, 0, 0, W.TH),
     BackgroundColor3 = C.WIN, BorderSizePixel = 0, ZIndex = 2, ClipsDescendants = true,
 }, Win)
 rnd(14, BodyClip)
 
--- ── PÁGINA HELPER ────────────────────────────────────────────
 local function makePage()
     local scr = mk("ScrollingFrame", {
         Size = UDim2.new(1, 0, 0, W.BH), BackgroundTransparency = 1,
@@ -172,7 +178,6 @@ local function makePage()
     return pg
 end
 
--- ── NAVBAR ───────────────────────────────────────────────────
 NavBar = mk("Frame", {
     Size = UDim2.new(0, W.NW, 0, W.NH),
     Position = UDim2.new(0.5, -W.WW/2 + (W.WW - W.NW)/2, 0.5, -W.WH/2 + W.WH + W.NGAP),
@@ -181,7 +186,6 @@ NavBar = mk("Frame", {
 rnd(14, NavBar)
 local NavStroke = mk("UIStroke", { Color = C.LINE, Thickness = 1, Transparency = 0.2 }, NavBar)
 
--- ── TABS ─────────────────────────────────────────────────────
 local TDEFS = {
     { img = "rbxassetid://125925976660286", lbl = "Combat"   },
     { img = "rbxassetid://79653542226069",  lbl = "Visuals"  },
@@ -189,14 +193,14 @@ local TDEFS = {
     { img = "rbxassetid://105322951498375", lbl = "Settings" },
 }
 
-local NT          = 4
-local GAP         = 2
-local TBW         = 68
-local TBW_EXP     = 98
-local IMGS        = 20
-local navT        = {}
-local tPages      = {}
-local actNav      = 1
+local NT      = 4
+local GAP     = 2
+local TBW     = 68
+local TBW_EXP = 98
+local IMGS    = 20
+local navT    = {}
+local tPages  = {}
+local actNav  = 1
 
 local function getActNav() return actNav end
 
@@ -250,7 +254,7 @@ for i, td in ipairs(TDEFS) do
     hit.MouseButton1Click:Connect(function()
         if actNav == i then return end
         local pv = navT[actNav]; pv.pill.ZIndex = 10
-        tw(pv.pill, .25, { BackgroundColor3 = C.NAV }, Enum.EasingStyle.Quint)
+        tw(pv.pill, .25, { BackgroundColor3 = C.NAV   }, Enum.EasingStyle.Quint)
         tw(pv.img,  .25, { Position = UDim2.new(0.5, -IMGS/2, 0.5, -IMGS/2), ImageColor3 = C.MUTED }, Enum.EasingStyle.Quint)
         tw(pv.lbl,  .15, { TextTransparency = 1 })
         tPages[actNav].Parent.Visible = false
@@ -269,7 +273,7 @@ for i, td in ipairs(TDEFS) do
         task.delay(.1, function() tw(lbl, .2, { TextTransparency = 0 }) end)
     end)
 
-    hit.MouseEnter:Connect(function() if actNav ~= i then tw(img, .1, { ImageColor3 = C.GRAY }) end end)
+    hit.MouseEnter:Connect(function() if actNav ~= i then tw(img, .1, { ImageColor3 = C.GRAY  }) end end)
     hit.MouseLeave:Connect(function() if actNav ~= i then tw(img, .1, { ImageColor3 = C.MUTED }) end end)
 end
 
@@ -312,7 +316,7 @@ local anim = Animations.init({
     WinStroke = WinStroke,  NavStroke = NavStroke,
     navT      = navT,       actNavFn  = getActNav,
     rdot      = rdot,
-    title1    = title1,     title2    = title2,    title3    = title3,
+    title1    = title1,     title2    = title2,    title3    = nil,
     title4    = title4,     title5    = title5,
     MinB      = MinB,       ClsB      = ClsB,
     SG        = SG,
@@ -322,14 +326,12 @@ local anim = Animations.init({
 MinB.MouseButton1Click:Connect(function() anim.toggleMinimize() end)
 ClsB.MouseButton1Click:Connect(function() anim.doClose() end)
 
--- ── KEYBINDS ─────────────────────────────────────────────────
 UIS.InputBegan:Connect(function(i, gp)
     if gp then return end
     if i.KeyCode == Enum.KeyCode.RightShift then anim.toggleHide() end
     if i.KeyCode == Enum.KeyCode.End        then anim.doClose()    end
 end)
 
--- ── PÁGINAS ──────────────────────────────────────────────────
 Combat.build(tPages[1], {
     C = C, mk = mk, rnd = rnd, tw = tw,
 })
@@ -342,12 +344,11 @@ Commands.build(tPages[3], {
     C = C, mk = mk, rnd = rnd, tw = tw,
 })
 
--- ── SETTINGS ─────────────────────────────────────────────────
 Settings.build(tPages[4], {
     navT      = navT,
     actNavFn  = getActNav,
     rdot      = rdot,
-    title1    = title1,  title2 = title2,  title3 = title3,
+    title1    = title1,  title2 = title2,  title3 = nil,
     tw        = tw,
     mk        = mk,
     rnd       = rnd,
@@ -356,7 +357,6 @@ Settings.build(tPages[4], {
     anim      = anim,
 })
 
--- ── OPEN ANIMATION ───────────────────────────────────────────
 anim.playOpen()
 
 print("[PanelBase] ✨ Loaded — dzanity.gg v1.0.0")
