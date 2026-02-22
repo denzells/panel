@@ -1,8 +1,8 @@
 {
   "1md7-71yvp-x5i4": {
     "key": "1md7-71yvp-x5i4",
-    "used": false,
-    "disabled": false,
+    "used": true,
+    "disabled": true,
     "username": null,
     "ip_hash": null,
     "ip_list": [],
