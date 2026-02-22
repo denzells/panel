@@ -75,5 +75,16 @@
     "expires_at": "2026-03-24T12:31:54.514942+00:00",
     "created_by_discord": "denzells",
     "discord_user_id": "1225229959254245509"
+  },
+  "lcnl-lcscy-v8uh": {
+    "key": "lcnl-lcscy-v8uh",
+    "used": false,
+    "username": null,
+    "ip_hash": null,
+    "session_id": null,
+    "created_at": "2026-02-22T12:44:44.855181+00:00",
+    "expires_at": "2026-02-23T12:44:44.458700+00:00",
+    "created_by_discord": "denzells",
+    "discord_user_id": "1225229959254245509"
   }
 }
