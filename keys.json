@@ -20,5 +20,16 @@
     "expires_at": null,
     "created_by_discord": "denzells",
     "discord_user_id": "1225229959254245509"
+  },
+  "pfzy-y2h4l-58hg": {
+    "key": "pfzy-y2h4l-58hg",
+    "used": false,
+    "username": null,
+    "ip_hash": null,
+    "session_id": null,
+    "created_at": "2026-02-22T11:59:53.859084+00:00",
+    "expires_at": null,
+    "created_by_discord": "denzells",
+    "discord_user_id": "1225229959254245509"
   }
 }
