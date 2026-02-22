@@ -86,5 +86,16 @@
     "expires_at": "2026-02-23T12:44:44.458700+00:00",
     "created_by_discord": "denzells",
     "discord_user_id": "1225229959254245509"
+  },
+  "zq5v-xb6su-qz9n": {
+    "key": "zq5v-xb6su-qz9n",
+    "used": false,
+    "username": null,
+    "ip_hash": null,
+    "session_id": null,
+    "created_at": "2026-02-22T12:49:31.588676+00:00",
+    "expires_at": "2026-02-23T12:49:31.156361+00:00",
+    "created_by_discord": "denzells",
+    "discord_user_id": "1225229959254245509"
   }
 }
