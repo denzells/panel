@@ -48,6 +48,11 @@ if old then old:Destroy() end
 
 local C = Settings.C
 local W = Settings.Layout
+
+-- Recalcular NW para 3 tabs (antes era 4)
+-- Fórmula: 4 (padding izq) + NT*TBW + (NT-1)*GAP + TBW_EXP-TBW + 4 (padding der)
+-- 3 tabs colapsados (68) + 1 expandido (98) + 2 gaps + 8 padding = 3*68 + 30 + 2*2 + 8
+W.NW = 3 * 68 + (98 - 68) + 2 * 2 + 8  -- = 246
 C.RED = Color3.fromRGB(255, 255, 255)
 
 local function mk(cls, props, parent)
