@@ -14,8 +14,8 @@
   },
   "c3ra-ge6vg-6z4e": {
     "key": "c3ra-ge6vg-6z4e",
-    "used": false,
-    "disabled": false,
+    "used": true,
+    "disabled": true,
     "username": null,
     "ip_hash": null,
     "ip_list": [],
