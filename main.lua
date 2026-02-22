@@ -28,7 +28,6 @@ local Animations = loadModule("animations.lua")
 local Settings   = loadModule("settings.lua")
 local Combat     = loadModule("combat.lua")
 local Visuals    = loadModule("visuals.lua")
-local Commands   = loadModule("commands.lua")
 
 if not Animations or not Settings then
 	warn("[BrutalityPanel] Falló la carga de módulos. Abortando.")
@@ -276,11 +275,10 @@ local NavStroke = mk("UIStroke", { Color = C.LINE, Thickness = 1, Transparency =
 local TDEFS = {
 	{ img = "rbxassetid://125925976660286", lbl = "Combat"   },
 	{ img = "rbxassetid://79653542226069",  lbl = "Visuals"  },
-	{ img = "rbxassetid://75066739039083",  lbl = "Commands" },
 	{ img = "rbxassetid://105322951498375", lbl = "Settings" },
 }
 
-local NT, GAP, TBW, TBW_EXP, IMGS = 4, 2, 68, 98, 20
+local NT, GAP, TBW, TBW_EXP, IMGS = 3, 2, 68, 98, 20
 local navT, tPages, actNav = {}, {}, 1
 
 local function getActNav() return actNav end
@@ -434,10 +432,9 @@ UIS.InputBegan:Connect(function(i, gp)
 	if i.KeyCode == Enum.KeyCode.End        then anim.doClose()    end
 end)
 
-Combat.build(tPages[1],   { C=C, mk=mk, rnd=rnd, tw=tw })
-Visuals.build(tPages[2],  { C=C, mk=mk, rnd=rnd, tw=tw })
-Commands.build(tPages[3], { C=C, mk=mk, rnd=rnd, tw=tw })
-Settings.build(tPages[4], {
+Combat.build(tPages[1],  { C=C, mk=mk, rnd=rnd, tw=tw })
+Visuals.build(tPages[2], { C=C, mk=mk, rnd=rnd, tw=tw })
+Settings.build(tPages[3], {
 	navT        = navT,
 	actNavFn    = getActNav,
 	rdot        = rdot,
