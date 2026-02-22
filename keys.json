@@ -24,5 +24,18 @@
     "expires_at": "2026-02-23T21:48:12.383959+00:00",
     "created_by_discord": "denzells",
     "discord_user_id": "1225229959254245509"
+  },
+  "wag6-6vho1-pmey": {
+    "key": "wag6-6vho1-pmey",
+    "used": false,
+    "disabled": false,
+    "username": null,
+    "ip_hash": null,
+    "ip_list": [],
+    "session_id": null,
+    "created_at": "2026-02-22T21:48:13.054895+00:00",
+    "expires_at": "2026-02-23T21:48:12.383959+00:00",
+    "created_by_discord": "denzells",
+    "discord_user_id": "1225229959254245509"
   }
 }
