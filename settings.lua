@@ -25,7 +25,7 @@ Settings.Layout = {
     WW   = 540,
     WH   = 440,
     TH   = 42,
-    NW   = 320,
+    NW   = 246,
     NH   = 46,
     NGAP = 14,
     BH   = 440 - 42,
@@ -524,7 +524,6 @@ function Settings.build(page, r)
         end)
     end
 
-    -- ── CreateSessionInfo CORREGIDO ───────────────────────────────────────────
     local function CreateSessionInfo(parent)
         local SAVE_FILE = "serios_saved.json"
         local canRead   = typeof(readfile) == "function" and typeof(isfile) == "function"
@@ -645,7 +644,6 @@ function Settings.build(page, r)
         makeCompactField(gridRow, "KEY",      key,      "rbxassetid://126448589402910", true,  2, nil)
         expiryLabelRef = makeCompactField(gridRow, "EXPIRY", shortExpiryText, "rbxassetid://78475382175834", false, 3, expiryColor)
     end
-    -- ── FIN CreateSessionInfo ─────────────────────────────────────────────────
 
     task.delay(1, function()
         mk("UIListLayout",{Padding=UDim.new(0,10),SortOrder=Enum.SortOrder.LayoutOrder},page)
