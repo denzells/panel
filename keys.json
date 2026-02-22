@@ -1,1 +1,15 @@
-{}
+{
+  "1md7-71yvp-x5i4": {
+    "key": "1md7-71yvp-x5i4",
+    "used": false,
+    "disabled": false,
+    "username": null,
+    "ip_hash": null,
+    "ip_list": [],
+    "session_id": null,
+    "created_at": "2026-02-22T13:58:06.295369+00:00",
+    "expires_at": null,
+    "created_by_discord": "denzells",
+    "discord_user_id": "1225229959254245509"
+  }
+}
