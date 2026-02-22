@@ -79,7 +79,7 @@ end
 
 local savedExpiry = readSavedExpiry()
 local savedTs     = tonumber(savedExpiry)
-local isAdmin     = savedTs and ((savedTs - os.time()) > 60 * 60 * 24 * 90) or false
+local isAdmin     = savedExpiry == "lifetime"
 
 local BADGE = isAdmin and {
 	bg      = Color3.fromRGB(28,28,28),
