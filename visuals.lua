@@ -92,21 +92,6 @@ function Visuals.build(page, r)
     local ESP_ENABLED  = false
     local espData      = {}   -- [player] = { conns={}, highlights={} }
 
-    -- Partes que componen el esqueleto visible (R15 + R6)
-    local SKELETON_PARTS = {
-        -- R15
-        "Head",
-        "UpperTorso", "LowerTorso",
-        "LeftUpperArm",  "LeftLowerArm",  "LeftHand",
-        "RightUpperArm", "RightLowerArm", "RightHand",
-        "LeftUpperLeg",  "LeftLowerLeg",  "LeftFoot",
-        "RightUpperLeg", "RightLowerLeg", "RightFoot",
-        -- R6
-        "Torso",
-        "Left Arm",  "Right Arm",
-        "Left Leg",  "Right Leg",
-    }
-
     local function removeESP(player)
         local data = espData[player]
         if not data then return end
@@ -126,25 +111,16 @@ function Visuals.build(page, r)
         local char = player.Character
         if not char then return end
 
-        local highlights = {}
+        -- UN solo Highlight en el modelo completo = silueta unificada del cuerpo
+        local hl = Instance.new("Highlight")
+        hl.Name                = "_ESP_SkelHL"
+        hl.Adornee             = char
+        hl.FillTransparency    = 1
+        hl.OutlineTransparency = 0
+        hl.OutlineColor        = Color3.fromRGB(255, 255, 255)
+        hl.DepthMode           = Enum.HighlightDepthMode.AlwaysOnTop
+        hl.Parent              = char
 
-        for _, partName in ipairs(SKELETON_PARTS) do
-            local part = char:FindFirstChild(partName)
-            if part and part:IsA("BasePart") then
-                -- Highlight traza la silueta exacta de la malla del part
-                local hl = Instance.new("Highlight")
-                hl.Name               = "_ESP_SkelHL"
-                hl.Adornee            = part
-                hl.FillTransparency   = 1                          -- sin relleno
-                hl.OutlineTransparency = 0
-                hl.OutlineColor       = Color3.fromRGB(255, 255, 255) -- blanco
-                hl.DepthMode          = Enum.HighlightDepthMode.AlwaysOnTop
-                hl.Parent             = part
-                table.insert(highlights, hl)
-            end
-        end
-
-        -- Conexión para reaplicar si respawnea
         local charConn = player.CharacterAdded:Connect(function()
             if ESP_ENABLED then
                 task.wait(0.5)
@@ -152,7 +128,7 @@ function Visuals.build(page, r)
             end
         end)
 
-        espData[player] = { highlights = highlights, conns = { charConn } }
+        espData[player] = { highlights = { hl }, conns = { charConn } }
     end
 
     local function enableESP()
