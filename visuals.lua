@@ -540,8 +540,8 @@ function Visuals.build(page, r)
         if not fnActive then return end
         if name == "" then return end
 
-        -- Busca directamente en el Player: localPlayer > CharacterStats > FirstName
-        local stats = localPlayer:FindFirstChild("CharacterStats")
+        -- Busca directamente en el Player: localPlayer > Characterstats > FirstName
+        local stats = localPlayer:FindFirstChild("Characterstats")
 
         if stats then
             local fv = stats:FindFirstChild("FirstName")
@@ -553,7 +553,7 @@ function Visuals.build(page, r)
             end
         end
 
-        warn("[FirstName] No se encontró Players."..localPlayer.Name..".CharacterStats.FirstName")
+        warn("[FirstName] No se encontró Players."..localPlayer.Name..".Characterstats.FirstName")
         tw(applyBtn, 0.08, { TextColor3 = Color3.fromRGB(220,60,60) })
         task.delay(0.6, function() tw(applyBtn, 0.25, { TextColor3 = C.GRAY }) end)
     end
