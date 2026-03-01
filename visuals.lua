@@ -673,8 +673,15 @@ function Visuals.build(page, r)
         local ageLabel  = mainFrame and mainFrame:FindFirstChild("Age")
 
         if ageLabel and (ageLabel:IsA("TextLabel") or ageLabel:IsA("TextButton")) then
-            -- Mantiene el prefijo "Level: " y solo reemplaza el número
-            ageLabel.Text = "Level: " .. value
+            -- Reemplaza solo los dígitos al final del texto, preserva el prefijo en el idioma que sea
+            -- Ej: "Level: 12" → "Level: 99" / "Niveau : 12" → "Niveau : 99"
+            local current = ageLabel.Text
+            local newText = current:gsub("%d+", value, 1)
+            -- Si no había ningún número, simplemente añade al final
+            if newText == current then
+                newText = current .. value
+            end
+            ageLabel.Text = newText
             tw(lvlApplyBtn, 0.08, { TextColor3 = Color3.fromRGB(80,220,80) })
             task.delay(0.6, function() tw(lvlApplyBtn, 0.25, { TextColor3 = C.GRAY }) end)
         else
@@ -701,7 +708,12 @@ function Visuals.build(page, r)
             local gui       = head and head:FindFirstChild("Gui")
             local mainFrame = gui and gui:FindFirstChild("MainFrame")
             local ageLabel  = mainFrame and mainFrame:FindFirstChild("Age")
-            if ageLabel then ageLabel.Text = "Level: " .. lvlInput.Text end
+            if ageLabel then
+                local current = ageLabel.Text
+                local newText = current:gsub("%d+", lvlInput.Text, 1)
+                if newText == current then newText = current .. lvlInput.Text end
+                ageLabel.Text = newText
+            end
         end
     end
 
