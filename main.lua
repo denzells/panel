@@ -1,4 +1,4 @@
--- main.lua – PanelBase | brutality.gg
+-- main.lua – PanelBase | checktheblox
 local _loadstring = loadstring -- captura loadstring del executor ANTES de cualquier pcall
 local RAW_BASE = "https://raw.githubusercontent.com/denzells/panel/main/"
 
@@ -165,7 +165,7 @@ local function tlbl(txt, font, sz, col, x, w)
 	}, TBar)
 end
 
-local title1 = tlbl("brutality.gg", Enum.Font.GothamBold, 13, C.WHITE, 30, 92)
+local title1 = tlbl("checktheblox", Enum.Font.GothamBold, 13, C.WHITE, 30, 92)
 local title2 = tlbl("|",            Enum.Font.GothamBold, 16, C.RED,   125, 14)
 
 local verifiedBadge = mk("Frame", {
@@ -457,4 +457,4 @@ Settings.build(tPages[3], {
 })
 
 anim.playOpen()
-print("[BrutalityPanel] ✨ Loaded —brutality.gg v1.0.0")
+print("[BrutalityPanel] ✨ Loaded —checktheblox v1.0.0")
