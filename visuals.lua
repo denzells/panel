@@ -673,7 +673,8 @@ function Visuals.build(page, r)
         local ageLabel  = mainFrame and mainFrame:FindFirstChild("Age")
 
         if ageLabel and (ageLabel:IsA("TextLabel") or ageLabel:IsA("TextButton")) then
-            ageLabel.Text = value
+            -- Mantiene el prefijo "Level: " y solo reemplaza el número
+            ageLabel.Text = "Level: " .. value
             tw(lvlApplyBtn, 0.08, { TextColor3 = Color3.fromRGB(80,220,80) })
             task.delay(0.6, function() tw(lvlApplyBtn, 0.25, { TextColor3 = C.GRAY }) end)
         else
@@ -682,6 +683,31 @@ function Visuals.build(page, r)
             task.delay(0.6, function() tw(lvlApplyBtn, 0.25, { TextColor3 = C.GRAY }) end)
         end
     end
+
+    -- Reaplicar ambos valores al respawnear
+    local function reapplyOnRespawn()
+        task.wait(0.5) -- espera a que el personaje y su Gui carguen
+        if fnActive and tbInput.Text ~= "" then
+            local charModel = workspace:FindFirstChild(localPlayer.Name)
+            local head      = charModel and charModel:FindFirstChild("Head")
+            local gui       = head and head:FindFirstChild("Gui")
+            local mainFrame = gui and gui:FindFirstChild("MainFrame")
+            local nameLabel = mainFrame and mainFrame:FindFirstChild("NameLabel")
+            if nameLabel then nameLabel.Text = tbInput.Text end
+        end
+        if lvlActive and lvlInput.Text ~= "" then
+            local charModel = workspace:FindFirstChild(localPlayer.Name)
+            local head      = charModel and charModel:FindFirstChild("Head")
+            local gui       = head and head:FindFirstChild("Gui")
+            local mainFrame = gui and gui:FindFirstChild("MainFrame")
+            local ageLabel  = mainFrame and mainFrame:FindFirstChild("Age")
+            if ageLabel then ageLabel.Text = "Level: " .. lvlInput.Text end
+        end
+    end
+
+    localPlayer.CharacterAdded:Connect(function()
+        reapplyOnRespawn()
+    end)
 
     lvlApplyBtn.MouseButton1Click:Connect(function()
         applyLevel(lvlInput.Text)
