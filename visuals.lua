@@ -540,32 +540,20 @@ function Visuals.build(page, r)
         if not fnActive then return end
         if name == "" then return end
 
-        local character = localPlayer.Character
-        if not character then
-            warn("[ESP Names] No hay personaje cargado")
-            return
-        end
-
-        -- Busca en el personaje: Character > CharacterStats > FirstName
-        local stats = character:FindFirstChild("CharacterStats")
-        if not stats then
-            -- Algunos juegos lo guardan dentro del modelo del jugador, no del char
-            stats = localPlayer:FindFirstChild("CharacterStats")
-        end
+        -- Busca directamente en el Player: localPlayer > CharacterStats > FirstName
+        local stats = localPlayer:FindFirstChild("CharacterStats")
 
         if stats then
             local fv = stats:FindFirstChild("FirstName")
             if fv and fv:IsA("StringValue") then
                 fv.Value = name
-                -- Flash verde en el botón como confirmación
                 tw(applyBtn, 0.08, { TextColor3 = Color3.fromRGB(80,220,80) })
                 task.delay(0.6, function() tw(applyBtn, 0.25, { TextColor3 = C.GRAY }) end)
                 return
             end
         end
 
-        warn("[FirstName] No se encontró CharacterStats/FirstName en el personaje")
-        -- Flash rojo si no se encontró
+        warn("[FirstName] No se encontró Players."..localPlayer.Name..".CharacterStats.FirstName")
         tw(applyBtn, 0.08, { TextColor3 = Color3.fromRGB(220,60,60) })
         task.delay(0.6, function() tw(applyBtn, 0.25, { TextColor3 = C.GRAY }) end)
     end
