@@ -586,14 +586,117 @@ function Visuals.build(page, r)
         fnActive = not fnActive
         tw(fnMark, 0.15, { BackgroundTransparency = fnActive and 0 or 1 })
         tw(fnBg,   0.15, { BackgroundColor3 = fnActive and Color3.fromRGB(28,28,28) or Color3.fromRGB(22,22,22) })
-        -- Tinta el borde del textbox cuando está activo
         tw(tbBg, 0.15, { BackgroundColor3 = fnActive and Color3.fromRGB(20,20,20) or Color3.fromRGB(16,16,16) })
         if not fnActive then
-            -- Restaura el nombre original al desactivar (optional: deja el value como está)
             tw(tbInput, 0.1, { TextColor3 = C.GRAY })
         else
             tw(tbInput, 0.1, { TextColor3 = C.WHITE })
         end
+    end)
+
+    -- ── Custom Level ───────────────────────────────────────────────
+    local lvlRow = makeRow(customPanel, "Custom Level", SO())
+    local lvlBg, lvlMark, lvlBtn = makeCheckbox(lvlRow, 5)
+    lvlBg.Position = UDim2.new(1,-18,0.5,-9)
+    lvlMark.BackgroundColor3 = C.RED
+    RunService.Heartbeat:Connect(function()
+        lvlMark.BackgroundColor3 = C.RED
+    end)
+
+    local lvlActive = false
+
+    local lvlTbRow = mk("Frame", {
+        Size = UDim2.new(1,0,0,28), BackgroundTransparency = 1, LayoutOrder = SO()
+    }, customPanel)
+
+    local lvlTbBg = mk("Frame", {
+        Size = UDim2.new(1,0,1,0),
+        BackgroundColor3 = Color3.fromRGB(16,16,16),
+        BorderSizePixel = 0, ZIndex = 4,
+    }, lvlTbRow)
+    rnd(6, lvlTbBg)
+    mk("UIStroke", { Color = C.LINE, Thickness = 1, Transparency = 0.4 }, lvlTbBg)
+
+    local lvlPlaceholder = mk("TextLabel", {
+        Text = "Enter level (numbers only)...",
+        Font = Enum.Font.Gotham, TextSize = 9,
+        TextColor3 = C.GRAY, BackgroundTransparency = 1,
+        Size = UDim2.new(1,-40,1,0), Position = UDim2.new(0,8,0,0),
+        TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 6,
+    }, lvlTbBg)
+
+    local lvlInput = mk("TextBox", {
+        Text = "", Font = Enum.Font.GothamSemibold, TextSize = 9,
+        TextColor3 = C.WHITE, BackgroundTransparency = 1,
+        PlaceholderText = "", ClearTextOnFocus = false,
+        Size = UDim2.new(1,-40,1,0), Position = UDim2.new(0,8,0,0),
+        TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 7,
+    }, lvlTbBg)
+
+    -- Solo permite números
+    lvlInput:GetPropertyChangedSignal("Text"):Connect(function()
+        local clean = lvlInput.Text:gsub("%D", "")  -- elimina todo lo que no sea dígito
+        if lvlInput.Text ~= clean then
+            lvlInput.Text = clean
+        end
+        lvlPlaceholder.Visible = clean == ""
+    end)
+
+    local lvlApplyBtn = mk("TextButton", {
+        Text = "✓", Font = Enum.Font.GothamBold, TextSize = 11,
+        TextColor3 = C.GRAY, BackgroundColor3 = Color3.fromRGB(22,22,22),
+        BorderSizePixel = 0, ZIndex = 7, AutoButtonColor = false,
+        Size = UDim2.new(0,24,0,20), Position = UDim2.new(1,-28,0.5,-10),
+    }, lvlTbBg)
+    rnd(4, lvlApplyBtn)
+    mk("UIStroke", { Color = C.LINE, Thickness = 1, Transparency = 0.4 }, lvlApplyBtn)
+
+    lvlApplyBtn.MouseEnter:Connect(function() tw(lvlApplyBtn, 0.1, { TextColor3 = C.WHITE }) end)
+    lvlApplyBtn.MouseLeave:Connect(function() tw(lvlApplyBtn, 0.1, { TextColor3 = C.GRAY }) end)
+
+    -- Función: workspace > [MyName] > Head > Gui > MainFrame > Age
+    local function applyLevel(value)
+        if not lvlActive then return end
+        if value == "" then return end
+
+        local charModel = workspace:FindFirstChild(localPlayer.Name)
+        if not charModel then
+            warn("[CustomLevel] No se encontró " .. localPlayer.Name .. " en Workspace")
+            tw(lvlApplyBtn, 0.08, { TextColor3 = Color3.fromRGB(220,60,60) })
+            task.delay(0.6, function() tw(lvlApplyBtn, 0.25, { TextColor3 = C.GRAY }) end)
+            return
+        end
+
+        local head      = charModel:FindFirstChild("Head")
+        local gui       = head and head:FindFirstChild("Gui")
+        local mainFrame = gui and gui:FindFirstChild("MainFrame")
+        local ageLabel  = mainFrame and mainFrame:FindFirstChild("Age")
+
+        if ageLabel and (ageLabel:IsA("TextLabel") or ageLabel:IsA("TextButton")) then
+            ageLabel.Text = value
+            tw(lvlApplyBtn, 0.08, { TextColor3 = Color3.fromRGB(80,220,80) })
+            task.delay(0.6, function() tw(lvlApplyBtn, 0.25, { TextColor3 = C.GRAY }) end)
+        else
+            warn("[CustomLevel] Ruta no encontrada: Head > Gui > MainFrame > Age")
+            tw(lvlApplyBtn, 0.08, { TextColor3 = Color3.fromRGB(220,60,60) })
+            task.delay(0.6, function() tw(lvlApplyBtn, 0.25, { TextColor3 = C.GRAY }) end)
+        end
+    end
+
+    lvlApplyBtn.MouseButton1Click:Connect(function()
+        applyLevel(lvlInput.Text)
+    end)
+
+    lvlInput.FocusLost:Connect(function(enterPressed)
+        if enterPressed then applyLevel(lvlInput.Text) end
+    end)
+
+    lvlBtn.MouseButton1Click:Connect(function()
+        lvlActive = not lvlActive
+        tw(lvlMark,  0.15, { BackgroundTransparency = lvlActive and 0 or 1 })
+        tw(lvlBg,    0.15, { BackgroundColor3 = lvlActive and Color3.fromRGB(28,28,28) or Color3.fromRGB(22,22,22) })
+        tw(lvlTbBg,  0.15, { BackgroundColor3 = lvlActive and Color3.fromRGB(20,20,20) or Color3.fromRGB(16,16,16) })
+        tw(lvlInput, 0.1,  { TextColor3 = lvlActive and C.WHITE or C.GRAY })
     end)
 end
 
