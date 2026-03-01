@@ -26,6 +26,106 @@ function Visuals.build(page, r)
 
     local esp_all     = false   -- ESP para todos
     local esp_pol     = false   -- ESP solo policías
+    local esp_names   = false   -- ESP nombres
+
+    -- ── ESP Names — BillboardGui clonado de ReplicatedStorage ─────
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")
+    local nameTagsActive    = {}  -- [player] = BillboardGui
+
+    local function removeNameTag(plr)
+        local tag = nameTagsActive[plr]
+        if tag then
+            pcall(function() tag:Destroy() end)
+            nameTagsActive[plr] = nil
+        end
+    end
+
+    local function applyNameTag(plr)
+        if plr == localPlayer then return end
+        removeNameTag(plr)
+
+        local character = plr.Character
+        if not character then return end
+
+        local head = character:FindFirstChild("Head")
+        if not head then return end
+
+        -- Intentamos clonar el UsernameGui original del juego
+        local template = ReplicatedStorage:FindFirstChild("UsernameGui")
+        local bill
+
+        if template then
+            bill = template:Clone()
+            -- Nos aseguramos de que muestre el nombre correcto
+            local lbl = bill:FindFirstChildWhichIsA("TextLabel", true)
+            if lbl then
+                lbl.Text           = plr.DisplayName
+                lbl.TextColor3     = Color3.new(1, 1, 1)
+                lbl.TextStrokeTransparency = 0.5
+            end
+        else
+            -- Fallback: creamos uno propio si el template no existe
+            bill = Instance.new("BillboardGui")
+            bill.Size          = UDim2.new(0, 120, 0, 24)
+            bill.StudsOffset   = Vector3.new(0, 3, 0)
+            local lbl = Instance.new("TextLabel")
+            lbl.Size                   = UDim2.new(1, 0, 1, 0)
+            lbl.BackgroundTransparency = 1
+            lbl.Text                   = plr.DisplayName
+            lbl.Font                   = Enum.Font.GothamBold
+            lbl.TextSize               = 13
+            lbl.TextColor3             = Color3.new(1, 1, 1)
+            lbl.TextStrokeTransparency = 0.5
+            lbl.TextStrokeColor3       = Color3.new(0, 0, 0)
+            lbl.Parent                 = bill
+        end
+
+        -- Clave: estas propiedades hacen que se vea siempre,
+        -- detrás de paredes y a cualquier distancia
+        bill.Name            = "ESP_NameTag"
+        bill.AlwaysOnTop     = true          -- traspasa paredes
+        bill.MaxDistance     = 9999          -- distancia ilimitada
+        bill.LightInfluence  = 0
+        bill.ResetOnSpawn    = false
+        bill.Enabled         = true
+        bill.Adornee         = head
+        bill.Parent          = head
+
+        nameTagsActive[plr] = bill
+    end
+
+    local function enableNames()
+        esp_names = true
+        for _, plr in ipairs(Players:GetPlayers()) do
+            if plr ~= localPlayer then
+                if plr.Character then
+                    applyNameTag(plr)
+                end
+                -- reconecta si reaparece
+                if not plr:FindFirstChild("_espNameConn") then
+                    plr.CharacterAdded:Connect(function()
+                        if esp_names then
+                            task.wait()
+                            applyNameTag(plr)
+                        end
+                    end)
+                end
+            end
+        end
+    end
+
+    local function disableNames()
+        esp_names = false
+        for plr in pairs(nameTagsActive) do
+            removeNameTag(plr)
+        end
+        nameTagsActive = {}
+    end
+
+    -- Limpia nombre cuando el jugador sale
+    Players.PlayerRemoving:Connect(function(plr)
+        removeNameTag(plr)
+    end)
 
     -- ── ScreenGui overlay ──────────────────────────────────────────
     local espGui = Instance.new("ScreenGui")
@@ -329,6 +429,23 @@ function Visuals.build(page, r)
         espGui.Enabled = esp_all or esp_pol
         tw(espPolMark, 0.15, { BackgroundTransparency = esp_pol and 0 or 1 })
         tw(espPolBg,   0.15, { BackgroundColor3 = esp_pol and Color3.fromRGB(18,28,45) or Color3.fromRGB(22,22,22) })
+    end)
+
+    -- Fila: ESP Names
+    local espNamesRow = makeRow(visionPanel, "ESP Names", SO())
+    local espNamesBg, espNamesMark, espNamesBtn = makeCheckbox(espNamesRow, 5)
+    espNamesBg.Position = UDim2.new(1,-18,0.5,-9)
+    espNamesMark.BackgroundColor3 = C.RED
+
+    RunService.Heartbeat:Connect(function()
+        espNamesMark.BackgroundColor3 = C.RED
+    end)
+
+    espNamesBtn.MouseButton1Click:Connect(function()
+        esp_names = not esp_names
+        tw(espNamesMark, 0.15, { BackgroundTransparency = esp_names and 0 or 1 })
+        tw(espNamesBg,   0.15, { BackgroundColor3 = esp_names and Color3.fromRGB(28,28,28) or Color3.fromRGB(22,22,22) })
+        if esp_names then enableNames() else disableNames() end
     end)
 
     -- Descripción
