@@ -52,7 +52,6 @@ function Visuals.build(page, r)
             BackgroundTransparency = 1,
         }, bg)
         rnd(2, mark)
-        -- FIX: ZIndex elevado para que no quede tapado por otros elementos
         local btn = mk("TextButton", {
             Text = "", BackgroundTransparency = 1,
             Size = UDim2.new(1,0,1,0), ZIndex = zBase+10, AutoButtonColor = false,
@@ -97,12 +96,19 @@ function Visuals.build(page, r)
     }
 
     local ESP_ENABLED = false
-    local skeletons   = {}  -- [player] = { lines={}, conn=RBXScriptConnection, charConn=RBXScriptConnection }
+    local skeletons   = {}
 
     local function createLine()
-        local line = Drawing.new("Line")
-        line.Visible = false
-        return line
+        local ok, line = pcall(function()
+            local l = Drawing.new("Line")
+            l.Visible   = false
+            l.Color     = SkeletonSettings.Color
+            l.Thickness = SkeletonSettings.Thickness
+            return l
+        end)
+        if ok then return line end
+        warn("[ESP] Drawing.new falló:", line)
+        return nil
     end
 
     local function removeLines(lines)
@@ -121,10 +127,9 @@ function Visuals.build(page, r)
     end
 
     local function startRendering(plr)
-        -- Cancela el render anterior si existía
         local data = skeletons[plr]
-        if data and data.conn then
-            data.conn:Disconnect()
+        if data then
+            if data.conn then data.conn:Disconnect() end
             removeLines(data.lines)
             data.lines = {}
         end
@@ -167,10 +172,10 @@ function Visuals.build(page, r)
                     RightHand     = character:FindFirstChild("RightHand"),
                     LeftUpperLeg  = character:FindFirstChild("LeftUpperLeg"),
                     LeftLowerLeg  = character:FindFirstChild("LeftLowerLeg"),
-                    LeftFoot      = character:FindFirstChild("LeftFoot"),   -- FIX: pies incluidos
+                    LeftFoot      = character:FindFirstChild("LeftFoot"),
                     RightUpperLeg = character:FindFirstChild("RightUpperLeg"),
                     RightLowerLeg = character:FindFirstChild("RightLowerLeg"),
-                    RightFoot     = character:FindFirstChild("RightFoot"),  -- FIX: pies incluidos
+                    RightFoot     = character:FindFirstChild("RightFoot"),
                 }
                 connections = {
                     { "Head",          "UpperTorso"    },
@@ -206,38 +211,40 @@ function Visuals.build(page, r)
                 }
             end
 
-            for index, conn in ipairs(connections) do
-                local jA = joints[conn[1]]
-                local jB = joints[conn[2]]
+            for index, pair in ipairs(connections) do
+                local jA = joints[pair[1]]
+                local jB = joints[pair[2]]
 
-                if jA and jB then
-                    local pA, onA = camera:WorldToViewportPoint(jA.Position)
-                    local pB, onB = camera:WorldToViewportPoint(jB.Position)
+                local line = lines[index]
+                if not line then
+                    line = createLine()
+                    lines[index] = line
+                end
 
-                    local line = lines[index]
-                    if not line then
-                        line = createLine()
-                        lines[index] = line
-                    end
+                if line and jA and jB then
+                    -- FIX clave: solo verificamos que el punto esté DELANTE de
+                    -- la cámara (Z > 0). Ya no exigimos onScreen=true, así las
+                    -- líneas se dibujan aunque el jugador esté cerca del borde.
+                    local pA, _, dA = camera:WorldToViewportPoint(jA.Position)
+                    local pB, _, dB = camera:WorldToViewportPoint(jB.Position)
 
                     line.Color        = SkeletonSettings.Color
                     line.Thickness    = SkeletonSettings.Thickness
                     line.Transparency = SkeletonSettings.Transparency
 
-                    if onA and onB then
+                    if dA > 0 and dB > 0 then
                         line.From    = Vector2.new(pA.X, pA.Y)
                         line.To      = Vector2.new(pB.X, pB.Y)
                         line.Visible = true
                     else
                         line.Visible = false
                     end
-                elseif lines[index] then
-                    lines[index].Visible = false
+                elseif line then
+                    line.Visible = false
                 end
             end
         end)
 
-        -- Actualiza o crea la entrada en skeletons
         if skeletons[plr] then
             skeletons[plr].lines = lines
             skeletons[plr].conn  = renderConn
@@ -250,17 +257,15 @@ function Visuals.build(page, r)
         if plr == Players.LocalPlayer then return end
         untrackPlayer(plr)
 
-        -- FIX: Escucha cuando el personaje carga/reaparece para reiniciar el render
         local charConn = plr.CharacterAdded:Connect(function()
             if ESP_ENABLED then
-                task.wait() -- espera un frame para que el personaje esté listo
+                task.wait()
                 startRendering(plr)
             end
         end)
 
         skeletons[plr] = { lines = {}, conn = nil, charConn = charConn }
 
-        -- Si ya tiene personaje, arranca inmediatamente
         if plr.Character then
             startRendering(plr)
         end
@@ -268,6 +273,7 @@ function Visuals.build(page, r)
 
     local function enableESP()
         ESP_ENABLED = true
+        print("[ESP] Activado — jugadores detectados:", #Players:GetPlayers() - 1)
         for _, plr in ipairs(Players:GetPlayers()) do
             if plr ~= Players.LocalPlayer then
                 trackPlayer(plr)
@@ -277,7 +283,8 @@ function Visuals.build(page, r)
 
     local function disableESP()
         ESP_ENABLED = false
-        for plr, _ in pairs(skeletons) do
+        print("[ESP] Desactivado")
+        for plr in pairs(skeletons) do
             untrackPlayer(plr)
         end
         skeletons = {}
@@ -292,17 +299,20 @@ function Visuals.build(page, r)
     end)
 
     -- ── Construcción del panel UI ───────────────────────────────────
-    -- FIX: Se elimina task.delay para que la UI se construya de inmediato
+    -- FIX: no duplicar UIListLayout/UIPadding si la página ya los tiene
 
-    mk("UIListLayout", { Padding = UDim.new(0,10), SortOrder = Enum.SortOrder.LayoutOrder }, page)
-    mk("UIPadding", {
-        PaddingTop    = UDim.new(0,10),
-        PaddingBottom = UDim.new(0,10),
-        PaddingLeft   = UDim.new(0,10),
-        PaddingRight  = UDim.new(0,10),
-    }, page)
+    if not page:FindFirstChildOfClass("UIListLayout") then
+        mk("UIListLayout", { Padding = UDim.new(0,10), SortOrder = Enum.SortOrder.LayoutOrder }, page)
+    end
+    if not page:FindFirstChildOfClass("UIPadding") then
+        mk("UIPadding", {
+            PaddingTop    = UDim.new(0,10),
+            PaddingBottom = UDim.new(0,10),
+            PaddingLeft   = UDim.new(0,10),
+            PaddingRight  = UDim.new(0,10),
+        }, page)
+    end
 
-    -- Panel: Character Vision
     local visionPanel = MiniPanel(page, "Character Vision")
 
     mk("ImageLabel", {
@@ -314,7 +324,6 @@ function Visuals.build(page, r)
 
     makeSectionLabel(visionPanel, "ESP", SO())
 
-    -- Fila: ESP Character
     local espRow = makeRow(visionPanel, "ESP Character", SO())
 
     local espChkBg, espChkMark, espChkBtn = makeCheckbox(espRow, 5)
@@ -324,9 +333,11 @@ function Visuals.build(page, r)
 
     espChkBtn.MouseButton1Click:Connect(function()
         espActive = not espActive
+        -- Estos prints aparecen en la consola del explorador (F9 o botón consola)
+        print("[ESP] Click recibido — espActive:", espActive)
 
         tw(espChkMark, 0.15, { BackgroundTransparency = espActive and 0 or 1 })
-        tw(espChkBg,   0.15, {
+        tw(espChkBg, 0.15, {
             BackgroundColor3 = espActive
                 and Color3.fromRGB(28,28,28)
                 or  Color3.fromRGB(22,22,22)
@@ -339,7 +350,6 @@ function Visuals.build(page, r)
         end
     end)
 
-    -- Descripción informativa
     local descRow = mk("Frame", {
         Size = UDim2.new(1,0,0,28), BackgroundTransparency = 1, LayoutOrder = SO()
     }, visionPanel)
