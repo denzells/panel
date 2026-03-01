@@ -20,14 +20,14 @@ function Visuals.build(page, r)
     local function SO() so = so + 1; return so end
 
     -- ── ESP settings ───────────────────────────────────────────────
-    local esp_settings = {
-        enabled   = false,
-        skel      = true,
-        skel_col  = Color3.fromRGB(255, 255, 255),
-        thickness = 2,
-    }
+    local POLICE_TEAM = "Metropolitan Police"
+    local COLOR_ALL   = Color3.fromRGB(255, 255, 255)  -- blanco
+    local COLOR_POL   = Color3.fromRGB(0,   140, 255)  -- azul
 
-    -- ── ScreenGui overlay (reemplaza Drawing API) ──────────────────
+    local esp_all     = false   -- ESP para todos
+    local esp_pol     = false   -- ESP solo policías
+
+    -- ── ScreenGui overlay ──────────────────────────────────────────
     local espGui = Instance.new("ScreenGui")
     espGui.Name           = "ESP_Overlay"
     espGui.ResetOnSpawn   = false
@@ -36,18 +36,13 @@ function Visuals.build(page, r)
     espGui.Enabled        = false
     espGui.Parent         = localPlayer:WaitForChild("PlayerGui")
 
-    --[[
-        Línea 2D usando un Frame rotado:
-          - Size.X  = longitud del segmento
-          - Size.Y  = grosor
-          - Rotation = ángulo en grados
-          - Position = punto medio A-B
-    ]]
-    local function makeLine()
+    local THICKNESS = 2
+
+    local function makeLine(color)
         local f = Instance.new("Frame")
         f.AnchorPoint            = Vector2.new(0.5, 0.5)
         f.BorderSizePixel        = 0
-        f.BackgroundColor3       = esp_settings.skel_col
+        f.BackgroundColor3       = color or COLOR_ALL
         f.BackgroundTransparency = 0
         f.Visible                = false
         f.ZIndex                 = 10
@@ -55,40 +50,46 @@ function Visuals.build(page, r)
         return f
     end
 
-    local function setLine(f, ax, ay, bx, by)
-        local dx   = bx - ax
-        local dy   = by - ay
-        local len  = math.sqrt(dx*dx + dy*dy)
+    local function setLine(f, ax, ay, bx, by, color)
+        local dx  = bx - ax
+        local dy  = by - ay
+        local len = math.sqrt(dx*dx + dy*dy)
         if len < 1 then f.Visible = false; return end
-        f.Position  = UDim2.fromOffset((ax+bx)/2, (ay+by)/2)
-        f.Size      = UDim2.fromOffset(len, esp_settings.thickness)
-        f.Rotation  = math.deg(math.atan2(dy, dx))
-        f.BackgroundColor3 = esp_settings.skel_col
-        f.Visible   = true
+        f.Position         = UDim2.fromOffset((ax+bx)/2, (ay+by)/2)
+        f.Size             = UDim2.fromOffset(len, THICKNESS)
+        f.Rotation         = math.deg(math.atan2(dy, dx))
+        f.BackgroundColor3 = color
+        f.Visible          = true
     end
 
     local function hideLine(f)
         if f then f.Visible = false end
     end
 
-    -- ── Lógica de dibujo por jugador ───────────────────────────────
-    local function draw(player, character)
-        -- 6 líneas (mismo esquema que el script original R6)
-        local lines = {}
-        for i = 1, 6 do lines[i] = makeLine() end
+    -- isPolice: determina si un jugador está en el equipo de policía
+    local function isPolice(player)
+        return player.Team ~= nil and player.Team.Name == POLICE_TEAM
+    end
 
-        local skel_head     = lines[1]
-        local skel_torso    = lines[2]
-        local skel_leftarm  = lines[3]
-        local skel_rightarm = lines[4]
-        local skel_leftleg  = lines[5]
-        local skel_rightleg = lines[6]
+    -- ── Función de dibujo (acepta color) ──────────────────────────
+    local function draw(player, character)
+        local lines = {}
+
+        -- pre-crea 14 líneas (suficiente para R15)
+        for i = 1, 14 do lines[i] = makeLine(COLOR_ALL) end
 
         local connection
         connection = RunService.RenderStepped:Connect(function()
 
-            -- Si el ESP se desactivó o el personaje ya no existe, limpiar
-            if not esp_settings.enabled
+            -- Determinar qué color y si este jugador debe verse
+            local police    = isPolice(player)
+            local showAll   = esp_all  and not police   -- todos los NO-policías
+            local showPol   = esp_pol  and police        -- solo policías
+            local shouldDraw = showAll or showPol
+            local lineColor  = police and COLOR_POL or COLOR_ALL
+
+            -- Limpiar si no debe dibujarse o el personaje ya no existe
+            if not shouldDraw
             or not workspace:FindFirstChild(character.Name)
             or not character
             or not character:FindFirstChild("HumanoidRootPart")
@@ -113,91 +114,60 @@ function Visuals.build(page, r)
             end
 
             if rig == Enum.HumanoidRigType.R6 then
-                -- ── R6 ─────────────────────────────────────────────
-                local head          = camera:WorldToViewportPoint(character.Head.Position)
-                local torso_up      = camera:WorldToViewportPoint(character.Torso.Position + Vector3.new(0, 1, 0))
-                local torso_dn      = camera:WorldToViewportPoint(character.Torso.Position + Vector3.new(0,-1, 0))
-                local leftarm       = camera:WorldToViewportPoint(character["Left Arm"].Position  + Vector3.new(0,-1,0))
-                local rightarm      = camera:WorldToViewportPoint(character["Right Arm"].Position + Vector3.new(0,-1,0))
-                local leftleg       = camera:WorldToViewportPoint(character["Left Leg"].Position  + Vector3.new(0,-1,0))
-                local rightleg      = camera:WorldToViewportPoint(character["Right Leg"].Position + Vector3.new(0,-1,0))
+                local head     = camera:WorldToViewportPoint(character.Head.Position)
+                local torso_up = camera:WorldToViewportPoint(character.Torso.Position + Vector3.new(0, 1, 0))
+                local torso_dn = camera:WorldToViewportPoint(character.Torso.Position + Vector3.new(0,-1, 0))
+                local leftarm  = camera:WorldToViewportPoint(character["Left Arm"].Position  + Vector3.new(0,-1,0))
+                local rightarm = camera:WorldToViewportPoint(character["Right Arm"].Position + Vector3.new(0,-1,0))
+                local leftleg  = camera:WorldToViewportPoint(character["Left Leg"].Position  + Vector3.new(0,-1,0))
+                local rightleg = camera:WorldToViewportPoint(character["Right Leg"].Position + Vector3.new(0,-1,0))
 
-                if esp_settings.skel then
-                    setLine(skel_head,     head.X,     head.Y,     torso_up.X, torso_up.Y)
-                    setLine(skel_torso,    torso_up.X, torso_up.Y, torso_dn.X, torso_dn.Y)
-                    setLine(skel_leftarm,  torso_up.X, torso_up.Y, leftarm.X,  leftarm.Y)
-                    setLine(skel_rightarm, torso_up.X, torso_up.Y, rightarm.X, rightarm.Y)
-                    setLine(skel_leftleg,  torso_dn.X, torso_dn.Y, leftleg.X,  leftleg.Y)
-                    setLine(skel_rightleg, torso_dn.X, torso_dn.Y, rightleg.X, rightleg.Y)
-                else
-                    for _, l in ipairs(lines) do hideLine(l) end
-                end
+                setLine(lines[1], head.X,     head.Y,     torso_up.X, torso_up.Y, lineColor)
+                setLine(lines[2], torso_up.X, torso_up.Y, torso_dn.X, torso_dn.Y, lineColor)
+                setLine(lines[3], torso_up.X, torso_up.Y, leftarm.X,  leftarm.Y,  lineColor)
+                setLine(lines[4], torso_up.X, torso_up.Y, rightarm.X, rightarm.Y, lineColor)
+                setLine(lines[5], torso_dn.X, torso_dn.Y, leftleg.X,  leftleg.Y,  lineColor)
+                setLine(lines[6], torso_dn.X, torso_dn.Y, rightleg.X, rightleg.Y, lineColor)
+                for i = 7, 14 do hideLine(lines[i]) end
 
             elseif rig == Enum.HumanoidRigType.R15 then
-                -- ── R15 ────────────────────────────────────────────
-                local function v2(partName, offset)
+                local function v2(partName)
                     local part = character:FindFirstChild(partName)
                     if not part then return nil end
-                    local p = camera:WorldToViewportPoint(part.Position + (offset or Vector3.new()))
+                    local p = camera:WorldToViewportPoint(part.Position)
                     return Vector2.new(p.X, p.Y)
                 end
 
-                local head      = v2("Head")
-                local upTorso   = v2("UpperTorso")
-                local loTorso   = v2("LowerTorso")
-                local lUpArm    = v2("LeftUpperArm")
-                local lLoArm    = v2("LeftLowerArm")
-                local lHand     = v2("LeftHand")
-                local rUpArm    = v2("RightUpperArm")
-                local rLoArm    = v2("RightLowerArm")
-                local rHand     = v2("RightHand")
-                local lUpLeg    = v2("LeftUpperLeg")
-                local lLoLeg    = v2("LeftLowerLeg")
-                local lFoot     = v2("LeftFoot")
-                local rUpLeg    = v2("RightUpperLeg")
-                local rLoLeg    = v2("RightLowerLeg")
-                local rFoot     = v2("RightFoot")
-
-                -- Reutilizamos las 6 líneas base + creamos extra si hacen falta
-                -- Para R15 necesitamos 14 segmentos; los guardamos en lines[1..14]
-                for i = 7, 14 do
-                    if not lines[i] then lines[i] = makeLine() end
-                end
-
                 local segs = {
-                    {head,    upTorso},
-                    {upTorso, loTorso},
-                    {loTorso, lUpLeg},
-                    {lUpLeg,  lLoLeg},
-                    {lLoLeg,  lFoot},
-                    {loTorso, rUpLeg},
-                    {rUpLeg,  rLoLeg},
-                    {rLoLeg,  rFoot},
-                    {upTorso, lUpArm},
-                    {lUpArm,  lLoArm},
-                    {lLoArm,  lHand},
-                    {upTorso, rUpArm},
-                    {rUpArm,  rLoArm},
-                    {rLoArm,  rHand},
+                    { v2("Head"),          v2("UpperTorso")    },
+                    { v2("UpperTorso"),    v2("LowerTorso")    },
+                    { v2("LowerTorso"),    v2("LeftUpperLeg")  },
+                    { v2("LeftUpperLeg"),  v2("LeftLowerLeg")  },
+                    { v2("LeftLowerLeg"),  v2("LeftFoot")      },
+                    { v2("LowerTorso"),    v2("RightUpperLeg") },
+                    { v2("RightUpperLeg"), v2("RightLowerLeg") },
+                    { v2("RightLowerLeg"), v2("RightFoot")     },
+                    { v2("UpperTorso"),    v2("LeftUpperArm")  },
+                    { v2("LeftUpperArm"),  v2("LeftLowerArm")  },
+                    { v2("LeftLowerArm"),  v2("LeftHand")      },
+                    { v2("UpperTorso"),    v2("RightUpperArm") },
+                    { v2("RightUpperArm"), v2("RightLowerArm") },
+                    { v2("RightLowerArm"), v2("RightHand")     },
                 }
 
-                if esp_settings.skel then
-                    for i, seg in ipairs(segs) do
-                        local a, b = seg[1], seg[2]
-                        if a and b then
-                            setLine(lines[i], a.X, a.Y, b.X, b.Y)
-                        else
-                            hideLine(lines[i])
-                        end
+                for i, seg in ipairs(segs) do
+                    local a, b = seg[1], seg[2]
+                    if a and b then
+                        setLine(lines[i], a.X, a.Y, b.X, b.Y, lineColor)
+                    else
+                        hideLine(lines[i])
                     end
-                else
-                    for _, l in ipairs(lines) do hideLine(l) end
                 end
             end
         end)
     end
 
-    -- ── Track / untrack players ────────────────────────────────────
+    -- ── Track jugadores ────────────────────────────────────────────
     local function playerAdded(player)
         if player == localPlayer then return end
 
@@ -210,7 +180,6 @@ function Visuals.build(page, r)
         end)
     end
 
-    -- Jugadores ya en el servidor
     for _, plr in ipairs(Players:GetPlayers()) do
         playerAdded(plr)
     end
@@ -326,25 +295,37 @@ function Visuals.build(page, r)
 
     makeSectionLabel(visionPanel, "ESP", SO())
 
-    local espRow = makeRow(visionPanel, "ESP Character", SO())
-    local espChkBg, espChkMark, espChkBtn = makeCheckbox(espRow, 5)
-    espChkBg.Position = UDim2.new(1,-18,0.5,-9)
+    -- Fila: ESP ALL (todos los jugadores, blanco)
+    local espAllRow = makeRow(visionPanel, "ESP All", SO())
+    local espAllBg, espAllMark, espAllBtn = makeCheckbox(espAllRow, 5)
+    espAllBg.Position = UDim2.new(1,-18,0.5,-9)
 
-    local espActive = false
+    espAllBtn.MouseButton1Click:Connect(function()
+        esp_all = not esp_all
+        espGui.Enabled = esp_all or esp_pol
+        tw(espAllMark, 0.15, { BackgroundTransparency = esp_all and 0 or 1 })
+        tw(espAllBg,   0.15, { BackgroundColor3 = esp_all and Color3.fromRGB(28,28,28) or Color3.fromRGB(22,22,22) })
+    end)
 
-    espChkBtn.MouseButton1Click:Connect(function()
-        espActive = not espActive
+    -- Fila: ESP Polices (Metropolitan Police, azul)
+    local espPolRow = makeRow(visionPanel, "ESP Polices", SO())
 
-        tw(espChkMark, 0.15, { BackgroundTransparency = espActive and 0 or 1 })
-        tw(espChkBg, 0.15, {
-            BackgroundColor3 = espActive
-                and Color3.fromRGB(28,28,28)
-                or  Color3.fromRGB(22,22,22)
-        })
+    -- Indicador de color azul junto al label
+    local blueDot = mk("Frame", {
+        Size = UDim2.new(0,7,0,7), Position = UDim2.new(0,68,0.5,-3),
+        BackgroundColor3 = Color3.fromRGB(0,140,255), BorderSizePixel = 0, ZIndex = 6,
+    }, espPolRow)
+    rnd(4, blueDot)
 
-        esp_settings.enabled = espActive
-        espGui.Enabled        = espActive
-        print("[ESP] Estado:", espActive)
+    local espPolBg, espPolMark, espPolBtn = makeCheckbox(espPolRow, 5)
+    espPolBg.Position = UDim2.new(1,-18,0.5,-9)
+    espPolMark.BackgroundColor3 = Color3.fromRGB(0,140,255)  -- marca azul
+
+    espPolBtn.MouseButton1Click:Connect(function()
+        esp_pol = not esp_pol
+        espGui.Enabled = esp_all or esp_pol
+        tw(espPolMark, 0.15, { BackgroundTransparency = esp_pol and 0 or 1 })
+        tw(espPolBg,   0.15, { BackgroundColor3 = esp_pol and Color3.fromRGB(18,28,45) or Color3.fromRGB(22,22,22) })
     end)
 
     -- Descripción
