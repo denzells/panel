@@ -16,7 +16,7 @@ function Visuals.build(page, r)
     local so = 0
     local function SO() so = so + 1; return so end
 
-    -- ── Utilidades de layout ───────────────────────────────────────
+    -- ── Utilidades de layout (igual que settings.lua) ──────────────
 
     local function makeSectionLabel(parent, text, lo)
         local row = mk("Frame", { Size = UDim2.new(1,0,0,18), BackgroundTransparency = 1, LayoutOrder = lo or SO() }, parent)
@@ -54,7 +54,7 @@ function Visuals.build(page, r)
         rnd(2, mark)
         local btn = mk("TextButton", {
             Text = "", BackgroundTransparency = 1,
-            Size = UDim2.new(1,0,1,0), ZIndex = zBase+10, AutoButtonColor = false,
+            Size = UDim2.new(1,0,1,0), ZIndex = zBase+2, AutoButtonColor = false,
         }, bg)
         return bg, mark, btn
     end
@@ -90,25 +90,18 @@ function Visuals.build(page, r)
     local camera = workspace.CurrentCamera
 
     local SkeletonSettings = {
-        Color        = Color3.new(1, 1, 1),
+        Color        = Color3.new(1, 1, 1),   -- blanco
         Thickness    = 2,
-        Transparency = 0,
+        Transparency = 0,                      -- 0 = totalmente opaco
     }
 
     local ESP_ENABLED = false
-    local skeletons   = {}
+    local skeletons   = {}   -- [player] = { lines={}, conn=RBXScriptConnection }
 
     local function createLine()
-        local ok, line = pcall(function()
-            local l = Drawing.new("Line")
-            l.Visible   = false
-            l.Color     = SkeletonSettings.Color
-            l.Thickness = SkeletonSettings.Thickness
-            return l
-        end)
-        if ok then return line end
-        warn("[ESP] Drawing.new falló:", line)
-        return nil
+        local line = Drawing.new("Line")
+        line.Visible = false
+        return line
     end
 
     local function removeLines(lines)
@@ -121,27 +114,23 @@ function Visuals.build(page, r)
         local data = skeletons[plr]
         if not data then return end
         removeLines(data.lines)
-        if data.conn     then data.conn:Disconnect()     end
-        if data.charConn then data.charConn:Disconnect() end
+        if data.conn then data.conn:Disconnect() end
         skeletons[plr] = nil
     end
 
-    local function startRendering(plr)
-        local data = skeletons[plr]
-        if data then
-            if data.conn then data.conn:Disconnect() end
-            removeLines(data.lines)
-            data.lines = {}
-        end
+    local function trackPlayer(plr)
+        if plr == Players.LocalPlayer then return end
+        untrackPlayer(plr)
 
         local lines = {}
         local renderConn
 
         renderConn = RunService.RenderStepped:Connect(function()
+            -- Si ESP se desactivó o el jugador salió, limpiamos y desconectamos
             if not ESP_ENABLED or not plr or not plr.Parent then
                 removeLines(lines)
                 renderConn:Disconnect()
-                if skeletons[plr] then skeletons[plr].conn = nil end
+                skeletons[plr] = nil
                 return
             end
 
@@ -172,20 +161,16 @@ function Visuals.build(page, r)
                     RightHand     = character:FindFirstChild("RightHand"),
                     LeftUpperLeg  = character:FindFirstChild("LeftUpperLeg"),
                     LeftLowerLeg  = character:FindFirstChild("LeftLowerLeg"),
-                    LeftFoot      = character:FindFirstChild("LeftFoot"),
                     RightUpperLeg = character:FindFirstChild("RightUpperLeg"),
                     RightLowerLeg = character:FindFirstChild("RightLowerLeg"),
-                    RightFoot     = character:FindFirstChild("RightFoot"),
                 }
                 connections = {
                     { "Head",          "UpperTorso"    },
                     { "UpperTorso",    "LowerTorso"    },
                     { "LowerTorso",    "LeftUpperLeg"  },
                     { "LeftUpperLeg",  "LeftLowerLeg"  },
-                    { "LeftLowerLeg",  "LeftFoot"      },
                     { "LowerTorso",    "RightUpperLeg" },
                     { "RightUpperLeg", "RightLowerLeg" },
-                    { "RightLowerLeg", "RightFoot"     },
                     { "UpperTorso",    "LeftUpperArm"  },
                     { "LeftUpperArm",  "LeftLowerArm"  },
                     { "LeftLowerArm",  "LeftHand"      },
@@ -211,69 +196,41 @@ function Visuals.build(page, r)
                 }
             end
 
-            for index, pair in ipairs(connections) do
-                local jA = joints[pair[1]]
-                local jB = joints[pair[2]]
+            for index, conn in ipairs(connections) do
+                local jA = joints[conn[1]]
+                local jB = joints[conn[2]]
 
-                local line = lines[index]
-                if not line then
-                    line = createLine()
-                    lines[index] = line
-                end
+                if jA and jB then
+                    local pA, onA = camera:WorldToViewportPoint(jA.Position)
+                    local pB, onB = camera:WorldToViewportPoint(jB.Position)
 
-                if line and jA and jB then
-                    -- FIX clave: solo verificamos que el punto esté DELANTE de
-                    -- la cámara (Z > 0). Ya no exigimos onScreen=true, así las
-                    -- líneas se dibujan aunque el jugador esté cerca del borde.
-                    local pA, _, dA = camera:WorldToViewportPoint(jA.Position)
-                    local pB, _, dB = camera:WorldToViewportPoint(jB.Position)
+                    local line = lines[index]
+                    if not line then
+                        line = createLine()
+                        lines[index] = line
+                    end
 
                     line.Color        = SkeletonSettings.Color
                     line.Thickness    = SkeletonSettings.Thickness
                     line.Transparency = SkeletonSettings.Transparency
 
-                    if dA > 0 and dB > 0 then
+                    if onA and onB then
                         line.From    = Vector2.new(pA.X, pA.Y)
                         line.To      = Vector2.new(pB.X, pB.Y)
                         line.Visible = true
                     else
                         line.Visible = false
                     end
-                elseif line then
-                    line.Visible = false
+                elseif lines[index] then
+                    lines[index].Visible = false
                 end
             end
         end)
 
-        if skeletons[plr] then
-            skeletons[plr].lines = lines
-            skeletons[plr].conn  = renderConn
-        else
-            skeletons[plr] = { lines = lines, conn = renderConn, charConn = nil }
-        end
-    end
-
-    local function trackPlayer(plr)
-        if plr == Players.LocalPlayer then return end
-        untrackPlayer(plr)
-
-        local charConn = plr.CharacterAdded:Connect(function()
-            if ESP_ENABLED then
-                task.wait()
-                startRendering(plr)
-            end
-        end)
-
-        skeletons[plr] = { lines = {}, conn = nil, charConn = charConn }
-
-        if plr.Character then
-            startRendering(plr)
-        end
+        skeletons[plr] = { lines = lines, conn = renderConn }
     end
 
     local function enableESP()
-        ESP_ENABLED = true
-        print("[ESP] Activado — jugadores detectados:", #Players:GetPlayers() - 1)
         for _, plr in ipairs(Players:GetPlayers()) do
             if plr ~= Players.LocalPlayer then
                 trackPlayer(plr)
@@ -282,94 +239,94 @@ function Visuals.build(page, r)
     end
 
     local function disableESP()
-        ESP_ENABLED = false
-        print("[ESP] Desactivado")
-        for plr in pairs(skeletons) do
+        for plr, _ in pairs(skeletons) do
             untrackPlayer(plr)
         end
         skeletons = {}
     end
 
+    -- Jugador entra a la partida mientras el ESP está activo
     Players.PlayerAdded:Connect(function(plr)
         if ESP_ENABLED then trackPlayer(plr) end
     end)
 
+    -- Jugador sale de la partida: limpiar sus lineas
     Players.PlayerRemoving:Connect(function(plr)
         untrackPlayer(plr)
     end)
 
     -- ── Construcción del panel UI ───────────────────────────────────
-    -- FIX: no duplicar UIListLayout/UIPadding si la página ya los tiene
 
-    if not page:FindFirstChildOfClass("UIListLayout") then
+    task.delay(1, function()
         mk("UIListLayout", { Padding = UDim.new(0,10), SortOrder = Enum.SortOrder.LayoutOrder }, page)
-    end
-    if not page:FindFirstChildOfClass("UIPadding") then
         mk("UIPadding", {
             PaddingTop    = UDim.new(0,10),
             PaddingBottom = UDim.new(0,10),
             PaddingLeft   = UDim.new(0,10),
             PaddingRight  = UDim.new(0,10),
         }, page)
-    end
 
-    local visionPanel = MiniPanel(page, "Character Vision")
+        -- Panel: Character Vision
+        local visionPanel = MiniPanel(page, "Character Vision")
 
-    mk("ImageLabel", {
-        Image = "rbxassetid://79986513204084",
-        Size = UDim2.new(0,18,0,18), Position = UDim2.new(1,-26,0,7),
-        BackgroundTransparency = 1,
-        ImageColor3 = Color3.fromRGB(70,70,70), ZIndex = 6,
-    }, visionPanel.Parent)
+        mk("ImageLabel", {
+            Image = "rbxassetid://79986513204084",
+            Size = UDim2.new(0,18,0,18), Position = UDim2.new(1,-26,0,7),
+            BackgroundTransparency = 1,
+            ImageColor3 = Color3.fromRGB(70,70,70), ZIndex = 6,
+        }, visionPanel.Parent)
 
-    makeSectionLabel(visionPanel, "ESP", SO())
+        makeSectionLabel(visionPanel, "ESP", SO())
 
-    local espRow = makeRow(visionPanel, "ESP Character", SO())
+        -- Fila: ESP Character
+        local espRow = makeRow(visionPanel, "ESP Character", SO())
 
-    local espChkBg, espChkMark, espChkBtn = makeCheckbox(espRow, 5)
-    espChkBg.Position = UDim2.new(1,-18,0.5,-9)
+        local espChkBg, espChkMark, espChkBtn = makeCheckbox(espRow, 5)
+        espChkBg.Position = UDim2.new(1,-18,0.5,-9)
 
-    local espActive = false
+        local espActive = false
 
-    espChkBtn.MouseButton1Click:Connect(function()
-        espActive = not espActive
-        -- Estos prints aparecen en la consola del explorador (F9 o botón consola)
-        print("[ESP] Click recibido — espActive:", espActive)
+        espChkBtn.MouseButton1Click:Connect(function()
+            espActive = not espActive
 
-        tw(espChkMark, 0.15, { BackgroundTransparency = espActive and 0 or 1 })
-        tw(espChkBg, 0.15, {
-            BackgroundColor3 = espActive
-                and Color3.fromRGB(28,28,28)
-                or  Color3.fromRGB(22,22,22)
-        })
+            tw(espChkMark, 0.15, { BackgroundTransparency = espActive and 0 or 1 })
+            tw(espChkBg,   0.15, {
+                BackgroundColor3 = espActive
+                    and Color3.fromRGB(28,28,28)
+                    or  Color3.fromRGB(22,22,22)
+            })
 
-        if espActive then
-            enableESP()
-        else
-            disableESP()
-        end
+            ESP_ENABLED = espActive
+
+            if espActive then
+                enableESP()
+            else
+                disableESP()
+            end
+        end)
+
+        -- Descripción informativa
+        local descRow = mk("Frame", {
+            Size = UDim2.new(1,0,0,28), BackgroundTransparency = 1, LayoutOrder = SO()
+        }, visionPanel)
+
+        local descBox = mk("Frame", {
+            Size = UDim2.new(1,0,1,0),
+            BackgroundColor3 = Color3.fromRGB(16,16,16),
+            BorderSizePixel = 0, ZIndex = 4,
+        }, descRow)
+        rnd(6, descBox)
+        mk("UIStroke", { Color = C.LINE, Thickness = 1, Transparency = 0.5 }, descBox)
+
+        mk("TextLabel", {
+            Text = "Dibuja el esqueleto de todos los jugadores en pantalla.",
+            Font = Enum.Font.Gotham, TextSize = 8,
+            TextColor3 = C.GRAY, BackgroundTransparency = 1,
+            Size = UDim2.new(1,-12,1,0), Position = UDim2.new(0,8,0,0),
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextWrapped = true, ZIndex = 5,
+        }, descBox)
     end)
-
-    local descRow = mk("Frame", {
-        Size = UDim2.new(1,0,0,28), BackgroundTransparency = 1, LayoutOrder = SO()
-    }, visionPanel)
-
-    local descBox = mk("Frame", {
-        Size = UDim2.new(1,0,1,0),
-        BackgroundColor3 = Color3.fromRGB(16,16,16),
-        BorderSizePixel = 0, ZIndex = 4,
-    }, descRow)
-    rnd(6, descBox)
-    mk("UIStroke", { Color = C.LINE, Thickness = 1, Transparency = 0.5 }, descBox)
-
-    mk("TextLabel", {
-        Text = "Dibuja el esqueleto de todos los jugadores en pantalla.",
-        Font = Enum.Font.Gotham, TextSize = 8,
-        TextColor3 = C.GRAY, BackgroundTransparency = 1,
-        Size = UDim2.new(1,-12,1,0), Position = UDim2.new(0,8,0,0),
-        TextXAlignment = Enum.TextXAlignment.Left,
-        TextWrapped = true, ZIndex = 5,
-    }, descBox)
 end
 
 return Visuals
