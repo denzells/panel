@@ -476,8 +476,8 @@ function Visuals.build(page, r)
 
     makeSectionLabel(customPanel, "PLAYER", SO())
 
-    -- Fila: Custom First Name (checkbox)
-    local fnRow = makeRow(customPanel, "Custom First Name", SO())
+    -- Fila: Custom Name
+    local fnRow = makeRow(customPanel, "Custom Name", SO())
     local fnBg, fnMark, fnBtn = makeCheckbox(fnRow, 5)
     fnBg.Position = UDim2.new(1,-18,0.5,-9)
     fnMark.BackgroundColor3 = C.RED
@@ -535,27 +535,40 @@ function Visuals.build(page, r)
     applyBtn.MouseEnter:Connect(function() tw(applyBtn, 0.1, { TextColor3 = C.WHITE }) end)
     applyBtn.MouseLeave:Connect(function() tw(applyBtn, 0.1, { TextColor3 = C.GRAY }) end)
 
-    -- Función que aplica el nombre al StringValue del LocalPlayer
+    -- Función: workspace > [MyName] > Head > Gui > MainFrame > NameLabel
     local function applyFirstName(name)
         if not fnActive then return end
         if name == "" then return end
 
-        -- Busca directamente en el Player: localPlayer > Characterstats > FirstName
-        local stats = localPlayer:FindFirstChild("Characterstats")
-
-        if stats then
-            local fv = stats:FindFirstChild("Firstname")
-            if fv and fv:IsA("StringValue") then
-                fv.Value = name
-                tw(applyBtn, 0.08, { TextColor3 = Color3.fromRGB(80,220,80) })
-                task.delay(0.6, function() tw(applyBtn, 0.25, { TextColor3 = C.GRAY }) end)
-                return
-            end
+        local charModel = workspace:FindFirstChild(localPlayer.Name)
+        if not charModel then
+            warn("[CustomName] No se encontró " .. localPlayer.Name .. " en Workspace")
+            tw(applyBtn, 0.08, { TextColor3 = Color3.fromRGB(220,60,60) })
+            task.delay(0.6, function() tw(applyBtn, 0.25, { TextColor3 = C.GRAY }) end)
+            return
         end
 
-        warn("[FirstName] No se encontró Players."..localPlayer.Name..".Characterstats.Firstname")
-        tw(applyBtn, 0.08, { TextColor3 = Color3.fromRGB(220,60,60) })
-        task.delay(0.6, function() tw(applyBtn, 0.25, { TextColor3 = C.GRAY }) end)
+        local head = charModel:FindFirstChild("Head")
+        if not head then
+            warn("[CustomName] No se encontró Head")
+            tw(applyBtn, 0.08, { TextColor3 = Color3.fromRGB(220,60,60) })
+            task.delay(0.6, function() tw(applyBtn, 0.25, { TextColor3 = C.GRAY }) end)
+            return
+        end
+
+        local gui       = head:FindFirstChild("Gui")
+        local mainFrame = gui and gui:FindFirstChild("MainFrame")
+        local nameLabel = mainFrame and mainFrame:FindFirstChild("NameLabel")
+
+        if nameLabel and (nameLabel:IsA("TextLabel") or nameLabel:IsA("TextButton")) then
+            nameLabel.Text = name
+            tw(applyBtn, 0.08, { TextColor3 = Color3.fromRGB(80,220,80) })
+            task.delay(0.6, function() tw(applyBtn, 0.25, { TextColor3 = C.GRAY }) end)
+        else
+            warn("[CustomName] Ruta no encontrada: Head > Gui > MainFrame > NameLabel")
+            tw(applyBtn, 0.08, { TextColor3 = Color3.fromRGB(220,60,60) })
+            task.delay(0.6, function() tw(applyBtn, 0.25, { TextColor3 = C.GRAY }) end)
+        end
     end
 
     -- Apply al hacer clic en ✓
