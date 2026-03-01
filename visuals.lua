@@ -468,6 +468,132 @@ function Visuals.build(page, r)
         TextXAlignment = Enum.TextXAlignment.Left,
         TextWrapped = true, ZIndex = 5,
     }, descBox)
+
+    -- ── Panel derecho: Custom Values ───────────────────────────────
+    local customPanel = MiniPanel(topRow, "Custom Values")
+    customPanel.Parent.Size          = UDim2.new(0.5,-5,0,0)
+    customPanel.Parent.AutomaticSize = Enum.AutomaticSize.Y
+
+    makeSectionLabel(customPanel, "PLAYER", SO())
+
+    -- Fila: Custom First Name (checkbox)
+    local fnRow = makeRow(customPanel, "Custom First Name", SO())
+    local fnBg, fnMark, fnBtn = makeCheckbox(fnRow, 5)
+    fnBg.Position = UDim2.new(1,-18,0.5,-9)
+    fnMark.BackgroundColor3 = C.RED
+    RunService.Heartbeat:Connect(function()
+        fnMark.BackgroundColor3 = C.RED
+    end)
+
+    local fnActive = false
+
+    -- TextBox para ingresar el nombre
+    local tbRow = mk("Frame", {
+        Size = UDim2.new(1,0,0,28), BackgroundTransparency = 1, LayoutOrder = SO()
+    }, customPanel)
+
+    local tbBg = mk("Frame", {
+        Size = UDim2.new(1,0,1,0),
+        BackgroundColor3 = Color3.fromRGB(16,16,16),
+        BorderSizePixel = 0, ZIndex = 4,
+    }, tbRow)
+    rnd(6, tbBg)
+    mk("UIStroke", { Color = C.LINE, Thickness = 1, Transparency = 0.4 }, tbBg)
+
+    -- Placeholder label
+    local placeholder = mk("TextLabel", {
+        Text = "Enter first name...",
+        Font = Enum.Font.Gotham, TextSize = 9,
+        TextColor3 = C.GRAY, BackgroundTransparency = 1,
+        Size = UDim2.new(1,-40,1,0), Position = UDim2.new(0,8,0,0),
+        TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 6,
+    }, tbBg)
+
+    local tbInput = mk("TextBox", {
+        Text = "", Font = Enum.Font.GothamSemibold, TextSize = 9,
+        TextColor3 = C.WHITE, BackgroundTransparency = 1,
+        PlaceholderText = "", ClearTextOnFocus = false,
+        Size = UDim2.new(1,-40,1,0), Position = UDim2.new(0,8,0,0),
+        TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 7,
+    }, tbBg)
+
+    -- Oculta placeholder cuando hay texto
+    tbInput:GetPropertyChangedSignal("Text"):Connect(function()
+        placeholder.Visible = tbInput.Text == ""
+    end)
+
+    -- Botón Apply dentro del textbox
+    local applyBtn = mk("TextButton", {
+        Text = "✓", Font = Enum.Font.GothamBold, TextSize = 11,
+        TextColor3 = C.GRAY, BackgroundColor3 = Color3.fromRGB(22,22,22),
+        BorderSizePixel = 0, ZIndex = 7, AutoButtonColor = false,
+        Size = UDim2.new(0,24,0,20), Position = UDim2.new(1,-28,0.5,-10),
+    }, tbBg)
+    rnd(4, applyBtn)
+    mk("UIStroke", { Color = C.LINE, Thickness = 1, Transparency = 0.4 }, applyBtn)
+
+    applyBtn.MouseEnter:Connect(function() tw(applyBtn, 0.1, { TextColor3 = C.WHITE }) end)
+    applyBtn.MouseLeave:Connect(function() tw(applyBtn, 0.1, { TextColor3 = C.GRAY }) end)
+
+    -- Función que aplica el nombre al StringValue del LocalPlayer
+    local function applyFirstName(name)
+        if not fnActive then return end
+        if name == "" then return end
+
+        local character = localPlayer.Character
+        if not character then
+            warn("[ESP Names] No hay personaje cargado")
+            return
+        end
+
+        -- Busca en el personaje: Character > CharacterStats > FirstName
+        local stats = character:FindFirstChild("CharacterStats")
+        if not stats then
+            -- Algunos juegos lo guardan dentro del modelo del jugador, no del char
+            stats = localPlayer:FindFirstChild("CharacterStats")
+        end
+
+        if stats then
+            local fv = stats:FindFirstChild("FirstName")
+            if fv and fv:IsA("StringValue") then
+                fv.Value = name
+                -- Flash verde en el botón como confirmación
+                tw(applyBtn, 0.08, { TextColor3 = Color3.fromRGB(80,220,80) })
+                task.delay(0.6, function() tw(applyBtn, 0.25, { TextColor3 = C.GRAY }) end)
+                return
+            end
+        end
+
+        warn("[FirstName] No se encontró CharacterStats/FirstName en el personaje")
+        -- Flash rojo si no se encontró
+        tw(applyBtn, 0.08, { TextColor3 = Color3.fromRGB(220,60,60) })
+        task.delay(0.6, function() tw(applyBtn, 0.25, { TextColor3 = C.GRAY }) end)
+    end
+
+    -- Apply al hacer clic en ✓
+    applyBtn.MouseButton1Click:Connect(function()
+        applyFirstName(tbInput.Text)
+    end)
+
+    -- Apply también al presionar Enter en el TextBox
+    tbInput.FocusLost:Connect(function(enterPressed)
+        if enterPressed then applyFirstName(tbInput.Text) end
+    end)
+
+    -- Checkbox activa/desactiva la funcionalidad
+    fnBtn.MouseButton1Click:Connect(function()
+        fnActive = not fnActive
+        tw(fnMark, 0.15, { BackgroundTransparency = fnActive and 0 or 1 })
+        tw(fnBg,   0.15, { BackgroundColor3 = fnActive and Color3.fromRGB(28,28,28) or Color3.fromRGB(22,22,22) })
+        -- Tinta el borde del textbox cuando está activo
+        tw(tbBg, 0.15, { BackgroundColor3 = fnActive and Color3.fromRGB(20,20,20) or Color3.fromRGB(16,16,16) })
+        if not fnActive then
+            -- Restaura el nombre original al desactivar (optional: deja el value como está)
+            tw(tbInput, 0.1, { TextColor3 = C.GRAY })
+        else
+            tw(tbInput, 0.1, { TextColor3 = C.WHITE })
+        end
+    end)
 end
 
 return Visuals
