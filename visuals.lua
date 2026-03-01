@@ -544,7 +544,7 @@ function Visuals.build(page, r)
         local stats = localPlayer:FindFirstChild("Characterstats")
 
         if stats then
-            local fv = stats:FindFirstChild("FirstName")
+            local fv = stats:FindFirstChild("Firstname")
             if fv and fv:IsA("StringValue") then
                 fv.Value = name
                 tw(applyBtn, 0.08, { TextColor3 = Color3.fromRGB(80,220,80) })
@@ -553,7 +553,7 @@ function Visuals.build(page, r)
             end
         end
 
-        warn("[FirstName] No se encontró Players."..localPlayer.Name..".Characterstats.FirstName")
+        warn("[FirstName] No se encontró Players."..localPlayer.Name..".Characterstats.Firstname")
         tw(applyBtn, 0.08, { TextColor3 = Color3.fromRGB(220,60,60) })
         task.delay(0.6, function() tw(applyBtn, 0.25, { TextColor3 = C.GRAY }) end)
     end
