@@ -6,10 +6,11 @@
 local Visuals = {}
 
 function Visuals.build(page, r)
-    local C   = r.C
-    local mk  = r.mk
-    local rnd = r.rnd
-    local tw  = r.tw
+    local C          = r.C
+    local mk         = r.mk
+    local rnd        = r.rnd
+    local tw         = r.tw
+    local accentEls  = r.accentEls or {}   -- tabla compartida con settings.lua
 
     local Players     = game:GetService("Players")
     local RunService  = game:GetService("RunService")
@@ -295,10 +296,12 @@ function Visuals.build(page, r)
 
     makeSectionLabel(visionPanel, "ESP", SO())
 
-    -- Fila: ESP ALL (todos los jugadores, blanco)
+    -- Fila: ESP ALL (todos los jugadores, sigue el color accent)
     local espAllRow = makeRow(visionPanel, "ESP All", SO())
     local espAllBg, espAllMark, espAllBtn = makeCheckbox(espAllRow, 5)
     espAllBg.Position = UDim2.new(1,-18,0.5,-9)
+    espAllMark.BackgroundColor3 = C.RED                          -- color inicial = accent actual
+    table.insert(accentEls, { el = espAllMark, prop = "BackgroundColor3" })  -- se actualiza con applyAccent
 
     espAllBtn.MouseButton1Click:Connect(function()
         esp_all = not esp_all
