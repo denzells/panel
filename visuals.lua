@@ -86,31 +86,37 @@ function Visuals.build(page, r)
     end
 
     -- ── Lógica ESP Esqueleto ────────────────────────────────────────────
+    -- Usa Highlight por parte con FillTransparency=1 para trazar la silueta
+    -- real de cada limb (igual que la foto de referencia), no cajas rectangulares.
 
-    local ESP_ENABLED = false
-    local espHighlights = {}  -- [player] = { highlights }
+    local ESP_ENABLED  = false
+    local espData      = {}   -- [player] = { conns={}, highlights={} }
 
-    -- Partes del esqueleto que queremos resaltar (omitimos HumanoidRootPart)
+    -- Partes que componen el esqueleto visible (R15 + R6)
     local SKELETON_PARTS = {
+        -- R15
         "Head",
         "UpperTorso", "LowerTorso",
-        "LeftUpperArm", "LeftLowerArm", "LeftHand",
+        "LeftUpperArm",  "LeftLowerArm",  "LeftHand",
         "RightUpperArm", "RightLowerArm", "RightHand",
-        "LeftUpperLeg", "LeftLowerLeg", "LeftFoot",
+        "LeftUpperLeg",  "LeftLowerLeg",  "LeftFoot",
         "RightUpperLeg", "RightLowerLeg", "RightFoot",
-        -- R6 fallback
+        -- R6
         "Torso",
-        "Left Arm", "Right Arm",
-        "Left Leg", "Right Leg",
+        "Left Arm",  "Right Arm",
+        "Left Leg",  "Right Leg",
     }
 
     local function removeESP(player)
-        if espHighlights[player] then
-            for _, hl in ipairs(espHighlights[player]) do
-                if hl and hl.Parent then hl:Destroy() end
-            end
-            espHighlights[player] = nil
+        local data = espData[player]
+        if not data then return end
+        for _, hl in ipairs(data.highlights) do
+            if hl and hl.Parent then hl:Destroy() end
         end
+        for _, c in ipairs(data.conns) do
+            c:Disconnect()
+        end
+        espData[player] = nil
     end
 
     local function applyESP(player)
@@ -120,62 +126,55 @@ function Visuals.build(page, r)
         local char = player.Character
         if not char then return end
 
-        local list = {}
+        local highlights = {}
 
         for _, partName in ipairs(SKELETON_PARTS) do
             local part = char:FindFirstChild(partName)
             if part and part:IsA("BasePart") then
-                -- Ocultamos meshes/acccesorios del part para que solo se vea el highlight
-                local hl = Instance.new("SelectionBox")
-                hl.Name        = "_ESP_SkeletonHL"
-                hl.Adornee     = part
-                hl.Color3      = Color3.fromRGB(255, 255, 255)   -- blanco
-                hl.LineThickness = 0.03
-                hl.SurfaceTransparency = 1                        -- sin relleno
-                hl.SurfaceColor3 = Color3.fromRGB(0, 0, 0)
-                hl.Parent      = part
-                table.insert(list, hl)
+                -- Highlight traza la silueta exacta de la malla del part
+                local hl = Instance.new("Highlight")
+                hl.Name               = "_ESP_SkelHL"
+                hl.Adornee            = part
+                hl.FillTransparency   = 1                          -- sin relleno
+                hl.OutlineTransparency = 0
+                hl.OutlineColor       = Color3.fromRGB(255, 255, 255) -- blanco
+                hl.DepthMode          = Enum.HighlightDepthMode.AlwaysOnTop
+                hl.Parent             = part
+                table.insert(highlights, hl)
             end
         end
 
-        espHighlights[player] = list
-    end
-
-    local function enableESP()
-        for _, player in ipairs(Players:GetPlayers()) do
-            if player ~= Players.LocalPlayer then
-                applyESP(player)
-                -- Reaplica si el personaje cambia
-                if not player:GetAttribute("_espConn") then
-                    player.CharacterAdded:Connect(function()
-                        if ESP_ENABLED then
-                            task.wait(0.5)
-                            applyESP(player)
-                        end
-                    end)
-                end
-            end
-        end
-        -- Nuevos jugadores que entren
-        Players.PlayerAdded:Connect(function(player)
+        -- Conexión para reaplicar si respawnea
+        local charConn = player.CharacterAdded:Connect(function()
             if ESP_ENABLED then
-                player.CharacterAdded:Connect(function()
-                    if ESP_ENABLED then
-                        task.wait(0.5)
-                        applyESP(player)
-                    end
-                end)
                 task.wait(0.5)
                 applyESP(player)
             end
         end)
+
+        espData[player] = { highlights = highlights, conns = { charConn } }
+    end
+
+    local function enableESP()
+        for _, player in ipairs(Players:GetPlayers()) do
+            applyESP(player)
+        end
     end
 
     local function disableESP()
-        for player, _ in pairs(espHighlights) do
+        for player in pairs(espData) do
             removeESP(player)
         end
     end
+
+    -- Jugadores que entran mientras el ESP está activo
+    Players.PlayerAdded:Connect(function(player)
+        if not ESP_ENABLED then return end
+        player.CharacterAdded:Connect(function()
+            if ESP_ENABLED then task.wait(0.5); applyESP(player) end
+        end)
+        task.wait(0.5); applyESP(player)
+    end)
 
     Players.PlayerRemoving:Connect(function(player)
         removeESP(player)
