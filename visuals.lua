@@ -313,19 +313,16 @@ function Visuals.build(page, r)
         tw(espAllBg,   0.15, { BackgroundColor3 = esp_all and Color3.fromRGB(28,28,28) or Color3.fromRGB(22,22,22) })
     end)
 
-    -- Fila: ESP Polices (Metropolitan Police, azul)
+    -- Fila: ESP Polices (Metropolitan Police, esqueleto azul)
     local espPolRow = makeRow(visionPanel, "ESP Polices", SO())
-
-    -- Indicador de color azul junto al label
-    local blueDot = mk("Frame", {
-        Size = UDim2.new(0,7,0,7), Position = UDim2.new(0,68,0.5,-3),
-        BackgroundColor3 = Color3.fromRGB(0,140,255), BorderSizePixel = 0, ZIndex = 6,
-    }, espPolRow)
-    rnd(4, blueDot)
 
     local espPolBg, espPolMark, espPolBtn = makeCheckbox(espPolRow, 5)
     espPolBg.Position = UDim2.new(1,-18,0.5,-9)
-    espPolMark.BackgroundColor3 = Color3.fromRGB(0,140,255)  -- marca azul
+    espPolMark.BackgroundColor3 = C.RED
+
+    RunService.Heartbeat:Connect(function()
+        espPolMark.BackgroundColor3 = C.RED
+    end)
 
     espPolBtn.MouseButton1Click:Connect(function()
         esp_pol = not esp_pol
