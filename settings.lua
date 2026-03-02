@@ -1,6 +1,5 @@
--- settings.lua - PanelBase (Screenshot-matched style)
--- Paneles: fondo oscuro #121212, borde sutil, header con barra roja + icono derecha
--- Checkboxes: cuadrado relleno rojo cuando activo (mismo estilo que la foto)
+-- settings.lua - PanelBase (Reference Screenshot Style)
+-- Tono cálido oscuro, paneles limpios, checkbox cuadrado suave, barra acento izquierda
 
 local _loadstring = loadstring
 
@@ -10,26 +9,23 @@ local HttpService = game:GetService("HttpService")
 
 local Settings = {}
 
+-- Paleta cálida oscura — igual que la foto de referencia (#1a1918 base)
 Settings.C = {
-    WIN    = Color3.fromRGB(12,  12,  12),
-    TBAR   = Color3.fromRGB(8,   8,   8),
-    LINE   = Color3.fromRGB(35,  35,  35),
-    RED    = Color3.fromRGB(200, 30,  30),
-    NAV    = Color3.fromRGB(8,   8,   8),
-    NAVPIL = Color3.fromRGB(20,  20,  20),
-    WHITE  = Color3.fromRGB(230, 230, 230),
-    GRAY   = Color3.fromRGB(100, 100, 100),
-    MUTED  = Color3.fromRGB(50,  50,  50),
-    PANEL  = Color3.fromRGB(18,  18,  18),
+    WIN    = Color3.fromRGB(20,  19,  18),
+    TBAR   = Color3.fromRGB(15,  14,  13),
+    LINE   = Color3.fromRGB(45,  43,  40),
+    RED    = Color3.fromRGB(255, 255, 255),
+    NAV    = Color3.fromRGB(13,  12,  11),
+    NAVPIL = Color3.fromRGB(28,  26,  24),
+    WHITE  = Color3.fromRGB(228, 226, 222),
+    GRAY   = Color3.fromRGB(108, 104, 98),
+    MUTED  = Color3.fromRGB(58,  55,  50),
+    PANEL  = Color3.fromRGB(28,  27,  25),
 }
 
 Settings.Layout = {
-    WW   = 540,
-    WH   = 440,
-    TH   = 42,
-    NW   = 246,
-    NH   = 46,
-    NGAP = 14,
+    WW   = 540, WH   = 440, TH   = 42,
+    NW   = 246, NH   = 46,  NGAP = 14,
     BH   = 440 - 42,
 }
 
@@ -53,200 +49,136 @@ function Settings.build(page, r)
     local so = 0
     local function SO() so = so + 1; return so end
 
-    local expiryLabelRef   = nil
-    local fullExpiryText   = ""
-    local shortExpiryText  = ""
+    local expiryLabelRef  = nil
+    local fullExpiryText  = ""
+    local shortExpiryText = ""
 
-    -- ══════════════════════════════════════
+    -- ══════════════════════════════════════════════════════
     --  CHECKBOX
-    --  Estilo foto: caja oscura pequeña,
-    --  relleno cuadrado rojo al activar
-    -- ══════════════════════════════════════
+    --  Caja oscura 15x15, borde suave cálido,
+    --  cuadrado interior relleno de acento al activar
+    -- ══════════════════════════════════════════════════════
     local function makeCheckbox(parent, zBase)
         zBase = zBase or 5
-
         local bg = mk("Frame", {
-            Size             = UDim2.new(0, 16, 0, 16),
-            BackgroundColor3 = Color3.fromRGB(22, 22, 22),
-            BorderSizePixel  = 0,
-            ZIndex           = zBase,
+            Size             = UDim2.new(0, 15, 0, 15),
+            BackgroundColor3 = Color3.fromRGB(32, 31, 29),
+            BorderSizePixel  = 0, ZIndex = zBase,
         }, parent)
         rnd(3, bg)
-        mk("UIStroke", {
-            Color        = Color3.fromRGB(52, 52, 52),
-            Thickness    = 1,
-            Transparency = 0,
-        }, bg)
+        mk("UIStroke", { Color = Color3.fromRGB(72, 68, 62), Thickness = 1, Transparency = 0 }, bg)
 
-        -- Relleno interior acento
         local mark = mk("Frame", {
-            Size             = UDim2.new(0, 8, 0, 8),
-            Position         = UDim2.new(0.5, -4, 0.5, -4),
+            Size             = UDim2.new(0, 7, 0, 7),
+            Position         = UDim2.new(0.5, -3, 0.5, -3),
             BackgroundColor3 = C.RED,
-            BorderSizePixel  = 0,
-            ZIndex           = zBase + 1,
+            BorderSizePixel  = 0, ZIndex = zBase + 1,
             BackgroundTransparency = 1,
         }, bg)
         rnd(2, mark)
         table.insert(accentEls, { el = mark, prop = "BackgroundColor3" })
 
         local btn = mk("TextButton", {
-            Text               = "",
-            BackgroundTransparency = 1,
-            Size               = UDim2.new(1, 0, 1, 0),
-            ZIndex             = zBase + 2,
-            AutoButtonColor    = false,
+            Text = "", BackgroundTransparency = 1,
+            Size = UDim2.new(1, 8, 1, 8), Position = UDim2.new(0, -4, 0, -4),
+            ZIndex = zBase + 2, AutoButtonColor = false,
         }, bg)
-
-        btn.MouseEnter:Connect(function()
-            tw(bg, .1, { BackgroundColor3 = Color3.fromRGB(28, 28, 28) })
-        end)
-        btn.MouseLeave:Connect(function()
-            tw(bg, .1, { BackgroundColor3 = Color3.fromRGB(22, 22, 22) })
-        end)
-
+        btn.MouseEnter:Connect(function() tw(bg, .1, { BackgroundColor3 = Color3.fromRGB(38, 36, 33) }) end)
+        btn.MouseLeave:Connect(function() tw(bg, .1, { BackgroundColor3 = Color3.fromRGB(32, 31, 29) }) end)
         return bg, mark, btn
     end
 
-    -- ══════════════════════════════════════
-    --  SECTION LABEL
-    --  Texto gris con línea divisoria abajo
-    -- ══════════════════════════════════════
+    -- ══════════════════════════════════════════════════════
+    --  SECTION LABEL — texto gris, sin decoración extra
+    -- ══════════════════════════════════════════════════════
     local function makeSectionLabel(parent, text, lo)
         local row = mk("Frame", {
-            Size               = UDim2.new(1, 0, 0, 20),
-            BackgroundTransparency = 1,
-            LayoutOrder        = lo or SO(),
+            Size = UDim2.new(1, 0, 0, 22),
+            BackgroundTransparency = 1, LayoutOrder = lo or SO(),
         }, parent)
-
-        mk("Frame", {
-            Size             = UDim2.new(1, 0, 0, 1),
-            Position         = UDim2.new(0, 0, 1, -1),
-            BackgroundColor3 = Color3.fromRGB(36, 36, 36),
-            BorderSizePixel  = 0,
-            ZIndex           = 4,
-        }, row)
-
         mk("TextLabel", {
-            Text              = text,
-            Font              = Enum.Font.GothamBold,
-            TextSize          = 9,
-            TextColor3        = C.GRAY,
-            BackgroundTransparency = 1,
-            Size              = UDim2.new(1, 0, 1, 0),
-            TextXAlignment    = Enum.TextXAlignment.Left,
-            ZIndex            = 5,
+            Text = text, Font = Enum.Font.GothamBold, TextSize = 9,
+            TextColor3 = C.GRAY, BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 1, 0),
+            TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 5,
         }, row)
-
         return row
     end
 
-    -- ══════════════════════════════════════
+    -- ══════════════════════════════════════════════════════
     --  ROW
-    -- ══════════════════════════════════════
+    -- ══════════════════════════════════════════════════════
     local function makeRow(parent, labelText, lo)
         local row = mk("Frame", {
-            Size               = UDim2.new(1, 0, 0, 26),
-            BackgroundTransparency = 1,
-            LayoutOrder        = lo or SO(),
+            Size = UDim2.new(1, 0, 0, 28),
+            BackgroundTransparency = 1, LayoutOrder = lo or SO(),
         }, parent)
         mk("TextLabel", {
-            Text              = labelText,
-            Font              = Enum.Font.GothamSemibold,
-            TextSize          = 10,
-            TextColor3        = C.WHITE,
-            BackgroundTransparency = 1,
-            Size              = UDim2.new(1, -30, 1, 0),
-            TextXAlignment    = Enum.TextXAlignment.Left,
-            ZIndex            = 5,
+            Text = labelText, Font = Enum.Font.Gotham, TextSize = 11,
+            TextColor3 = C.WHITE, BackgroundTransparency = 1,
+            Size = UDim2.new(1, -30, 1, 0),
+            TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 5,
         }, row)
         return row
     end
 
-    -- ══════════════════════════════════════
-    --  MINI PANEL  (estilo foto)
-    --  - Fondo oscuro #121212
-    --  - Header más oscuro con barra roja
-    --    vertical + título blanco
-    --  - Ícono rojo en esquina superior dcha
-    --  - Borde sutil #282828
-    --  - Línea divisoria header/contenido
-    -- ══════════════════════════════════════
+    -- ══════════════════════════════════════════════════════
+    --  MINI PANEL — igual que la foto de referencia:
+    --  • Sin borde exterior duro (muy sutil, casi invisible)
+    --  • Header oscuro con barra vertical de ACENTO izq
+    --  • Título blanco bold + ícono derecha
+    --  • Línea divisoria 1px
+    -- ══════════════════════════════════════════════════════
     local function MiniPanel(parent, title, fixedW)
         local panel = mk("Frame", {
             Size             = fixedW and UDim2.new(0, fixedW, 0, 0) or UDim2.new(1, 0, 0, 0),
             AutomaticSize    = Enum.AutomaticSize.Y,
-            BackgroundColor3 = Color3.fromRGB(18, 18, 18),
-            BorderSizePixel  = 0,
-            LayoutOrder      = SO(),
+            BackgroundColor3 = Color3.fromRGB(28, 27, 25),
+            BorderSizePixel  = 0, LayoutOrder = SO(),
         }, parent)
-        rnd(4, panel)
-        mk("UIStroke", {
-            Color        = Color3.fromRGB(38, 38, 38),
-            Thickness    = 1,
-            Transparency = 0,
-        }, panel)
+        rnd(5, panel)
+        mk("UIStroke", { Color = Color3.fromRGB(48, 46, 42), Thickness = 1, Transparency = 0.35 }, panel)
 
         -- Header
         local header = mk("Frame", {
-            Size             = UDim2.new(1, 0, 0, 30),
-            BackgroundColor3 = Color3.fromRGB(12, 12, 12),
-            BorderSizePixel  = 0,
-            ZIndex           = 4,
-            ClipsDescendants = true,
+            Size             = UDim2.new(1, 0, 0, 34),
+            BackgroundColor3 = Color3.fromRGB(22, 21, 19),
+            BorderSizePixel  = 0, ZIndex = 4, ClipsDescendants = true,
         }, panel)
-        rnd(4, header)
-        -- Parche inferior para no redondear las esquinas de abajo
+        rnd(5, header)
         mk("Frame", {
-            Size             = UDim2.new(1, 0, 0.5, 0),
-            Position         = UDim2.new(0, 0, 0.5, 0),
-            BackgroundColor3 = Color3.fromRGB(12, 12, 12),
-            BorderSizePixel  = 0,
-            ZIndex           = 3,
+            Size = UDim2.new(1, 0, 0.5, 0), Position = UDim2.new(0, 0, 0.5, 0),
+            BackgroundColor3 = Color3.fromRGB(22, 21, 19),
+            BorderSizePixel  = 0, ZIndex = 3,
         }, header)
 
-        -- Barra vertical roja (acento)
+        -- Barra acento vertical izquierda
         local bar = mk("Frame", {
-            Size             = UDim2.new(0, 2, 0, 14),
-            Position         = UDim2.new(0, 8, 0.5, -7),
-            BackgroundColor3 = C.RED,
-            BorderSizePixel  = 0,
-            ZIndex           = 6,
+            Size = UDim2.new(0, 2, 0, 16), Position = UDim2.new(0, 8, 0.5, -8),
+            BackgroundColor3 = C.RED, BorderSizePixel = 0, ZIndex = 6,
         }, header)
         rnd(1, bar)
         table.insert(accentEls, { el = bar, prop = "BackgroundColor3" })
 
         mk("TextLabel", {
-            Text           = title,
-            Font           = Enum.Font.GothamBold,
-            TextSize       = 11,
-            TextColor3     = C.WHITE,
-            BackgroundTransparency = 1,
-            Size           = UDim2.new(1, -40, 1, 0),
-            Position       = UDim2.new(0, 16, 0, 0),
-            TextXAlignment = Enum.TextXAlignment.Left,
-            ZIndex         = 6,
+            Text = title, Font = Enum.Font.GothamBold, TextSize = 12,
+            TextColor3 = C.WHITE, BackgroundTransparency = 1,
+            Size = UDim2.new(1, -44, 1, 0), Position = UDim2.new(0, 16, 0, 0),
+            TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 6,
         }, header)
 
-        -- Divisor header/contenido
+        -- Línea divisoria
         mk("Frame", {
-            Size             = UDim2.new(1, 0, 0, 1),
-            Position         = UDim2.new(0, 0, 0, 30),
-            BackgroundColor3 = Color3.fromRGB(36, 36, 36),
-            BorderSizePixel  = 0,
-            ZIndex           = 4,
+            Size = UDim2.new(1, 0, 0, 1), Position = UDim2.new(0, 0, 0, 34),
+            BackgroundColor3 = Color3.fromRGB(42, 40, 37),
+            BorderSizePixel = 0, ZIndex = 4,
         }, panel)
 
         local content = mk("Frame", {
-            Size          = UDim2.new(1, -16, 0, 0),
-            Position      = UDim2.new(0, 8, 0, 38),
-            AutomaticSize = Enum.AutomaticSize.Y,
-            BackgroundTransparency = 1,
+            Size = UDim2.new(1, -18, 0, 0), Position = UDim2.new(0, 9, 0, 42),
+            AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1,
         }, panel)
-        mk("UIListLayout", {
-            Padding   = UDim.new(0, 5),
-            SortOrder = Enum.SortOrder.LayoutOrder,
-        }, content)
+        mk("UIListLayout", { Padding = UDim.new(0, 5), SortOrder = Enum.SortOrder.LayoutOrder }, content)
         mk("UIPadding", { PaddingBottom = UDim.new(0, 10) }, panel)
         return content
     end
@@ -271,22 +203,18 @@ function Settings.build(page, r)
         local CONTENTH, TOTALH = SV + PAD + APPH, SV + PAD + APPH + PAD*2
 
         local root = mk("Frame", {
-            Size          = UDim2.new(1, 0, 0, 0),
-            AutomaticSize = Enum.AutomaticSize.Y,
-            BackgroundTransparency = 1,
-            LayoutOrder   = SO(),
+            Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
+            BackgroundTransparency = 1, LayoutOrder = SO(),
         }, parent)
         mk("UIListLayout", { Padding = UDim.new(0, 5), SortOrder = Enum.SortOrder.LayoutOrder }, root)
 
         local row1 = makeRow(root, "Accent Color", 1)
         local chkBg, chkMark, chkBtn = makeCheckbox(row1, 5)
-        chkBg.Position = UDim2.new(1, -16, 0.5, -8)
+        chkBg.Position = UDim2.new(1, -15, 0.5, -7)
         local checked = false
 
         local rgbModeOn, rgbHue, rgbConn = false, 0, nil
-        local function stopRGBMode()
-            if rgbConn then rgbConn:Disconnect(); rgbConn = nil end
-        end
+        local function stopRGBMode() if rgbConn then rgbConn:Disconnect(); rgbConn = nil end end
         local function startRGBMode()
             stopRGBMode()
             rgbConn = RunService.RenderStepped:Connect(function(dt)
@@ -297,26 +225,25 @@ function Settings.build(page, r)
 
         local row2 = makeRow(root, "RGB Mode", 2)
         local ledBadge = mk("Frame", {
-            Size             = UDim2.new(0, 30, 0, 14),
-            Position         = UDim2.new(0, 76, 0.5, -7),
-            BackgroundColor3 = Color3.fromRGB(20, 20, 20),
-            BorderSizePixel  = 0, ZIndex = 6,
+            Size = UDim2.new(0, 34, 0, 16), Position = UDim2.new(0, 80, 0.5, -8),
+            BackgroundColor3 = Color3.fromRGB(32, 31, 29), BorderSizePixel = 0, ZIndex = 6,
         }, row2)
-        rnd(3, ledBadge)
-        mk("UIStroke", { Color = Color3.fromRGB(42, 42, 42), Thickness = 1, Transparency = 0 }, ledBadge)
+        rnd(4, ledBadge)
+        mk("UIStroke", { Color = Color3.fromRGB(62, 58, 53), Thickness = 1, Transparency = 0 }, ledBadge)
         local ledDot = mk("Frame", {
-            Size = UDim2.new(0, 5, 0, 5), Position = UDim2.new(0, 4, 0.5, -2),
-            BackgroundColor3 = Color3.fromRGB(55, 55, 55), BorderSizePixel = 0, ZIndex = 7,
+            Size = UDim2.new(0, 5, 0, 5), Position = UDim2.new(0, 5, 0.5, -2),
+            BackgroundColor3 = Color3.fromRGB(75, 71, 65), BorderSizePixel = 0, ZIndex = 7,
         }, ledBadge)
         rnd(3, ledDot)
         mk("TextLabel", {
-            Text = "LED", Font = Enum.Font.GothamBold, TextSize = 7, TextColor3 = C.GRAY,
-            BackgroundTransparency = 1, Size = UDim2.new(1, -12, 1, 0), Position = UDim2.new(0, 11, 0, 0),
+            Text = "LED", Font = Enum.Font.GothamBold, TextSize = 7,
+            TextColor3 = Color3.fromRGB(125, 120, 112), BackgroundTransparency = 1,
+            Size = UDim2.new(1, -13, 1, 0), Position = UDim2.new(0, 12, 0, 0),
             ZIndex = 7, TextXAlignment = Enum.TextXAlignment.Center,
         }, ledBadge)
 
         local rgbChkBg, rgbChkMark, rgbChkBtn = makeCheckbox(row2, 5)
-        rgbChkBg.Position = UDim2.new(1, -16, 0.5, -8)
+        rgbChkBg.Position = UDim2.new(1, -15, 0.5, -7)
 
         rgbChkBtn.MouseButton1Click:Connect(function()
             rgbModeOn = not rgbModeOn
@@ -326,67 +253,63 @@ function Settings.build(page, r)
                 checked = false; tw(chkMark, .15, { BackgroundTransparency = 1 })
                 startRGBMode()
             else
-                tw(ledDot, .3, { BackgroundColor3 = Color3.fromRGB(55, 55, 55) })
+                tw(ledDot, .3, { BackgroundColor3 = Color3.fromRGB(75, 71, 65) })
                 stopRGBMode(); applyAccent(originalColor)
             end
         end)
 
+        -- Dropdown de Color Palette (mismo estilo que la foto)
         local palBtn = mk("TextButton", {
-            Text = "", BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 26),
+            Text = "", BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 28),
             BorderSizePixel = 0, ZIndex = 5, AutoButtonColor = false, LayoutOrder = 3,
         }, root)
         local palBg = mk("Frame", {
-            Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.fromRGB(22, 22, 22),
+            Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.fromRGB(32, 31, 29),
             BorderSizePixel = 0, ZIndex = 4,
         }, palBtn)
-        rnd(3, palBg)
-        mk("UIStroke", { Color = Color3.fromRGB(38, 38, 38), Thickness = 1, Transparency = 0 }, palBg)
-
+        rnd(4, palBg)
+        mk("UIStroke", { Color = Color3.fromRGB(58, 55, 49), Thickness = 1, Transparency = 0 }, palBg)
         local prevDot = mk("Frame", {
-            Size = UDim2.new(0, 10, 0, 10), Position = UDim2.new(0, 7, 0.5, -5),
+            Size = UDim2.new(0, 14, 0, 14), Position = UDim2.new(0, 7, 0.5, -7),
             BackgroundColor3 = C.RED, BorderSizePixel = 0, ZIndex = 6,
         }, palBg)
-        rnd(2, prevDot)
+        rnd(3, prevDot)
         table.insert(accentEls, { el = prevDot, prop = "BackgroundColor3" })
         mk("TextLabel", {
-            Text = "Color Palette", Font = Enum.Font.GothamSemibold, TextSize = 9,
+            Text = "Color Palette", Font = Enum.Font.Gotham, TextSize = 10,
             TextColor3 = C.WHITE, BackgroundTransparency = 1,
-            Size = UDim2.new(1, -44, 1, 0), Position = UDim2.new(0, 24, 0, 0),
+            Size = UDim2.new(1, -46, 1, 0), Position = UDim2.new(0, 28, 0, 0),
             TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 6,
         }, palBg)
         local arrowC = mk("TextLabel", {
-            Text = "▼", Font = Enum.Font.Code, TextSize = 7, TextColor3 = C.GRAY,
-            BackgroundTransparency = 1, Size = UDim2.new(0, 14, 1, 0), Position = UDim2.new(1, -16, 0, 0),
+            Text = "▾", Font = Enum.Font.GothamBold, TextSize = 10,
+            TextColor3 = Color3.fromRGB(125, 120, 112), BackgroundTransparency = 1,
+            Size = UDim2.new(0, 16, 1, 0), Position = UDim2.new(1, -18, 0, 0),
             TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 6,
         }, palBg)
-
-        palBtn.MouseEnter:Connect(function() tw(palBg, .1, { BackgroundColor3 = Color3.fromRGB(26, 26, 26) }) end)
-        palBtn.MouseLeave:Connect(function() tw(palBg, .1, { BackgroundColor3 = Color3.fromRGB(22, 22, 22) }) end)
+        palBtn.MouseEnter:Connect(function() tw(palBg, .1, { BackgroundColor3 = Color3.fromRGB(36, 35, 32) }) end)
+        palBtn.MouseLeave:Connect(function() tw(palBg, .1, { BackgroundColor3 = Color3.fromRGB(32, 31, 29) }) end)
 
         local pickerPanel = mk("Frame", {
-            Size = UDim2.new(1, 0, 0, 0), BackgroundColor3 = Color3.fromRGB(15, 15, 15),
+            Size = UDim2.new(1, 0, 0, 0), BackgroundColor3 = Color3.fromRGB(24, 23, 21),
             BorderSizePixel = 0, ZIndex = 5, ClipsDescendants = true, LayoutOrder = 4,
         }, root)
-        rnd(3, pickerPanel)
-        mk("UIStroke", { Color = Color3.fromRGB(38, 38, 38), Thickness = 1, Transparency = 0 }, pickerPanel)
+        rnd(4, pickerPanel)
+        mk("UIStroke", { Color = Color3.fromRGB(50, 47, 43), Thickness = 1, Transparency = 0 }, pickerPanel)
 
         local inner = mk("Frame", {
             Size = UDim2.new(0, PW-PAD*2, 0, CONTENTH), Position = UDim2.new(0, PAD, 0, PAD),
             BackgroundTransparency = 1, ZIndex = 6,
         }, pickerPanel)
 
-        local svSq = mk("Frame", {
-            Size = UDim2.new(0, SV, 0, SV), BackgroundColor3 = Color3.fromHSV(currentH, 1, 1),
-            BorderSizePixel = 0, ZIndex = 7,
-        }, inner)
+        local svSq = mk("Frame", { Size=UDim2.new(0,SV,0,SV), BackgroundColor3=Color3.fromHSV(currentH,1,1), BorderSizePixel=0, ZIndex=7 }, inner)
         rnd(3, svSq)
-        local wL = mk("Frame", { Size=UDim2.new(1,0,1,0), BackgroundColor3=Color3.new(1,1,1), BorderSizePixel=0, ZIndex=8 }, svSq)
-        local wG = Instance.new("UIGradient"); wG.Rotation=0
+        local wL=mk("Frame",{Size=UDim2.new(1,0,1,0),BackgroundColor3=Color3.new(1,1,1),BorderSizePixel=0,ZIndex=8},svSq)
+        local wG=Instance.new("UIGradient"); wG.Rotation=0
         wG.Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,0),NumberSequenceKeypoint.new(1,1)}); wG.Parent=wL
         local bL=mk("Frame",{Size=UDim2.new(1,0,1,0),BackgroundColor3=Color3.new(0,0,0),BorderSizePixel=0,ZIndex=9},svSq)
         local bG=Instance.new("UIGradient"); bG.Rotation=90
         bG.Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,1),NumberSequenceKeypoint.new(1,0)}); bG.Parent=bL
-
         local svCur=mk("Frame",{Size=UDim2.new(0,10,0,10),BackgroundColor3=Color3.new(1,1,1),BorderSizePixel=0,ZIndex=12},inner)
         rnd(5,svCur); mk("UIStroke",{Color=Color3.new(0,0,0),Thickness=1.5},svCur)
         local svHit=mk("TextButton",{Text="",BackgroundTransparency=1,Size=UDim2.new(0,SV,0,SV),ZIndex=13,AutoButtonColor=false},inner)
@@ -395,24 +318,19 @@ function Settings.build(page, r)
         rnd(3,hueBg)
         local hG=Instance.new("UIGradient"); hG.Rotation=90
         hG.Color=ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.fromRGB(255,0,0)),ColorSequenceKeypoint.new(0.17,Color3.fromRGB(255,255,0)),ColorSequenceKeypoint.new(0.33,Color3.fromRGB(0,255,0)),ColorSequenceKeypoint.new(0.50,Color3.fromRGB(0,255,255)),ColorSequenceKeypoint.new(0.67,Color3.fromRGB(0,0,255)),ColorSequenceKeypoint.new(0.83,Color3.fromRGB(255,0,255)),ColorSequenceKeypoint.new(1,Color3.fromRGB(255,0,0))}); hG.Parent=hueBg
-
         local hueCur=mk("Frame",{Size=UDim2.new(0,HW+4,0,3),BackgroundColor3=Color3.new(1,1,1),BorderSizePixel=0,ZIndex=9},inner)
         rnd(2,hueCur); mk("UIStroke",{Color=Color3.new(0,0,0),Thickness=1},hueCur)
         local hueHit=mk("TextButton",{Text="",BackgroundTransparency=1,Size=UDim2.new(0,HW,0,SV),Position=UDim2.new(0,SV+PAD,0,0),ZIndex=13,AutoButtonColor=false},inner)
 
         local rx=SV+HW+PAD*2
         local bigPrev=mk("Frame",{Size=UDim2.new(0,PREVW,0,SV-20),Position=UDim2.new(0,rx,0,0),BackgroundColor3=Color3.fromHSV(currentH,currentS,currentV),BorderSizePixel=0,ZIndex=7},inner)
-        rnd(3,bigPrev)
-        mk("UIStroke",{Color=Color3.fromRGB(38,38,38),Thickness=1,Transparency=0},bigPrev)
-
+        rnd(4,bigPrev); mk("UIStroke",{Color=Color3.fromRGB(50,47,43),Thickness=1,Transparency=0},bigPrev)
         local function toHex(c) return string.format("#%02X%02X%02X",math.floor(c.R*255),math.floor(c.G*255),math.floor(c.B*255)) end
         local hexLbl=mk("TextLabel",{Text=toHex(C.RED),Font=Enum.Font.Code,TextSize=7,TextColor3=C.GRAY,BackgroundTransparency=1,Size=UDim2.new(0,PREVW,0,14),Position=UDim2.new(0,rx,0,SV-18),TextXAlignment=Enum.TextXAlignment.Center,ZIndex=7},inner)
-
-        local applyBtn=mk("TextButton",{Text="Apply Color",Font=Enum.Font.GothamSemibold,TextSize=9,TextColor3=Color3.fromHSV(currentH,currentS,currentV),BackgroundColor3=Color3.fromRGB(22,22,22),BorderSizePixel=0,ZIndex=7,Size=UDim2.new(1,0,0,APPH),Position=UDim2.new(0,0,0,SV+PAD),AutoButtonColor=false},inner)
-        rnd(3,applyBtn)
-        mk("UIStroke",{Color=Color3.fromRGB(42,42,42),Thickness=1,Transparency=0},applyBtn)
-        applyBtn.MouseEnter:Connect(function() tw(applyBtn,.1,{BackgroundColor3=Color3.fromRGB(28,28,28)}) end)
-        applyBtn.MouseLeave:Connect(function() tw(applyBtn,.1,{BackgroundColor3=Color3.fromRGB(22,22,22)}) end)
+        local applyBtn=mk("TextButton",{Text="Apply Color",Font=Enum.Font.GothamSemibold,TextSize=9,TextColor3=Color3.fromHSV(currentH,currentS,currentV),BackgroundColor3=Color3.fromRGB(32,31,29),BorderSizePixel=0,ZIndex=7,Size=UDim2.new(1,0,0,APPH),Position=UDim2.new(0,0,0,SV+PAD),AutoButtonColor=false},inner)
+        rnd(4,applyBtn); mk("UIStroke",{Color=Color3.fromRGB(58,55,49),Thickness=1,Transparency=0},applyBtn)
+        applyBtn.MouseEnter:Connect(function() tw(applyBtn,.1,{BackgroundColor3=Color3.fromRGB(38,36,33)}) end)
+        applyBtn.MouseLeave:Connect(function() tw(applyBtn,.1,{BackgroundColor3=Color3.fromRGB(32,31,29)}) end)
 
         local function refreshPicker()
             local col=Color3.fromHSV(currentH,currentS,currentV)
@@ -426,25 +344,15 @@ function Settings.build(page, r)
             checked=not checked
             tw(chkMark,.15,{BackgroundTransparency=checked and 0 or 1})
             if checked then
-                if rgbModeOn then
-                    rgbModeOn=false; stopRGBMode(); tw(rgbChkMark,.15,{BackgroundTransparency=1})
-                    tw(ledDot,.3,{BackgroundColor3=Color3.fromRGB(55,55,55)})
-                end
+                if rgbModeOn then rgbModeOn=false;stopRGBMode();tw(rgbChkMark,.15,{BackgroundTransparency=1});tw(ledDot,.3,{BackgroundColor3=Color3.fromRGB(75,71,65)}) end
                 applyAccent(Color3.fromHSV(currentH,currentS,currentV))
             else applyAccent(originalColor) end
         end)
-
         applyBtn.MouseButton1Click:Connect(function()
-            if not checked then
-                tw(chkBg,.1,{BackgroundColor3=Color3.fromRGB(55,18,18)})
-                task.delay(.2,function() tw(chkBg,.1,{BackgroundColor3=Color3.fromRGB(22,22,22)}) end); return
-            end
-            if rgbModeOn then
-                rgbModeOn=false; stopRGBMode(); tw(rgbChkMark,.15,{BackgroundTransparency=1})
-                tw(ledDot,.3,{BackgroundColor3=Color3.fromRGB(55,55,55)})
-            end
+            if not checked then tw(chkBg,.1,{BackgroundColor3=Color3.fromRGB(55,25,22)}); task.delay(.2,function() tw(chkBg,.1,{BackgroundColor3=Color3.fromRGB(32,31,29)}) end); return end
+            if rgbModeOn then rgbModeOn=false;stopRGBMode();tw(rgbChkMark,.15,{BackgroundTransparency=1});tw(ledDot,.3,{BackgroundColor3=Color3.fromRGB(75,71,65)}) end
             local newCol=Color3.fromHSV(currentH,currentS,currentV); applyAccent(newCol)
-            tw(applyBtn,.08,{TextColor3=Color3.fromRGB(80,220,80)}); task.delay(.6,function() tw(applyBtn,.25,{TextColor3=newCol}) end)
+            tw(applyBtn,.08,{TextColor3=Color3.fromRGB(80,210,80)}); task.delay(.6,function() tw(applyBtn,.25,{TextColor3=newCol}) end)
         end)
 
         local svDrag=false
@@ -457,7 +365,6 @@ function Settings.build(page, r)
             currentV=1-math.clamp((mp.Y-svHit.AbsolutePosition.Y)/svHit.AbsoluteSize.Y,0,1)
             refreshPicker()
         end)
-
         local hueDrag=false
         hueHit.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then hueDrag=true end end)
         UIS.InputEnded:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then hueDrag=false end end)
@@ -467,23 +374,19 @@ function Settings.build(page, r)
             currentH=math.clamp((mp.Y-hueHit.AbsolutePosition.Y)/hueHit.AbsoluteSize.Y,0,1)
             refreshPicker()
         end)
-
         palBtn.MouseButton1Click:Connect(function()
             if pickerAnim then return end; pickerAnim=true; pickerOpen=not pickerOpen
-            if pickerOpen then arrowC.Text="▲"; tw(pickerPanel,.3,{Size=UDim2.new(1,0,0,TOTALH)},Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
-            else arrowC.Text="▼"; tw(pickerPanel,.25,{Size=UDim2.new(1,0,0,0)},Enum.EasingStyle.Quint,Enum.EasingDirection.In) end
+            if pickerOpen then arrowC.Text="▴"; tw(pickerPanel,.3,{Size=UDim2.new(1,0,0,TOTALH)},Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
+            else arrowC.Text="▾"; tw(pickerPanel,.25,{Size=UDim2.new(1,0,0,0)},Enum.EasingStyle.Quint,Enum.EasingDirection.In) end
             task.delay(.3,function() pickerAnim=false end)
         end)
         refreshPicker()
     end
 
     local FONTS = {
-        {name="Gotham",     font=Enum.Font.Gotham    },
-        {name="GothamBold", font=Enum.Font.GothamBold},
-        {name="Code",       font=Enum.Font.Code      },
-        {name="Ubuntu",     font=Enum.Font.Ubuntu    },
-        {name="Arcade",     font=Enum.Font.Arcade    },
-        {name="Bangers",    font=Enum.Font.Bangers   },
+        {name="Gotham",font=Enum.Font.Gotham},{name="GothamBold",font=Enum.Font.GothamBold},
+        {name="Code",font=Enum.Font.Code},{name="Ubuntu",font=Enum.Font.Ubuntu},
+        {name="Arcade",font=Enum.Font.Arcade},{name="Bangers",font=Enum.Font.Bangers},
     }
 
     local function CreateFontPicker(parent)
@@ -497,76 +400,60 @@ function Settings.build(page, r)
 
         local row1=makeRow(root,"Custom Font",1)
         local chkBg,chkMark,chkBtn=makeCheckbox(row1,5)
-        chkBg.Position=UDim2.new(1,-16,0.5,-8)
+        chkBg.Position=UDim2.new(1,-15,0.5,-7)
 
-        local selBtn=mk("TextButton",{Text="",BackgroundTransparency=1,Size=UDim2.new(1,0,0,26),BorderSizePixel=0,ZIndex=5,AutoButtonColor=false,LayoutOrder=2},root)
-        local selBg=mk("Frame",{Size=UDim2.new(1,0,1,0),BackgroundColor3=Color3.fromRGB(22,22,22),BorderSizePixel=0,ZIndex=4},selBtn)
-        rnd(3,selBg)
-        mk("UIStroke",{Color=Color3.fromRGB(38,38,38),Thickness=1,Transparency=0},selBg)
-
-        local fontIcon=mk("TextLabel",{Text="Aa",Font=Enum.Font.GothamBold,TextSize=9,TextColor3=C.RED,BackgroundTransparency=1,Size=UDim2.new(0,20,1,0),Position=UDim2.new(0,6,0,0),TextXAlignment=Enum.TextXAlignment.Center,ZIndex=6},selBg)
+        local selBtn=mk("TextButton",{Text="",BackgroundTransparency=1,Size=UDim2.new(1,0,0,28),BorderSizePixel=0,ZIndex=5,AutoButtonColor=false,LayoutOrder=2},root)
+        local selBg=mk("Frame",{Size=UDim2.new(1,0,1,0),BackgroundColor3=Color3.fromRGB(32,31,29),BorderSizePixel=0,ZIndex=4},selBtn)
+        rnd(4,selBg); mk("UIStroke",{Color=Color3.fromRGB(58,55,49),Thickness=1,Transparency=0},selBg)
+        local fontIcon=mk("TextLabel",{Text="Aa",Font=Enum.Font.GothamBold,TextSize=9,TextColor3=C.RED,BackgroundTransparency=1,Size=UDim2.new(0,22,1,0),Position=UDim2.new(0,6,0,0),TextXAlignment=Enum.TextXAlignment.Center,ZIndex=6},selBg)
         table.insert(accentEls,{el=fontIcon,prop="TextColor3"})
-        mk("Frame",{Size=UDim2.new(0,1,0,12),Position=UDim2.new(0,28,0.5,-6),BackgroundColor3=Color3.fromRGB(38,38,38),BorderSizePixel=0,ZIndex=7},selBg)
+        mk("Frame",{Size=UDim2.new(0,1,0,13),Position=UDim2.new(0,30,0.5,-6),BackgroundColor3=Color3.fromRGB(55,52,46),BorderSizePixel=0,ZIndex=7},selBg)
+        local selLbl=mk("TextLabel",{Text=FONTS[selFont].name,Font=FONTS[selFont].font,TextSize=10,TextColor3=C.WHITE,BackgroundTransparency=1,Size=UDim2.new(1,-52,1,0),Position=UDim2.new(0,36,0,0),TextXAlignment=Enum.TextXAlignment.Left,ZIndex=6},selBg)
+        local arrowF=mk("TextLabel",{Text="▾",Font=Enum.Font.GothamBold,TextSize=10,TextColor3=Color3.fromRGB(125,120,112),BackgroundTransparency=1,Size=UDim2.new(0,16,1,0),Position=UDim2.new(1,-18,0,0),TextXAlignment=Enum.TextXAlignment.Center,ZIndex=6},selBg)
+        selBtn.MouseEnter:Connect(function() tw(selBg,.1,{BackgroundColor3=Color3.fromRGB(36,35,32)}) end)
+        selBtn.MouseLeave:Connect(function() tw(selBg,.1,{BackgroundColor3=Color3.fromRGB(32,31,29)}) end)
 
-        local selLbl=mk("TextLabel",{Text=FONTS[selFont].name,Font=FONTS[selFont].font,TextSize=10,TextColor3=C.WHITE,BackgroundTransparency=1,Size=UDim2.new(1,-48,1,0),Position=UDim2.new(0,34,0,0),TextXAlignment=Enum.TextXAlignment.Left,ZIndex=6},selBg)
-        local arrowF=mk("TextLabel",{Text="▼",Font=Enum.Font.Code,TextSize=7,TextColor3=C.GRAY,BackgroundTransparency=1,Size=UDim2.new(0,14,1,0),Position=UDim2.new(1,-16,0,0),TextXAlignment=Enum.TextXAlignment.Center,ZIndex=6},selBg)
-
-        selBtn.MouseEnter:Connect(function() tw(selBg,.1,{BackgroundColor3=Color3.fromRGB(26,26,26)}) end)
-        selBtn.MouseLeave:Connect(function() tw(selBg,.1,{BackgroundColor3=Color3.fromRGB(22,22,22)}) end)
-
-        local listPanel=mk("Frame",{Size=UDim2.new(1,0,0,0),BackgroundColor3=Color3.fromRGB(15,15,15),BorderSizePixel=0,ZIndex=5,ClipsDescendants=true,LayoutOrder=3},root)
-        rnd(3,listPanel)
-        mk("UIStroke",{Color=Color3.fromRGB(38,38,38),Thickness=1,Transparency=0},listPanel)
+        local listPanel=mk("Frame",{Size=UDim2.new(1,0,0,0),BackgroundColor3=Color3.fromRGB(24,23,21),BorderSizePixel=0,ZIndex=5,ClipsDescendants=true,LayoutOrder=3},root)
+        rnd(4,listPanel); mk("UIStroke",{Color=Color3.fromRGB(50,47,43),Thickness=1,Transparency=0},listPanel)
         local listInner=mk("Frame",{Size=UDim2.new(1,-PAD*2,0,0),AutomaticSize=Enum.AutomaticSize.Y,Position=UDim2.new(0,PAD,0,PAD/2),BackgroundTransparency=1,ZIndex=6},listPanel)
         mk("UIListLayout",{Padding=UDim.new(0,GAPF),SortOrder=Enum.SortOrder.LayoutOrder},listInner)
 
         local itemRefs={}
         for i,fd in ipairs(FONTS) do
             local isSel=(i==selFont)
-            local item=mk("Frame",{Size=UDim2.new(1,0,0,ITEMH),BackgroundColor3=isSel and Color3.fromRGB(24,24,24) or Color3.fromRGB(18,18,18),BorderSizePixel=0,ZIndex=7,LayoutOrder=i},listInner)
+            local item=mk("Frame",{Size=UDim2.new(1,0,0,ITEMH),BackgroundColor3=isSel and Color3.fromRGB(35,34,31) or Color3.fromRGB(28,27,25),BorderSizePixel=0,ZIndex=7,LayoutOrder=i},listInner)
             rnd(3,item)
-
-            -- Barra lateral roja cuando seleccionado
             local selBar=mk("Frame",{Size=UDim2.new(0,2,0,12),Position=UDim2.new(0,0,0.5,-6),BackgroundColor3=C.RED,BorderSizePixel=0,ZIndex=8},item)
             rnd(1,selBar); selBar.BackgroundTransparency=isSel and 0 or 1
             table.insert(accentEls,{el=selBar,prop="BackgroundColor3"})
-
-            mk("UIStroke",{Color=isSel and C.RED or Color3.fromRGB(36,36,36),Thickness=1,Transparency=isSel and 0.6 or 0},item)
+            mk("UIStroke",{Color=isSel and Color3.fromRGB(88,83,76) or Color3.fromRGB(44,42,38),Thickness=1,Transparency=isSel and 0.2 or 0},item)
             local lbl=mk("TextLabel",{Text=fd.name,Font=fd.font,TextSize=10,TextColor3=isSel and C.WHITE or C.GRAY,BackgroundTransparency=1,Size=UDim2.new(1,-18,1,0),Position=UDim2.new(0,8,0,0),TextXAlignment=Enum.TextXAlignment.Left,ZIndex=8},item)
             local dot=mk("Frame",{Size=UDim2.new(0,5,0,5),Position=UDim2.new(1,-11,0.5,-2),BackgroundColor3=C.RED,BorderSizePixel=0,ZIndex=8},item)
             rnd(3,dot); dot.BackgroundTransparency=isSel and 0 or 1
             table.insert(accentEls,{el=dot,prop="BackgroundColor3"})
             local hitBtn=mk("TextButton",{Text="",BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),ZIndex=9,AutoButtonColor=false},item)
             itemRefs[i]={item=item,lbl=lbl,dot=dot,selBar=selBar}
-
-            hitBtn.MouseEnter:Connect(function()
-                if i~=selFont then tw(item,.1,{BackgroundColor3=Color3.fromRGB(22,22,22)}); tw(lbl,.1,{TextColor3=C.WHITE}) end
-            end)
-            hitBtn.MouseLeave:Connect(function()
-                if i~=selFont then tw(item,.1,{BackgroundColor3=Color3.fromRGB(18,18,18)}); tw(lbl,.1,{TextColor3=C.GRAY}) end
-            end)
+            hitBtn.MouseEnter:Connect(function() if i~=selFont then tw(item,.1,{BackgroundColor3=Color3.fromRGB(32,31,28)}); tw(lbl,.1,{TextColor3=C.WHITE}) end end)
+            hitBtn.MouseLeave:Connect(function() if i~=selFont then tw(item,.1,{BackgroundColor3=Color3.fromRGB(28,27,25)}); tw(lbl,.1,{TextColor3=C.GRAY}) end end)
             hitBtn.MouseButton1Click:Connect(function()
                 local prev=itemRefs[selFont]
-                tw(prev.item,.15,{BackgroundColor3=Color3.fromRGB(18,18,18)}); tw(prev.lbl,.15,{TextColor3=C.GRAY})
+                tw(prev.item,.15,{BackgroundColor3=Color3.fromRGB(28,27,25)}); tw(prev.lbl,.15,{TextColor3=C.GRAY})
                 prev.dot.BackgroundTransparency=1; prev.selBar.BackgroundTransparency=1
-                selFont=i; tw(item,.15,{BackgroundColor3=Color3.fromRGB(24,24,24)}); tw(lbl,.15,{TextColor3=C.WHITE})
+                selFont=i; tw(item,.15,{BackgroundColor3=Color3.fromRGB(35,34,31)}); tw(lbl,.15,{TextColor3=C.WHITE})
                 dot.BackgroundTransparency=0; selBar.BackgroundTransparency=0
                 selLbl.Text=fd.name; selLbl.Font=fd.font
                 if checked then title1.Font=fd.font; if title3 then title3.Font=fd.font end; for _,t in ipairs(navT) do t.lbl.Font=fd.font end end
             end)
         end
-
         chkBtn.MouseButton1Click:Connect(function()
-            checked=not checked
-            tw(chkMark,.15,{BackgroundTransparency=checked and 0 or 1})
+            checked=not checked; tw(chkMark,.15,{BackgroundTransparency=checked and 0 or 1})
             if checked then local fd=FONTS[selFont]; title1.Font=fd.font; if title3 then title3.Font=fd.font end; for _,t in ipairs(navT) do t.lbl.Font=fd.font end
             else title1.Font=Enum.Font.GothamBold; if title3 then title3.Font=Enum.Font.Gotham end; for _,t in ipairs(navT) do t.lbl.Font=Enum.Font.GothamSemibold end end
         end)
-
         selBtn.MouseButton1Click:Connect(function()
             if panAnim then return end; panAnim=true; panOpen=not panOpen
-            if panOpen then arrowF.Text="▲"; tw(listPanel,.3,{Size=UDim2.new(1,0,0,LISTHTOTAL)},Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
-            else arrowF.Text="▼"; tw(listPanel,.25,{Size=UDim2.new(1,0,0,0)},Enum.EasingStyle.Quint,Enum.EasingDirection.In) end
+            if panOpen then arrowF.Text="▴"; tw(listPanel,.3,{Size=UDim2.new(1,0,0,LISTHTOTAL)},Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
+            else arrowF.Text="▾"; tw(listPanel,.25,{Size=UDim2.new(1,0,0,0)},Enum.EasingStyle.Quint,Enum.EasingDirection.In) end
             task.delay(.3,function() panAnim=false end)
         end)
     end
@@ -574,7 +461,6 @@ function Settings.build(page, r)
     local function CreateKeybinds(parent)
         local root=mk("Frame",{Size=UDim2.new(1,0,0,0),AutomaticSize=Enum.AutomaticSize.Y,BackgroundTransparency=1,LayoutOrder=SO()},parent)
         mk("UIListLayout",{Padding=UDim.new(0,5),SortOrder=Enum.SortOrder.LayoutOrder},root)
-
         local justAssignedMin,justAssignedClose,justAssignedSesion,justAssignedViewTime=false,false,false,false
 
         local function keyName(kc)
@@ -585,19 +471,17 @@ function Settings.build(page, r)
             if #raw<=6 then return raw else return raw:sub(1,5).."." end
         end
 
-        -- Badge tecla oscuro con detalle inferior (keycap feel)
+        -- Badge tecla: caja oscura redondeada, texto key, limpio como la foto
         local function makeKeyRow(parent,labelText,defaultKey,lo)
             local row=mk("Frame",{Size=UDim2.new(1,0,0,28),BackgroundTransparency=1,LayoutOrder=lo or SO()},parent)
-            mk("TextLabel",{Text=labelText,Font=Enum.Font.GothamSemibold,TextSize=10,TextColor3=C.WHITE,BackgroundTransparency=1,Size=UDim2.new(1,-52,1,0),TextXAlignment=Enum.TextXAlignment.Left,ZIndex=5},row)
-            local keyBg=mk("Frame",{Size=UDim2.new(0,46,0,18),Position=UDim2.new(1,-46,0.5,-9),BackgroundColor3=Color3.fromRGB(22,22,22),BorderSizePixel=0,ZIndex=5},row)
-            rnd(3,keyBg)
-            mk("UIStroke",{Color=Color3.fromRGB(48,48,48),Thickness=1,Transparency=0},keyBg)
-            -- Sombra inferior (keycap)
-            mk("Frame",{Size=UDim2.new(1,0,0,2),Position=UDim2.new(0,0,1,-2),BackgroundColor3=Color3.fromRGB(38,38,38),BorderSizePixel=0,ZIndex=6},keyBg)
-            local keyLbl=mk("TextLabel",{Text=keyName(defaultKey),Font=Enum.Font.GothamBold,TextSize=9,TextColor3=C.WHITE,BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),ZIndex=7,TextXAlignment=Enum.TextXAlignment.Center},keyBg)
-            local keyBtn=mk("TextButton",{Text="",BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),ZIndex=8,AutoButtonColor=false},keyBg)
-            keyBtn.MouseEnter:Connect(function() tw(keyBg,.1,{BackgroundColor3=Color3.fromRGB(28,28,28)}) end)
-            keyBtn.MouseLeave:Connect(function() tw(keyBg,.1,{BackgroundColor3=Color3.fromRGB(22,22,22)}) end)
+            mk("TextLabel",{Text=labelText,Font=Enum.Font.Gotham,TextSize=11,TextColor3=C.WHITE,BackgroundTransparency=1,Size=UDim2.new(1,-60,1,0),TextXAlignment=Enum.TextXAlignment.Left,ZIndex=5},row)
+            local keyBg=mk("Frame",{Size=UDim2.new(0,52,0,20),Position=UDim2.new(1,-52,0.5,-10),BackgroundColor3=Color3.fromRGB(32,31,29),BorderSizePixel=0,ZIndex=5},row)
+            rnd(5,keyBg)
+            mk("UIStroke",{Color=Color3.fromRGB(68,64,57),Thickness=1,Transparency=0},keyBg)
+            local keyLbl=mk("TextLabel",{Text=keyName(defaultKey),Font=Enum.Font.GothamBold,TextSize=9,TextColor3=C.WHITE,BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),ZIndex=6,TextXAlignment=Enum.TextXAlignment.Center},keyBg)
+            local keyBtn=mk("TextButton",{Text="",BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),ZIndex=7,AutoButtonColor=false},keyBg)
+            keyBtn.MouseEnter:Connect(function() tw(keyBg,.1,{BackgroundColor3=Color3.fromRGB(38,36,33)}) end)
+            keyBtn.MouseLeave:Connect(function() tw(keyBg,.1,{BackgroundColor3=Color3.fromRGB(32,31,29)}) end)
             return keyBg,keyLbl,keyBtn
         end
 
@@ -612,13 +496,12 @@ function Settings.build(page, r)
                 task.delay(0.1,function() justAssignedMin=false end)
                 if minListenConn then minListenConn:Disconnect(); minListenConn=nil end
                 minKeyLbl.Text=keyName(currentMinKey); minKeyLbl.TextColor3=C.WHITE
-                tw(minKeyBg,.08,{BackgroundColor3=Color3.fromRGB(15,35,15)}); task.delay(.35,function() tw(minKeyBg,.2,{BackgroundColor3=Color3.fromRGB(22,22,22)}) end)
+                tw(minKeyBg,.08,{BackgroundColor3=Color3.fromRGB(18,32,18)}); task.delay(.35,function() tw(minKeyBg,.2,{BackgroundColor3=Color3.fromRGB(32,31,29)}) end)
             end)
         end
         minKeyBtn.MouseButton1Click:Connect(function()
             if minListening then return end; minListening=true
-            tw(minKeyBg,.1,{BackgroundColor3=Color3.fromRGB(45,30,10)}); minKeyLbl.Text="···"; minKeyLbl.TextColor3=C.GRAY
-            startMinListening()
+            tw(minKeyBg,.1,{BackgroundColor3=Color3.fromRGB(42,32,12)}); minKeyLbl.Text="···"; minKeyLbl.TextColor3=C.GRAY; startMinListening()
         end)
 
         makeSectionLabel(root,"CLOSE PANEL",3)
@@ -632,13 +515,12 @@ function Settings.build(page, r)
                 task.delay(0.1,function() justAssignedClose=false end)
                 if closeListenConn then closeListenConn:Disconnect(); closeListenConn=nil end
                 closeKeyLbl.Text=keyName(currentCloseKey); closeKeyLbl.TextColor3=C.WHITE
-                tw(closeKeyBg,.08,{BackgroundColor3=Color3.fromRGB(15,35,15)}); task.delay(.35,function() tw(closeKeyBg,.2,{BackgroundColor3=Color3.fromRGB(22,22,22)}) end)
+                tw(closeKeyBg,.08,{BackgroundColor3=Color3.fromRGB(18,32,18)}); task.delay(.35,function() tw(closeKeyBg,.2,{BackgroundColor3=Color3.fromRGB(32,31,29)}) end)
             end)
         end
         closeKeyBtn.MouseButton1Click:Connect(function()
             if closeListening then return end; closeListening=true
-            tw(closeKeyBg,.1,{BackgroundColor3=Color3.fromRGB(45,30,10)}); closeKeyLbl.Text="···"; closeKeyLbl.TextColor3=C.GRAY
-            startCloseListening()
+            tw(closeKeyBg,.1,{BackgroundColor3=Color3.fromRGB(42,32,12)}); closeKeyLbl.Text="···"; closeKeyLbl.TextColor3=C.GRAY; startCloseListening()
         end)
 
         makeSectionLabel(root,"CLOSE SESION",5)
@@ -652,13 +534,12 @@ function Settings.build(page, r)
                 task.delay(0.1,function() justAssignedSesion=false end)
                 if sesionListenConn then sesionListenConn:Disconnect(); sesionListenConn=nil end
                 sesionKeyLbl.Text=keyName(currentSesionKey); sesionKeyLbl.TextColor3=C.WHITE
-                tw(sesionKeyBg,.08,{BackgroundColor3=Color3.fromRGB(15,35,15)}); task.delay(.35,function() tw(sesionKeyBg,.2,{BackgroundColor3=Color3.fromRGB(22,22,22)}) end)
+                tw(sesionKeyBg,.08,{BackgroundColor3=Color3.fromRGB(18,32,18)}); task.delay(.35,function() tw(sesionKeyBg,.2,{BackgroundColor3=Color3.fromRGB(32,31,29)}) end)
             end)
         end
         sesionKeyBtn.MouseButton1Click:Connect(function()
             if sesionListening then return end; sesionListening=true
-            tw(sesionKeyBg,.1,{BackgroundColor3=Color3.fromRGB(45,30,10)}); sesionKeyLbl.Text="···"; sesionKeyLbl.TextColor3=C.GRAY
-            startSesionListening()
+            tw(sesionKeyBg,.1,{BackgroundColor3=Color3.fromRGB(42,32,12)}); sesionKeyLbl.Text="···"; sesionKeyLbl.TextColor3=C.GRAY; startSesionListening()
         end)
 
         makeSectionLabel(root,"VIEW TIME",7)
@@ -672,35 +553,25 @@ function Settings.build(page, r)
                 task.delay(0.1,function() justAssignedViewTime=false end)
                 if viewTimeListenConn then viewTimeListenConn:Disconnect(); viewTimeListenConn=nil end
                 viewTimeKeyLbl.Text=keyName(currentViewTimeKey); viewTimeKeyLbl.TextColor3=C.WHITE
-                tw(viewTimeKeyBg,.08,{BackgroundColor3=Color3.fromRGB(15,35,15)}); task.delay(.35,function() tw(viewTimeKeyBg,.2,{BackgroundColor3=Color3.fromRGB(22,22,22)}) end)
+                tw(viewTimeKeyBg,.08,{BackgroundColor3=Color3.fromRGB(18,32,18)}); task.delay(.35,function() tw(viewTimeKeyBg,.2,{BackgroundColor3=Color3.fromRGB(32,31,29)}) end)
             end)
         end
         viewTimeKeyBtn.MouseButton1Click:Connect(function()
             if viewTimeListening then return end; viewTimeListening=true
-            tw(viewTimeKeyBg,.1,{BackgroundColor3=Color3.fromRGB(45,30,10)}); viewTimeKeyLbl.Text="···"; viewTimeKeyLbl.TextColor3=C.GRAY
-            startViewTimeListening()
+            tw(viewTimeKeyBg,.1,{BackgroundColor3=Color3.fromRGB(42,32,12)}); viewTimeKeyLbl.Text="···"; viewTimeKeyLbl.TextColor3=C.GRAY; startViewTimeListening()
         end)
 
         local toggleConn=UIS.InputBegan:Connect(function(input,gpe)
             if gpe then return end
             if input.UserInputType==Enum.UserInputType.Keyboard then
                 if minListening or closeListening or sesionListening or viewTimeListening then return end
-                if input.KeyCode==currentMinKey and not justAssignedMin then
-                    if r.anim and r.anim.toggleMinimize then r.anim.toggleMinimize() end
-                end
-                if input.KeyCode==currentCloseKey and not justAssignedClose then
-                    if r.anim and r.anim.doClose then r.anim.doClose() end
-                end
+                if input.KeyCode==currentMinKey and not justAssignedMin then if r.anim and r.anim.toggleMinimize then r.anim.toggleMinimize() end end
+                if input.KeyCode==currentCloseKey and not justAssignedClose then if r.anim and r.anim.doClose then r.anim.doClose() end end
                 if input.KeyCode==currentSesionKey and not justAssignedSesion then
                     if r.anim and r.anim.doClose then r.anim.doClose() end
-                    task.delay(0.3, function()
-                        local ok, content = pcall(function()
-                            return game:HttpGet("https://raw.githubusercontent.com/denzells/verified/main/ui.lua")
-                        end)
-                        if ok and content and content ~= "" then
-                            local fn, err = _loadstring(content)
-                            if fn then pcall(fn) end
-                        end
+                    task.delay(0.3,function()
+                        local ok,content=pcall(function() return game:HttpGet("https://raw.githubusercontent.com/denzells/verified/main/ui.lua") end)
+                        if ok and content and content~="" then local fn,err=_loadstring(content); if fn then pcall(fn) end end
                     end)
                 end
                 if input.KeyCode==currentViewTimeKey and not justAssignedViewTime then
@@ -708,7 +579,6 @@ function Settings.build(page, r)
                 end
             end
         end)
-
         local toggleConnRelease=UIS.InputEnded:Connect(function(input)
             if input.UserInputType==Enum.UserInputType.Keyboard then
                 if input.KeyCode==currentViewTimeKey then
@@ -716,54 +586,40 @@ function Settings.build(page, r)
                 end
             end
         end)
-
         root.Destroying:Connect(function()
-            if minListenConn     then minListenConn:Disconnect()     end
-            if closeListenConn   then closeListenConn:Disconnect()   end
-            if sesionListenConn  then sesionListenConn:Disconnect()  end
-            if viewTimeListenConn then viewTimeListenConn:Disconnect() end
-            if toggleConn        then toggleConn:Disconnect()        end
-            if toggleConnRelease then toggleConnRelease:Disconnect() end
+            if minListenConn then minListenConn:Disconnect() end; if closeListenConn then closeListenConn:Disconnect() end
+            if sesionListenConn then sesionListenConn:Disconnect() end; if viewTimeListenConn then viewTimeListenConn:Disconnect() end
+            if toggleConn then toggleConn:Disconnect() end; if toggleConnRelease then toggleConnRelease:Disconnect() end
         end)
     end
 
     local function CreateSessionInfo(parent)
-        local SAVE_FILE = "serios_saved.json"
-        local canRead   = typeof(readfile)=="function" and typeof(isfile)=="function"
-
-        local username, key, expiry = "N/A", "N/A", "N/A"
-        local isLifetime = false
-
+        local SAVE_FILE="serios_saved.json"
+        local canRead=typeof(readfile)=="function" and typeof(isfile)=="function"
+        local username,key,expiry="N/A","N/A","N/A"
+        local isLifetime=false
         if canRead then
-            local ok, result = pcall(function()
+            local ok,result=pcall(function()
                 if not isfile(SAVE_FILE) then return nil end
                 return HttpService:JSONDecode(readfile(SAVE_FILE))
             end)
-            if ok and result and result.username and result.key then
-                username=result.username; key=result.key; expiry=result.expiry or "N/A"
+            if ok and result and result.username and result.key then username=result.username; key=result.key; expiry=result.expiry or "N/A"
             else username="Not Found"; key="Not Found" end
         end
-
         local function formatExpiryShort(exp)
             if not exp or exp=="N/A" or exp=="Not Found" then return "N/A" end
             if exp=="lifetime" then isLifetime=true; return "Lifetime" end
-            local ts=tonumber(exp)
-            if ts then local d=os.date("*t",ts); return string.format("%02d/%02d/%04d",d.day,d.month,d.year) end
+            local ts=tonumber(exp); if ts then local d=os.date("*t",ts); return string.format("%02d/%02d/%04d",d.day,d.month,d.year) end
             return tostring(exp)
         end
-
         local function formatExpiryFull(exp)
             if not exp or exp=="N/A" or exp=="Not Found" then return "N/A" end
             if exp=="lifetime" then return "Lifetime (no expiry)" end
-            local ts=tonumber(exp)
-            if ts then local d=os.date("*t",ts); return string.format("%02d/%02d/%04d  %02d:%02d:%02d",d.day,d.month,d.year,d.hour,d.min,d.sec) end
+            local ts=tonumber(exp); if ts then local d=os.date("*t",ts); return string.format("%02d/%02d/%04d  %02d:%02d:%02d",d.day,d.month,d.year,d.hour,d.min,d.sec) end
             return tostring(exp)
         end
-
-        shortExpiryText=formatExpiryShort(expiry)
-        fullExpiryText=formatExpiryFull(expiry)
-
-        local expiryColor=(isLifetime or isAdmin) and Color3.fromRGB(230,230,230) or Color3.fromRGB(60,210,90)
+        shortExpiryText=formatExpiryShort(expiry); fullExpiryText=formatExpiryFull(expiry)
+        local expiryColor=(isLifetime or isAdmin) and Color3.fromRGB(228,226,222) or Color3.fromRGB(72,200,88)
 
         local gridRow=mk("Frame",{Size=UDim2.new(1,0,0,46),BackgroundTransparency=1,LayoutOrder=SO()},parent)
         mk("UIListLayout",{FillDirection=Enum.FillDirection.Horizontal,Padding=UDim.new(0,6),SortOrder=Enum.SortOrder.LayoutOrder},gridRow)
@@ -771,12 +627,11 @@ function Settings.build(page, r)
         local function makeCompactField(parent,label,value,icon,isPassword,lo,overrideColor)
             local container=mk("Frame",{Size=UDim2.new(0.333,-5,1,0),BackgroundTransparency=1,LayoutOrder=lo},parent)
             mk("TextLabel",{Text=label,Font=Enum.Font.GothamBold,TextSize=8,TextColor3=C.GRAY,BackgroundTransparency=1,Size=UDim2.new(1,0,0,12),TextXAlignment=Enum.TextXAlignment.Left,ZIndex=5},container)
-            local box=mk("Frame",{Size=UDim2.new(1,0,0,28),Position=UDim2.new(0,0,0,14),BackgroundColor3=Color3.fromRGB(20,20,20),BorderSizePixel=0,ZIndex=5},container)
-            rnd(3,box)
-            mk("UIStroke",{Color=Color3.fromRGB(36,36,36),Thickness=1,Transparency=0},box)
+            local box=mk("Frame",{Size=UDim2.new(1,0,0,28),Position=UDim2.new(0,0,0,14),BackgroundColor3=Color3.fromRGB(24,23,21),BorderSizePixel=0,ZIndex=5},container)
+            rnd(4,box); mk("UIStroke",{Color=Color3.fromRGB(50,47,43),Thickness=1,Transparency=0},box)
             if icon then
-                mk("Frame",{Size=UDim2.new(0,1,0,14),Position=UDim2.new(0,28,0.5,-7),BackgroundColor3=Color3.fromRGB(38,38,38),BorderSizePixel=0,ZIndex=7},box)
-                local img=mk("ImageLabel",{Image=icon,Size=UDim2.new(0,13,0,13),Position=UDim2.new(0,8,0.5,-6),BackgroundTransparency=1,ImageColor3=C.RED,ZIndex=6},box)
+                mk("Frame",{Size=UDim2.new(0,1,0,13),Position=UDim2.new(0,28,0.5,-6),BackgroundColor3=Color3.fromRGB(50,47,43),BorderSizePixel=0,ZIndex=7},box)
+                local img=mk("ImageLabel",{Image=icon,Size=UDim2.new(0,12,0,12),Position=UDim2.new(0,8,0.5,-6),BackgroundTransparency=1,ImageColor3=C.RED,ZIndex=6},box)
                 table.insert(accentEls,{el=img,prop="ImageColor3"})
             end
             local displayText=isPassword and string.rep("•",math.min(#value,18)) or value
@@ -793,7 +648,6 @@ function Settings.build(page, r)
             end
             return textLbl
         end
-
         makeCompactField(gridRow,"USERNAME",username,"rbxassetid://75066739039083",false,1,nil)
         makeCompactField(gridRow,"KEY",key,"rbxassetid://126448589402910",true,2,nil)
         expiryLabelRef=makeCompactField(gridRow,"EXPIRY",shortExpiryText,"rbxassetid://78475382175834",false,3,expiryColor)
@@ -808,37 +662,36 @@ function Settings.build(page, r)
 
         local customPanel=MiniPanel(topRow,"Custom Panel",nil)
         customPanel.Parent.Size=UDim2.new(0.5,-4,0,0); customPanel.Parent.AutomaticSize=Enum.AutomaticSize.Y
-        -- Ícono rojo en header (estilo foto: esquina superior derecha)
-        local cpIcon=mk("ImageLabel",{Image="rbxassetid://79986513204084",Size=UDim2.new(0,14,0,14),Position=UDim2.new(1,-22,0,8),BackgroundTransparency=1,ImageColor3=C.RED,ZIndex=7},customPanel.Parent)
-        table.insert(accentEls,{el=cpIcon,prop="ImageColor3"})
+        -- Ícono en el header (FindFirstChildOfClass busca el primer Frame = el header)
+        local cpHeader=customPanel.Parent:FindFirstChildOfClass("Frame")
+        if cpHeader then
+            local cpIcon=mk("ImageLabel",{Image="rbxassetid://79986513204084",Size=UDim2.new(0,13,0,13),Position=UDim2.new(1,-22,0.5,-6),BackgroundTransparency=1,ImageColor3=C.RED,ZIndex=8},cpHeader)
+            table.insert(accentEls,{el=cpIcon,prop="ImageColor3"})
+        end
         CreateAccentPicker(customPanel); CreateFontPicker(customPanel)
 
         local keybindPanel=MiniPanel(topRow,"Keybinds",nil)
         keybindPanel.Parent.Size=UDim2.new(0.5,-4,0,0); keybindPanel.Parent.AutomaticSize=Enum.AutomaticSize.Y
-        local kbIcon=mk("ImageLabel",{Image="rbxassetid://75198932068107",Size=UDim2.new(0,14,0,14),Position=UDim2.new(1,-22,0,8),BackgroundTransparency=1,ImageColor3=C.RED,ZIndex=7},keybindPanel.Parent)
-        table.insert(accentEls,{el=kbIcon,prop="ImageColor3"})
+        local kbHeader=keybindPanel.Parent:FindFirstChildOfClass("Frame")
+        if kbHeader then
+            local kbIcon=mk("ImageLabel",{Image="rbxassetid://75198932068107",Size=UDim2.new(0,13,0,13),Position=UDim2.new(1,-22,0.5,-6),BackgroundTransparency=1,ImageColor3=Color3.fromRGB(125,120,112),ZIndex=8},kbHeader)
+            table.insert(accentEls,{el=kbIcon,prop="ImageColor3"})
+        end
         CreateKeybinds(keybindPanel)
 
-        -- Panel sesión con mismo estilo
-        local sessionOuterPanel=mk("Frame",{Size=UDim2.new(1,0,0,0),AutomaticSize=Enum.AutomaticSize.Y,BackgroundColor3=Color3.fromRGB(18,18,18),BorderSizePixel=0,LayoutOrder=SO()},page)
-        rnd(4,sessionOuterPanel)
-        mk("UIStroke",{Color=Color3.fromRGB(38,38,38),Thickness=1,Transparency=0},sessionOuterPanel)
-
-        local sesHeader=mk("Frame",{Size=UDim2.new(1,0,0,30),BackgroundColor3=Color3.fromRGB(12,12,12),BorderSizePixel=0,ZIndex=4,ClipsDescendants=true},sessionOuterPanel)
-        rnd(4,sesHeader)
-        mk("Frame",{Size=UDim2.new(1,0,0.5,0),Position=UDim2.new(0,0,0.5,0),BackgroundColor3=Color3.fromRGB(12,12,12),BorderSizePixel=0,ZIndex=3},sesHeader)
-
-        local sesBar=mk("Frame",{Size=UDim2.new(0,2,0,14),Position=UDim2.new(0,8,0.5,-7),BackgroundColor3=C.RED,BorderSizePixel=0,ZIndex=6},sesHeader)
+        local sessionOuterPanel=mk("Frame",{Size=UDim2.new(1,0,0,0),AutomaticSize=Enum.AutomaticSize.Y,BackgroundColor3=Color3.fromRGB(28,27,25),BorderSizePixel=0,LayoutOrder=SO()},page)
+        rnd(5,sessionOuterPanel)
+        mk("UIStroke",{Color=Color3.fromRGB(48,46,42),Thickness=1,Transparency=0.35},sessionOuterPanel)
+        local sesHeader=mk("Frame",{Size=UDim2.new(1,0,0,34),BackgroundColor3=Color3.fromRGB(22,21,19),BorderSizePixel=0,ZIndex=4,ClipsDescendants=true},sessionOuterPanel)
+        rnd(5,sesHeader)
+        mk("Frame",{Size=UDim2.new(1,0,0.5,0),Position=UDim2.new(0,0,0.5,0),BackgroundColor3=Color3.fromRGB(22,21,19),BorderSizePixel=0,ZIndex=3},sesHeader)
+        local sesBar=mk("Frame",{Size=UDim2.new(0,2,0,16),Position=UDim2.new(0,8,0.5,-8),BackgroundColor3=C.RED,BorderSizePixel=0,ZIndex=6},sesHeader)
         rnd(1,sesBar); table.insert(accentEls,{el=sesBar,prop="BackgroundColor3"})
-
-        mk("TextLabel",{Text="Info Sesion",Font=Enum.Font.GothamBold,TextSize=11,TextColor3=C.WHITE,BackgroundTransparency=1,Size=UDim2.new(1,-40,1,0),Position=UDim2.new(0,16,0,0),TextXAlignment=Enum.TextXAlignment.Left,ZIndex=6},sesHeader)
-
-        local sesIcon=mk("ImageLabel",{Image="rbxassetid://78475382175834",Size=UDim2.new(0,14,0,14),Position=UDim2.new(1,-22,0.5,-7),BackgroundTransparency=1,ImageColor3=C.RED,ZIndex=7},sesHeader)
+        mk("TextLabel",{Text="Info Sesion",Font=Enum.Font.GothamBold,TextSize=12,TextColor3=C.WHITE,BackgroundTransparency=1,Size=UDim2.new(1,-44,1,0),Position=UDim2.new(0,16,0,0),TextXAlignment=Enum.TextXAlignment.Left,ZIndex=6},sesHeader)
+        local sesIcon=mk("ImageLabel",{Image="rbxassetid://78475382175834",Size=UDim2.new(0,13,0,13),Position=UDim2.new(1,-22,0.5,-6),BackgroundTransparency=1,ImageColor3=C.RED,ZIndex=7},sesHeader)
         table.insert(accentEls,{el=sesIcon,prop="ImageColor3"})
-
-        mk("Frame",{Size=UDim2.new(1,0,0,1),Position=UDim2.new(0,0,0,30),BackgroundColor3=Color3.fromRGB(36,36,36),BorderSizePixel=0,ZIndex=4},sessionOuterPanel)
-
-        local sessionContent=mk("Frame",{Size=UDim2.new(1,-16,0,0),Position=UDim2.new(0,8,0,38),AutomaticSize=Enum.AutomaticSize.Y,BackgroundTransparency=1},sessionOuterPanel)
+        mk("Frame",{Size=UDim2.new(1,0,0,1),Position=UDim2.new(0,0,0,34),BackgroundColor3=Color3.fromRGB(42,40,37),BorderSizePixel=0,ZIndex=4},sessionOuterPanel)
+        local sessionContent=mk("Frame",{Size=UDim2.new(1,-18,0,0),Position=UDim2.new(0,9,0,42),AutomaticSize=Enum.AutomaticSize.Y,BackgroundTransparency=1},sessionOuterPanel)
         mk("UIPadding",{PaddingBottom=UDim.new(0,10)},sessionOuterPanel)
         CreateSessionInfo(sessionContent)
     end)
