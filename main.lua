@@ -1,5 +1,5 @@
 -- main.lua – PanelBase | checktheprint (Restyled)
--- Captura loadstring de múltiples fuentes para compatibilidad con distintos executors
+-- loadstring compatible con múltiples executors
 local _loadstring = loadstring
 	or (syn and syn.loadstring)
 	or (fluxus and fluxus.loadstring)
@@ -7,42 +7,69 @@ local _loadstring = loadstring
 
 local RAW_BASE = "https://raw.githubusercontent.com/denzells/panel/main/"
 
+-- Descarga con fallback: HttpGet → request() → HttpGetAsync
+local function fetchContent(url)
+	-- Método 1: game:HttpGet
+	local ok, res = pcall(function()
+		return game:HttpGet(url, true)
+	end)
+	if ok and res and res ~= "" and res:sub(1,1) ~= "<" then return res end
+
+	-- Método 2: request() — Synapse X, KRNL, Fluxus, etc.
+	ok, res = pcall(function()
+		local r = request({ Url = url, Method = "GET" })
+		return r and r.Body
+	end)
+	if ok and res and res ~= "" and res:sub(1,1) ~= "<" then return res end
+
+	-- Método 3: HttpGetAsync (algunos executors más viejos)
+	ok, res = pcall(function()
+		return game:GetService("HttpService"):GetAsync(url, true)
+	end)
+	if ok and res and res ~= "" and res:sub(1,1) ~= "<" then return res end
+
+	return nil
+end
+
 local function loadModule(path)
 	local url = RAW_BASE .. path
+	print("[BrutalityPanel] Cargando: " .. path)
 
-	-- 1. Descargar
+	-- 1. Descargar (3 intentos)
 	local content
-	local ok1, err1 = pcall(function()
-		content = game:HttpGet(url, true)
-	end)
-	if not ok1 then
-		warn("[BrutalityPanel] HttpGet falló en '" .. path .. "': " .. tostring(err1))
-		return nil
+	for attempt = 1, 3 do
+		content = fetchContent(url)
+		if content then break end
+		if attempt < 3 then
+			warn("[BrutalityPanel] Intento " .. attempt .. " fallido para '" .. path .. "', reintentando...")
+			task.wait(0.5)
+		end
 	end
-	if not content or content == "" or content:sub(1,1) == "<" then
-		-- Si devuelve HTML significa 404 u otro error de GitHub
-		warn("[BrutalityPanel] Contenido inválido para '" .. path .. "' (¿archivo no existe en el repo?)")
+
+	if not content then
+		warn("[BrutalityPanel] ✗ No se pudo descargar '" .. path .. "' — verifica que el archivo existe en el repo y que HTTP está habilitado en el executor")
 		return nil
 	end
 
 	-- 2. Compilar
 	if not _loadstring then
-		warn("[BrutalityPanel] loadstring no disponible en este executor")
+		warn("[BrutalityPanel] ✗ loadstring no disponible — executor no soportado")
 		return nil
 	end
-	local fn, err2 = _loadstring(content, path)
+	local fn, compErr = _loadstring(content, "@" .. path)
 	if not fn then
-		warn("[BrutalityPanel] Error de compilación en '" .. path .. "': " .. tostring(err2))
+		warn("[BrutalityPanel] ✗ Error compilando '" .. path .. "': " .. tostring(compErr))
 		return nil
 	end
 
 	-- 3. Ejecutar
-	local ok3, result = pcall(fn)
-	if not ok3 then
-		warn("[BrutalityPanel] Error de ejecución en '" .. path .. "': " .. tostring(result))
+	local ok, result = pcall(fn)
+	if not ok then
+		warn("[BrutalityPanel] ✗ Error ejecutando '" .. path .. "': " .. tostring(result))
 		return nil
 	end
 
+	print("[BrutalityPanel] ✓ " .. path .. " cargado correctamente")
 	return result
 end
 
