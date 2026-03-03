@@ -203,7 +203,7 @@ local MinB = mk("TextButton", {
 	Text="─", Font=Enum.Font.GothamBold, TextSize=14, TextColor3=C.GRAY,
 	BackgroundTransparency=1, BorderSizePixel=0,
 	Size=UDim2.new(0,36,0,W.TH), Position=UDim2.new(0,W.WW-72,0,0),
-	ZIndex=8, AutoButtonColor=false,
+	ZIndex=8, AutoButtonColor=false, Visible=true,
 }, TBar)
 
 -- ── Botón maximizar ───────────────────────────────────────────────────────
@@ -415,16 +415,26 @@ local anim = Animations.init({
 	MinB=MinB, ClsB=ClsB, SG=SG, tw=tw,
 })
 
--- ── Clicks minimizar / maximizar / cerrar ─────────────────────────────────
+-- ── Minimize / Maximize state ─────────────────────────────────────────────
+local isMinimized = false
+
+local function syncMinMaxButtons()
+	MinB.Visible = not isMinimized
+	MaxB.Visible = isMinimized
+end
+
+-- Estado inicial correcto
+syncMinMaxButtons()
+
 MinB.MouseButton1Click:Connect(function()
-	MinB.Visible = false
-	MaxB.Visible = true
+	isMinimized = true
+	syncMinMaxButtons()
 	anim.toggleMinimize()
 end)
 
 MaxB.MouseButton1Click:Connect(function()
-	MaxB.Visible = false
-	MinB.Visible = true
+	isMinimized = false
+	syncMinMaxButtons()
 	anim.toggleMinimize()
 end)
 
@@ -434,8 +444,12 @@ end)
 
 UIS.InputBegan:Connect(function(inp, gp)
 	if gp then return end
-	if inp.KeyCode == Enum.KeyCode.RightShift then anim.toggleHide() end
-	if inp.KeyCode == Enum.KeyCode.End        then anim.doClose()    end
+	if inp.KeyCode == Enum.KeyCode.RightShift then
+		isMinimized = not isMinimized
+		syncMinMaxButtons()
+		anim.toggleHide()
+	end
+	if inp.KeyCode == Enum.KeyCode.End then anim.doClose() end
 end)
 
 -- ── Build pages ───────────────────────────────────────────────────────────
@@ -447,7 +461,7 @@ Settings.build(tPages[3], {
 	tw=tw, mk=mk, rnd=rnd, Win=Win, NavBar=NavBar,
 	anim=anim, isAdmin=isAdmin, savedExpiry=savedExpiry,
 })
-navT[3].lbl.Text = "Settings"  -- sobreescribe si el módulo lo cambia a español
+navT[3].lbl.Text = "Settings"
 
 anim.playOpen()
 print("[BrutalityPanel] ✨ Loaded — checktheprint v1.0.0")
