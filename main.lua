@@ -214,7 +214,7 @@ local MaxB = mk("TextButton", {
 }, TBar)
 local MaxIcon = mk("ImageLabel", {
 	Image="rbxassetid://99708815872049",
-	Size=UDim2.new(0,14,0,14), Position=UDim2.new(0.5,-7,0.5,-7),
+	Size=UDim2.new(0,10,0,10), Position=UDim2.new(0.5,-5,0.5,-5),
 	BackgroundTransparency=1, ImageColor3=C.GRAY, ZIndex=9,
 }, MaxB)
 
