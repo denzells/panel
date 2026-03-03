@@ -153,7 +153,7 @@ rnd(CORNER.WIN, Win)
 local WinStroke = mk("UIStroke", {
 	Color        = C.LINE,
 	Thickness    = 1,
-	Transparency = 0.55,
+	Transparency = 1,   -- sin trazo
 }, Win)
 
 -- ── Titlebar ──────────────────────────────────────────────────────────────
@@ -240,10 +240,7 @@ local title5 = tlbl("v1.0.0", Enum.Font.Code,       11, C.MUTED, 253, 60)
 
 -- Botones minimizar / cerrar
 local MinB = mk("TextButton", {
-	Text                   = "─",
-	Font                   = Enum.Font.GothamBold,
-	TextSize               = 14,
-	TextColor3             = C.GRAY,
+	Text                   = "",
 	BackgroundTransparency = 1,
 	BorderSizePixel        = 0,
 	Size                   = UDim2.new(0, 36, 0, W.TH),
@@ -251,6 +248,14 @@ local MinB = mk("TextButton", {
 	ZIndex                 = 8,
 	AutoButtonColor        = false,
 }, TBar)
+local MinIcon = mk("ImageLabel", {
+	Image                  = "rbxassetid://99708815872049",
+	Size                   = UDim2.new(0, 14, 0, 14),
+	Position               = UDim2.new(0.5, -7, 0.5, -7),
+	BackgroundTransparency = 1,
+	ImageColor3            = C.GRAY,
+	ZIndex                 = 9,
+}, MinB)
 
 local ClsB = mk("TextButton", {
 	Text                   = "×",
@@ -265,10 +270,11 @@ local ClsB = mk("TextButton", {
 	AutoButtonColor        = false,
 }, TBar)
 
-ClsB.MouseEnter:Connect(function()  tw(ClsB, .12, {TextColor3 = Color3.fromRGB(220,60,60)}) end)
+ClsB.MouseEnter:Connect(function()  tw(ClsB, .12, {TextColor3 = Color3.fromRGB(220,60,60)})
+navT[3].lbl.Text = "Settings"  -- fuerza el label tras posible override del módulo end)
 ClsB.MouseLeave:Connect(function()  tw(ClsB, .18, {TextColor3 = C.GRAY})  end)
-MinB.MouseEnter:Connect(function()  tw(MinB, .12, {TextColor3 = C.WHITE}) end)
-MinB.MouseLeave:Connect(function()  tw(MinB, .18, {TextColor3 = C.GRAY})  end)
+MinB.MouseEnter:Connect(function()  tw(MinIcon, .12, {ImageColor3 = C.WHITE}) end)
+MinB.MouseLeave:Connect(function()  tw(MinIcon, .18, {ImageColor3 = C.GRAY})  end)
 
 -- ── Body ──────────────────────────────────────────────────────────────────
 BodyClip = mk("Frame", {
@@ -318,7 +324,7 @@ rnd(CORNER.NAV, NavBar)
 local NavStroke = mk("UIStroke", {
 	Color        = C.LINE,
 	Thickness    = 1,
-	Transparency = 0.45,
+	Transparency = 1,   -- sin trazo
 }, NavBar)
 
 -- ── Tabs ──────────────────────────────────────────────────────────────────
@@ -371,7 +377,7 @@ for i, td in ipairs(TDEFS) do
 	local pillStroke = mk("UIStroke", {
 		Color        = C.LINE,
 		Thickness    = 1,
-		Transparency = isF and 0.5 or 1,
+		Transparency = 1,   -- sin trazo
 	}, pill)
 
 	local img = mk("ImageLabel", {
