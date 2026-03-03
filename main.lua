@@ -34,13 +34,13 @@ if not Animations or not Settings then
 	return
 end
 
-local Players     = game:GetService("Players")
-local UIS         = game:GetService("UserInputService")
+local Players      = game:GetService("Players")
+local UIS          = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
-local RunService  = game:GetService("RunService")
-local HttpService = game:GetService("HttpService")
-local LocalPlayer = Players.LocalPlayer
-local PlayerGui   = LocalPlayer:WaitForChild("PlayerGui", 10) or LocalPlayer:FindFirstChildOfClass("PlayerGui")
+local RunService   = game:GetService("RunService")
+local HttpService  = game:GetService("HttpService")
+local LocalPlayer  = Players.LocalPlayer
+local PlayerGui    = LocalPlayer:WaitForChild("PlayerGui", 10) or LocalPlayer:FindFirstChildOfClass("PlayerGui")
 if not PlayerGui then return end
 
 local old = PlayerGui:FindFirstChild("BrutalityPanel")
@@ -49,19 +49,18 @@ if old then old:Destroy() end
 local C = Settings.C
 local W = Settings.Layout
 
--- ── Paleta de color (override) ────────────────────────────────────────────
-C.WIN    = Color3.fromRGB(6,  6,  6)    -- panel: negro puro
-C.TBAR   = Color3.fromRGB(18, 18, 18)   -- titlebar: gris oscuro visible
-C.NAV    = Color3.fromRGB(12, 12, 12)   -- navbar fondo
-C.NAVPIL = Color3.fromRGB(32, 32, 32)   -- pastilla activa
-C.LINE   = Color3.fromRGB(60, 60, 60)   -- bordes / separadores
-C.MUTED  = Color3.fromRGB(90, 90, 90)   -- iconos inactivos
+-- ── Paleta de color ───────────────────────────────────────────────────────
+C.WIN    = Color3.fromRGB(6,  6,  6)
+C.TBAR   = Color3.fromRGB(18, 18, 18)
+C.NAV    = Color3.fromRGB(12, 12, 12)
+C.NAVPIL = Color3.fromRGB(32, 32, 32)
+C.LINE   = Color3.fromRGB(60, 60, 60)
+C.MUTED  = Color3.fromRGB(90, 90, 90)
 C.GRAY   = Color3.fromRGB(130,130,130)
 C.WHITE  = Color3.fromRGB(230,230,230)
-C.RED    = Color3.fromRGB(255,255,255)  -- acento (blanco puro mantenido)
+C.RED    = Color3.fromRGB(255,255,255)
 
--- ── Layout ────────────────────────────────────────────────────────────────
-W.NW = 3 * 68 + (98 - 68) + 2 * 2 + 8  -- 246 px, 3 tabs
+W.NW = 3 * 68 + (98 - 68) + 2 * 2 + 8  -- 246 px
 
 -- ── Helpers ───────────────────────────────────────────────────────────────
 local function mk(cls, props, parent)
@@ -71,21 +70,12 @@ local function mk(cls, props, parent)
 	return obj
 end
 
--- Esquinas menos redondeadas en toda la UI
-local CORNER = {
-	WIN   = 8,   -- ventana principal
-	TBAR  = 8,   -- titlebar
-	NAV   = 8,   -- navbar
-	PILL  = 6,   -- pastillas de tab
-	BADGE = 4,   -- badge verificado
-	DOT   = 5,   -- punto de acento
-}
+local CORNER = { WIN = 8, TBAR = 8, NAV = 8, PILL = 6, BADGE = 4, DOT = 5 }
 
 local function rnd(r, p)
 	mk("UICorner", { CornerRadius = UDim.new(0, r) }, p)
 end
 
--- tw mejorado: soporte para callback opcional
 local function tw(obj, t, props, es, ed, cb)
 	local ti = TweenInfo.new(t, es or Enum.EasingStyle.Quint, ed or Enum.EasingDirection.Out)
 	local tween = TweenService:Create(obj, ti, props)
@@ -94,10 +84,9 @@ local function tw(obj, t, props, es, ed, cb)
 	return tween
 end
 
--- ── Leer expiry guardado ──────────────────────────────────────────────────
+-- ── Expiry ────────────────────────────────────────────────────────────────
 local function readSavedExpiry()
-	local canRead = typeof(readfile) == "function" and typeof(isfile) == "function"
-	if not canRead then return nil end
+	if typeof(readfile) ~= "function" or typeof(isfile) ~= "function" then return nil end
 	local ok, result = pcall(function()
 		if not isfile("serios_saved.json") then return nil end
 		return HttpService:JSONDecode(readfile("serios_saved.json"))
@@ -107,21 +96,14 @@ local function readSavedExpiry()
 end
 
 local savedExpiry = readSavedExpiry()
-local savedTs     = tonumber(savedExpiry)
 local isAdmin     = savedExpiry == "lifetime"
 
 local BADGE = isAdmin and {
-	bg      = Color3.fromRGB(22, 22, 22),
-	stroke  = Color3.fromRGB(160,160,160),
-	stAlpha = 0.35,
-	text    = "⭐ Admin",
-	col     = Color3.fromRGB(220,220,220),
+	bg = Color3.fromRGB(22,22,22), stroke = Color3.fromRGB(160,160,160),
+	stAlpha = 0.35, text = "⭐ Admin", col = Color3.fromRGB(220,220,220),
 } or {
-	bg      = Color3.fromRGB(12, 36, 14),
-	stroke  = Color3.fromRGB(40, 170, 65),
-	stAlpha = 0.3,
-	text    = "✓ Verified",
-	col     = Color3.fromRGB(55, 200, 80),
+	bg = Color3.fromRGB(12,36,14), stroke = Color3.fromRGB(40,170,65),
+	stAlpha = 0.3, text = "✓ Verified", col = Color3.fromRGB(55,200,80),
 }
 
 -- ── ScreenGui ─────────────────────────────────────────────────────────────
@@ -139,7 +121,7 @@ local function applyPos(wx, wy)
 	NavBar.Position = UDim2.new(0.5, wx + (W.WW - W.NW)/2, 0.5, wy + W.WH + W.NGAP)
 end
 
--- ── Ventana principal ─────────────────────────────────────────────────────
+-- ── Ventana ───────────────────────────────────────────────────────────────
 Win = mk("Frame", {
 	Size             = UDim2.new(0, W.WW, 0, W.WH),
 	Position         = UDim2.new(0.5, -W.WW/2, 0.5, -W.WH/2),
@@ -150,13 +132,9 @@ Win = mk("Frame", {
 }, SG)
 rnd(CORNER.WIN, Win)
 
-local WinStroke = mk("UIStroke", {
-	Color        = C.LINE,
-	Thickness    = 1,
-	Transparency = 1,   -- sin trazo
-}, Win)
+local WinStroke = mk("UIStroke", { Color = C.LINE, Thickness = 1, Transparency = 1 }, Win)
 
--- ── Titlebar ──────────────────────────────────────────────────────────────
+-- ── TitleBar ──────────────────────────────────────────────────────────────
 local TBar = mk("Frame", {
 	Size             = UDim2.new(1, 0, 0, W.TH),
 	BackgroundColor3 = C.TBAR,
@@ -166,8 +144,6 @@ local TBar = mk("Frame", {
 	Active           = true,
 }, Win)
 mk("UICorner", { CornerRadius = UDim.new(0, CORNER.TBAR) }, TBar)
-
--- Parche inferior para que TBar no tenga esquinas redondeadas abajo
 mk("Frame", {
 	Size             = UDim2.new(1, 0, 0, CORNER.TBAR),
 	Position         = UDim2.new(0, 0, 1, -CORNER.TBAR),
@@ -175,8 +151,6 @@ mk("Frame", {
 	BorderSizePixel  = 0,
 	ZIndex           = 5,
 }, TBar)
-
--- Separador inferior del TBar (más sutil)
 mk("Frame", {
 	Size                   = UDim2.new(1, 0, 0, 1),
 	Position               = UDim2.new(0, 0, 1, 0),
@@ -186,7 +160,6 @@ mk("Frame", {
 	BackgroundTransparency = 0.6,
 }, TBar)
 
--- Punto de acento
 local rdot = mk("Frame", {
 	Size             = UDim2.new(0, 8, 0, 8),
 	Position         = UDim2.new(0, 14, 0.5, -4),
@@ -196,7 +169,6 @@ local rdot = mk("Frame", {
 }, TBar)
 rnd(CORNER.DOT, rdot)
 
--- Etiquetas del título
 local function tlbl(txt, font, sz, col, x, w)
 	return mk("TextLabel", {
 		Text                   = txt,
@@ -211,10 +183,9 @@ local function tlbl(txt, font, sz, col, x, w)
 	}, TBar)
 end
 
-local title1 = tlbl("checktheprint", Enum.Font.GothamBold,    13, C.WHITE, 30,  92)
-local title2 = tlbl("|",            Enum.Font.GothamBold,    16, C.RED,   125, 14)
+local title1 = tlbl("checktheprint", Enum.Font.GothamBold, 13, C.WHITE, 30,  92)
+local title2 = tlbl("|",            Enum.Font.GothamBold, 16, C.RED,   125, 14)
 
--- Badge verificado
 local verifiedBadge = mk("Frame", {
 	Size             = UDim2.new(0, 84, 0, 20),
 	Position         = UDim2.new(0, 141, 0.5, -10),
@@ -238,7 +209,7 @@ mk("TextLabel", {
 local title4 = tlbl("|",      Enum.Font.GothamBold, 14, C.MUTED, 237, 14)
 local title5 = tlbl("v1.0.0", Enum.Font.Code,       11, C.MUTED, 253, 60)
 
--- Botones minimizar / cerrar
+-- ── Botón minimizar ───────────────────────────────────────────────────────
 local MinB = mk("TextButton", {
 	Text                   = "─",
 	Font                   = Enum.Font.GothamBold,
@@ -247,18 +218,18 @@ local MinB = mk("TextButton", {
 	BackgroundTransparency = 1,
 	BorderSizePixel        = 0,
 	Size                   = UDim2.new(0, 36, 0, W.TH),
-	Position               = UDim2.new(0, W.WW-72, 0, 0),
+	Position               = UDim2.new(0, W.WW - 72, 0, 0),
 	ZIndex                 = 8,
 	AutoButtonColor        = false,
 }, TBar)
 
--- Botón maximizar (visible solo cuando el panel está minimizado)
+-- ── Botón maximizar (oculto hasta minimizar) ──────────────────────────────
 local MaxB = mk("TextButton", {
 	Text                   = "",
 	BackgroundTransparency = 1,
 	BorderSizePixel        = 0,
 	Size                   = UDim2.new(0, 36, 0, W.TH),
-	Position               = UDim2.new(0, W.WW-72, 0, 0),
+	Position               = UDim2.new(0, W.WW - 72, 0, 0),
 	ZIndex                 = 8,
 	AutoButtonColor        = false,
 	Visible                = false,
@@ -272,6 +243,7 @@ local MaxIcon = mk("ImageLabel", {
 	ZIndex                 = 9,
 }, MaxB)
 
+-- ── Botón cerrar ──────────────────────────────────────────────────────────
 local ClsB = mk("TextButton", {
 	Text                   = "×",
 	Font                   = Enum.Font.GothamBold,
@@ -280,33 +252,17 @@ local ClsB = mk("TextButton", {
 	BackgroundTransparency = 1,
 	BorderSizePixel        = 0,
 	Size                   = UDim2.new(0, 36, 0, W.TH),
-	Position               = UDim2.new(0, W.WW-36, 0, 0),
+	Position               = UDim2.new(0, W.WW - 36, 0, 0),
 	ZIndex                 = 8,
 	AutoButtonColor        = false,
 }, TBar)
 
-ClsB.MouseEnter:Connect(function()  tw(ClsB, .12, {TextColor3 = Color3.fromRGB(220,60,60)})
-navT[3].lbl.Text = "Settings"  -- fuerza el label tras posible override del módulo end)
-ClsB.MouseLeave:Connect(function()  tw(ClsB, .18, {TextColor3 = C.GRAY})  end)
-MinB.MouseEnter:Connect(function()  tw(MinB, .12, {TextColor3 = C.WHITE}) end)
-MinB.MouseLeave:Connect(function()  tw(MinB, .18, {TextColor3 = C.GRAY})  end)
-MaxB.MouseEnter:Connect(function()  tw(MaxIcon, .12, {ImageColor3 = C.WHITE}) end)
-MaxB.MouseLeave:Connect(function()  tw(MaxIcon, .18, {ImageColor3 = C.GRAY})  end)
-
--- Lógica toggle minimizar/maximizar
-local isMinimized = false
-MinB.MouseButton1Click:Connect(function()
-	isMinimized = true
-	MinB.Visible = false
-	MaxB.Visible = true
-	anim.toggleMinimize()
-end)
-MaxB.MouseButton1Click:Connect(function()
-	isMinimized = false
-	MaxB.Visible = false
-	MinB.Visible = true
-	anim.toggleMinimize()
-end)
+ClsB.MouseEnter:Connect(function() tw(ClsB, .12, {TextColor3 = Color3.fromRGB(220,60,60)}) end)
+ClsB.MouseLeave:Connect(function() tw(ClsB, .18, {TextColor3 = C.GRAY}) end)
+MinB.MouseEnter:Connect(function() tw(MinB, .12, {TextColor3 = C.WHITE}) end)
+MinB.MouseLeave:Connect(function() tw(MinB, .18, {TextColor3 = C.GRAY}) end)
+MaxB.MouseEnter:Connect(function() tw(MaxIcon, .12, {ImageColor3 = C.WHITE}) end)
+MaxB.MouseLeave:Connect(function() tw(MaxIcon, .18, {ImageColor3 = C.GRAY}) end)
 
 -- ── Body ──────────────────────────────────────────────────────────────────
 BodyClip = mk("Frame", {
@@ -353,11 +309,7 @@ NavBar = mk("Frame", {
 }, SG)
 rnd(CORNER.NAV, NavBar)
 
-local NavStroke = mk("UIStroke", {
-	Color        = C.LINE,
-	Thickness    = 1,
-	Transparency = 1,   -- sin trazo
-}, NavBar)
+local NavStroke = mk("UIStroke", { Color = C.LINE, Thickness = 1, Transparency = 1 }, NavBar)
 
 -- ── Tabs ──────────────────────────────────────────────────────────────────
 local TDEFS = {
@@ -386,11 +338,9 @@ for i = 1, NT do
 	tPages[i] = pg
 end
 
--- Animación de entrada escalonada para las páginas
 local function slidePageIn(pg)
 	local scr = pg.Parent
 	scr.Position = UDim2.new(0, 18, 0, 0)
-	scr.BackgroundTransparency = 1
 	tw(scr, .28, { Position = UDim2.new(0, 0, 0, 0) }, Enum.EasingStyle.Quint)
 end
 
@@ -405,11 +355,10 @@ for i, td in ipairs(TDEFS) do
 	}, NavBar)
 	rnd(CORNER.PILL, pill)
 
-	-- Borde sutil en pastilla activa
 	local pillStroke = mk("UIStroke", {
 		Color        = C.LINE,
 		Thickness    = 1,
-		Transparency = 1,   -- sin trazo
+		Transparency = 1,
 	}, pill)
 
 	local img = mk("ImageLabel", {
@@ -453,22 +402,16 @@ for i, td in ipairs(TDEFS) do
 
 	hit.MouseButton1Click:Connect(function()
 		if actNav == i then return end
-
-		-- Desactivar tab anterior
 		local pv = navT[actNav]
 		pv.pill.ZIndex = 10
-		tw(pv.pill,       .3,  { BackgroundColor3 = C.NAV },                                              Enum.EasingStyle.Quint)
-		tw(pv.pillStroke, .3,  { Transparency = 1 })
-		tw(pv.img,        .3,  { Position = UDim2.new(0.5,-IMGS/2,0.5,-IMGS/2), ImageColor3 = C.MUTED }, Enum.EasingStyle.Quint)
-		tw(pv.lbl,        .15, { TextTransparency = 1 })
+		tw(pv.pill, .3, { BackgroundColor3 = C.NAV }, Enum.EasingStyle.Quint)
+		tw(pv.img,  .3, { Position = UDim2.new(0.5, -IMGS/2, 0.5, -IMGS/2), ImageColor3 = C.MUTED }, Enum.EasingStyle.Quint)
+		tw(pv.lbl,  .15, { TextTransparency = 1 })
 		tPages[actNav].Parent.Visible = false
-
-		-- Activar tab nuevo
 		actNav = i
 		tPages[i].Parent.Visible = true
 		slidePageIn(tPages[i])
 		pill.ZIndex = 15
-
 		updateTabPositions(i)
 		for j = 1, NT do
 			local nt = navT[j]
@@ -477,14 +420,11 @@ for i, td in ipairs(TDEFS) do
 				Position = UDim2.new(0, nt.targetX, 0, 4),
 			}, Enum.EasingStyle.Quint)
 		end
-
-		tw(pill,       .3,  { BackgroundColor3 = C.NAVPIL },                              Enum.EasingStyle.Quint)
-		tw(pillStroke, .3,  { Transparency = 0.5 })
-		tw(img,        .3,  { Position = UDim2.new(0,11,0.5,-IMGS/2), ImageColor3 = C.WHITE }, Enum.EasingStyle.Quint)
+		tw(pill, .3, { BackgroundColor3 = C.NAVPIL }, Enum.EasingStyle.Quint)
+		tw(img,  .3, { Position = UDim2.new(0, 11, 0.5, -IMGS/2), ImageColor3 = C.WHITE }, Enum.EasingStyle.Quint)
 		task.delay(.12, function() tw(lbl, .22, { TextTransparency = 0 }) end)
 	end)
 
-	-- Hover más sutil
 	hit.MouseEnter:Connect(function()
 		if actNav ~= i then
 			tw(img,  .12, { ImageColor3 = C.GRAY })
@@ -534,7 +474,6 @@ do
 		local d  = mp - mStart
 		local tx, ty = wStart.X + d.X, wStart.Y + d.Y
 		local cx, cy = Win.Position.X.Offset, Win.Position.Y.Offset
-		-- Suavizado del drag más fluido (lerp 0.4)
 		local nx = cx + (tx - cx) * 0.4
 		local ny = cy + (ty - cy) * 0.4
 		if math.abs(nx - tx) < 0.5 then nx = tx end
@@ -543,7 +482,7 @@ do
 	end)
 end
 
--- ── Animations init ───────────────────────────────────────────────────────
+-- ── Animations ────────────────────────────────────────────────────────────
 local anim = Animations.init({
 	C         = C,
 	W         = W,
@@ -566,7 +505,19 @@ local anim = Animations.init({
 	tw        = tw,
 })
 
-MinB.MouseButton1Click:Connect(function() end) -- manejado arriba
+-- ── Lógica minimizar / maximizar ──────────────────────────────────────────
+MinB.MouseButton1Click:Connect(function()
+	MinB.Visible = false
+	MaxB.Visible = true
+	anim.toggleMinimize()
+end)
+
+MaxB.MouseButton1Click:Connect(function()
+	MaxB.Visible = false
+	MinB.Visible = true
+	anim.toggleMinimize()
+end)
+
 ClsB.MouseButton1Click:Connect(function() anim.doClose() end)
 
 UIS.InputBegan:Connect(function(inp, gp)
@@ -594,6 +545,7 @@ Settings.build(tPages[3], {
 	isAdmin     = isAdmin,
 	savedExpiry = savedExpiry,
 })
+navT[3].lbl.Text = "Settings"
 
 anim.playOpen()
 print("[BrutalityPanel] ✨ Loaded — checktheprint v1.0.0")
