@@ -240,7 +240,10 @@ local title5 = tlbl("v1.0.0", Enum.Font.Code,       11, C.MUTED, 253, 60)
 
 -- Botones minimizar / cerrar
 local MinB = mk("TextButton", {
-	Text                   = "",
+	Text                   = "─",
+	Font                   = Enum.Font.GothamBold,
+	TextSize               = 14,
+	TextColor3             = C.GRAY,
 	BackgroundTransparency = 1,
 	BorderSizePixel        = 0,
 	Size                   = UDim2.new(0, 36, 0, W.TH),
@@ -248,14 +251,26 @@ local MinB = mk("TextButton", {
 	ZIndex                 = 8,
 	AutoButtonColor        = false,
 }, TBar)
-local MinIcon = mk("ImageLabel", {
+
+-- Botón maximizar (visible solo cuando el panel está minimizado)
+local MaxB = mk("TextButton", {
+	Text                   = "",
+	BackgroundTransparency = 1,
+	BorderSizePixel        = 0,
+	Size                   = UDim2.new(0, 36, 0, W.TH),
+	Position               = UDim2.new(0, W.WW-72, 0, 0),
+	ZIndex                 = 8,
+	AutoButtonColor        = false,
+	Visible                = false,
+}, TBar)
+local MaxIcon = mk("ImageLabel", {
 	Image                  = "rbxassetid://99708815872049",
 	Size                   = UDim2.new(0, 14, 0, 14),
 	Position               = UDim2.new(0.5, -7, 0.5, -7),
 	BackgroundTransparency = 1,
 	ImageColor3            = C.GRAY,
 	ZIndex                 = 9,
-}, MinB)
+}, MaxB)
 
 local ClsB = mk("TextButton", {
 	Text                   = "×",
@@ -273,8 +288,25 @@ local ClsB = mk("TextButton", {
 ClsB.MouseEnter:Connect(function()  tw(ClsB, .12, {TextColor3 = Color3.fromRGB(220,60,60)})
 navT[3].lbl.Text = "Settings"  -- fuerza el label tras posible override del módulo end)
 ClsB.MouseLeave:Connect(function()  tw(ClsB, .18, {TextColor3 = C.GRAY})  end)
-MinB.MouseEnter:Connect(function()  tw(MinIcon, .12, {ImageColor3 = C.WHITE}) end)
-MinB.MouseLeave:Connect(function()  tw(MinIcon, .18, {ImageColor3 = C.GRAY})  end)
+MinB.MouseEnter:Connect(function()  tw(MinB, .12, {TextColor3 = C.WHITE}) end)
+MinB.MouseLeave:Connect(function()  tw(MinB, .18, {TextColor3 = C.GRAY})  end)
+MaxB.MouseEnter:Connect(function()  tw(MaxIcon, .12, {ImageColor3 = C.WHITE}) end)
+MaxB.MouseLeave:Connect(function()  tw(MaxIcon, .18, {ImageColor3 = C.GRAY})  end)
+
+-- Lógica toggle minimizar/maximizar
+local isMinimized = false
+MinB.MouseButton1Click:Connect(function()
+	isMinimized = true
+	MinB.Visible = false
+	MaxB.Visible = true
+	anim.toggleMinimize()
+end)
+MaxB.MouseButton1Click:Connect(function()
+	isMinimized = false
+	MaxB.Visible = false
+	MinB.Visible = true
+	anim.toggleMinimize()
+end)
 
 -- ── Body ──────────────────────────────────────────────────────────────────
 BodyClip = mk("Frame", {
@@ -534,8 +566,8 @@ local anim = Animations.init({
 	tw        = tw,
 })
 
-MinB.MouseButton1Click:Connect(function() anim.toggleMinimize() end)
-ClsB.MouseButton1Click:Connect(function() anim.doClose()        end)
+MinB.MouseButton1Click:Connect(function() end) -- manejado arriba
+ClsB.MouseButton1Click:Connect(function() anim.doClose() end)
 
 UIS.InputBegan:Connect(function(inp, gp)
 	if gp then return end
