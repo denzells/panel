@@ -1,562 +1,700 @@
--- main.lua – PanelBase | checktheprint (Restyled)
+-- settings.lua - PanelBase (Reference Screenshot Style)
+-- Tono cálido oscuro, paneles limpios, checkbox cuadrado suave, barra acento izquierda
+
 local _loadstring = loadstring
-local RAW_BASE = "https://raw.githubusercontent.com/denzells/panel/main/"
 
-local function loadModule(path)
-	local content
-	local ok = pcall(function()
-		content = game:HttpGet(RAW_BASE .. path)
-	end)
-	if not ok or not content or content == "" then
-		warn("[BrutalityPanel] Error descargando " .. path)
-		return nil
-	end
-	local fn, err = _loadstring(content)
-	if not fn then
-		warn("[BrutalityPanel] Error compilando " .. path .. ": " .. tostring(err))
-		return nil
-	end
-	local ok2, result = pcall(fn)
-	if not ok2 then
-		warn("[BrutalityPanel] Error ejecutando " .. path .. ": " .. tostring(result))
-		return nil
-	end
-	return result
-end
-
-local Animations = loadModule("animations.lua")
-local Settings   = loadModule("settings.lua")
-local Combat     = loadModule("combat.lua")
-local Visuals    = loadModule("visuals.lua")
-
-if not Animations or not Settings then
-	warn("[BrutalityPanel] Falló la carga de módulos. Abortando.")
-	return
-end
-
-local Players     = game:GetService("Players")
 local UIS         = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
 local RunService  = game:GetService("RunService")
 local HttpService = game:GetService("HttpService")
-local LocalPlayer = Players.LocalPlayer
-local PlayerGui   = LocalPlayer:WaitForChild("PlayerGui", 10) or LocalPlayer:FindFirstChildOfClass("PlayerGui")
-if not PlayerGui then return end
 
-local old = PlayerGui:FindFirstChild("BrutalityPanel")
-if old then old:Destroy() end
+local Settings = {}
 
-local C = Settings.C
-local W = Settings.Layout
-
--- ── Paleta de color (override) ────────────────────────────────────────────
-C.WIN    = Color3.fromRGB(6,  6,  6)    -- panel: negro puro
-C.TBAR   = Color3.fromRGB(18, 18, 18)   -- titlebar: gris oscuro visible
-C.NAV    = Color3.fromRGB(12, 12, 12)   -- navbar fondo
-C.NAVPIL = Color3.fromRGB(32, 32, 32)   -- pastilla activa
-C.LINE   = Color3.fromRGB(60, 60, 60)   -- bordes / separadores
-C.MUTED  = Color3.fromRGB(90, 90, 90)   -- iconos inactivos
-C.GRAY   = Color3.fromRGB(130,130,130)
-C.WHITE  = Color3.fromRGB(230,230,230)
-C.RED    = Color3.fromRGB(255,255,255)  -- acento (blanco puro mantenido)
-
--- ── Layout ────────────────────────────────────────────────────────────────
-W.NW = 3 * 68 + (98 - 68) + 2 * 2 + 8  -- 246 px, 3 tabs
-
--- ── Helpers ───────────────────────────────────────────────────────────────
-local function mk(cls, props, parent)
-	local obj = Instance.new(cls)
-	for k, v in pairs(props) do pcall(function() obj[k] = v end) end
-	if parent then obj.Parent = parent end
-	return obj
-end
-
--- Esquinas menos redondeadas en toda la UI
-local CORNER = {
-	WIN   = 8,   -- ventana principal
-	TBAR  = 8,   -- titlebar
-	NAV   = 8,   -- navbar
-	PILL  = 6,   -- pastillas de tab
-	BADGE = 4,   -- badge verificado
-	DOT   = 5,   -- punto de acento
+-- Paleta cálida oscura — igual que la foto de referencia (#1a1918 base)
+Settings.C = {
+    WIN    = Color3.fromRGB(20,  19,  18),
+    TBAR   = Color3.fromRGB(15,  14,  13),
+    LINE   = Color3.fromRGB(45,  43,  40),
+    RED    = Color3.fromRGB(255, 255, 255),
+    NAV    = Color3.fromRGB(13,  12,  11),
+    NAVPIL = Color3.fromRGB(28,  26,  24),
+    WHITE  = Color3.fromRGB(228, 226, 222),
+    GRAY   = Color3.fromRGB(108, 104, 98),
+    MUTED  = Color3.fromRGB(58,  55,  50),
+    PANEL  = Color3.fromRGB(28,  27,  25),
 }
 
-local function rnd(r, p)
-	mk("UICorner", { CornerRadius = UDim.new(0, r) }, p)
-end
-
--- tw mejorado: soporte para callback opcional
-local function tw(obj, t, props, es, ed, cb)
-	local ti = TweenInfo.new(t, es or Enum.EasingStyle.Quint, ed or Enum.EasingDirection.Out)
-	local tween = TweenService:Create(obj, ti, props)
-	if cb then tween.Completed:Once(cb) end
-	tween:Play()
-	return tween
-end
-
--- ── Leer expiry guardado ──────────────────────────────────────────────────
-local function readSavedExpiry()
-	local canRead = typeof(readfile) == "function" and typeof(isfile) == "function"
-	if not canRead then return nil end
-	local ok, result = pcall(function()
-		if not isfile("serios_saved.json") then return nil end
-		return HttpService:JSONDecode(readfile("serios_saved.json"))
-	end)
-	if ok and result then return result.expiry end
-	return nil
-end
-
-local savedExpiry = readSavedExpiry()
-local savedTs     = tonumber(savedExpiry)
-local isAdmin     = savedExpiry == "lifetime"
-
-local BADGE = isAdmin and {
-	bg      = Color3.fromRGB(22, 22, 22),
-	stroke  = Color3.fromRGB(160,160,160),
-	stAlpha = 0.35,
-	text    = "⭐ Admin",
-	col     = Color3.fromRGB(220,220,220),
-} or {
-	bg      = Color3.fromRGB(12, 36, 14),
-	stroke  = Color3.fromRGB(40, 170, 65),
-	stAlpha = 0.3,
-	text    = "✓ Verified",
-	col     = Color3.fromRGB(55, 200, 80),
+Settings.Layout = {
+    WW   = 540, WH   = 440, TH   = 42,
+    NW   = 246, NH   = 46,  NGAP = 14,
+    BH   = 440 - 42,
 }
 
--- ── ScreenGui ─────────────────────────────────────────────────────────────
-local SG = mk("ScreenGui", {
-	Name           = "BrutalityPanel",
-	ResetOnSpawn   = false,
-	IgnoreGuiInset = true,
-	ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
-}, PlayerGui)
+function Settings.build(page, r)
+    local C   = Settings.C
+    local mk  = r.mk
+    local rnd = r.rnd
+    local tw  = r.tw
 
-local Win, NavBar, BodyClip
+    local navT     = r.navT
+    local actNavFn = r.actNavFn
+    local rdot     = r.rdot
+    local title2   = r.title2
+    local title1   = r.title1
+    local title3   = r.title3
 
-local function applyPos(wx, wy)
-	Win.Position    = UDim2.new(0.5, wx, 0.5, wy)
-	NavBar.Position = UDim2.new(0.5, wx + (W.WW - W.NW)/2, 0.5, wy + W.WH + W.NGAP)
+    local isAdmin     = r.isAdmin     or false
+    local savedExpiry = r.savedExpiry
+
+    local accentEls = {}
+    local so = 0
+    local function SO() so = so + 1; return so end
+
+    local expiryLabelRef  = nil
+    local fullExpiryText  = ""
+    local shortExpiryText = ""
+
+    -- ══════════════════════════════════════════════════════
+    --  CHECKBOX
+    --  Caja oscura 15x15, borde suave cálido,
+    --  cuadrado interior relleno de acento al activar
+    -- ══════════════════════════════════════════════════════
+    local function makeCheckbox(parent, zBase)
+        zBase = zBase or 5
+        local bg = mk("Frame", {
+            Size             = UDim2.new(0, 15, 0, 15),
+            BackgroundColor3 = Color3.fromRGB(32, 31, 29),
+            BorderSizePixel  = 0, ZIndex = zBase,
+        }, parent)
+        rnd(3, bg)
+        mk("UIStroke", { Color = Color3.fromRGB(72, 68, 62), Thickness = 1, Transparency = 0 }, bg)
+
+        local mark = mk("Frame", {
+            Size             = UDim2.new(0, 7, 0, 7),
+            Position         = UDim2.new(0.5, -3, 0.5, -3),
+            BackgroundColor3 = C.RED,
+            BorderSizePixel  = 0, ZIndex = zBase + 1,
+            BackgroundTransparency = 1,
+        }, bg)
+        rnd(2, mark)
+        table.insert(accentEls, { el = mark, prop = "BackgroundColor3" })
+
+        local btn = mk("TextButton", {
+            Text = "", BackgroundTransparency = 1,
+            Size = UDim2.new(1, 8, 1, 8), Position = UDim2.new(0, -4, 0, -4),
+            ZIndex = zBase + 2, AutoButtonColor = false,
+        }, bg)
+        btn.MouseEnter:Connect(function() tw(bg, .1, { BackgroundColor3 = Color3.fromRGB(38, 36, 33) }) end)
+        btn.MouseLeave:Connect(function() tw(bg, .1, { BackgroundColor3 = Color3.fromRGB(32, 31, 29) }) end)
+        return bg, mark, btn
+    end
+
+    -- ══════════════════════════════════════════════════════
+    --  SECTION LABEL — texto gris, sin decoración extra
+    -- ══════════════════════════════════════════════════════
+    local function makeSectionLabel(parent, text, lo)
+        local row = mk("Frame", {
+            Size = UDim2.new(1, 0, 0, 22),
+            BackgroundTransparency = 1, LayoutOrder = lo or SO(),
+        }, parent)
+        mk("TextLabel", {
+            Text = text, Font = Enum.Font.GothamBold, TextSize = 9,
+            TextColor3 = C.GRAY, BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 1, 0),
+            TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 5,
+        }, row)
+        return row
+    end
+
+    -- ══════════════════════════════════════════════════════
+    --  ROW
+    -- ══════════════════════════════════════════════════════
+    local function makeRow(parent, labelText, lo)
+        local row = mk("Frame", {
+            Size = UDim2.new(1, 0, 0, 28),
+            BackgroundTransparency = 1, LayoutOrder = lo or SO(),
+        }, parent)
+        mk("TextLabel", {
+            Text = labelText, Font = Enum.Font.Gotham, TextSize = 11,
+            TextColor3 = C.WHITE, BackgroundTransparency = 1,
+            Size = UDim2.new(1, -30, 1, 0),
+            TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 5,
+        }, row)
+        return row
+    end
+
+    -- ══════════════════════════════════════════════════════
+    --  MINI PANEL — igual que la foto de referencia:
+    --  • Sin borde exterior duro (muy sutil, casi invisible)
+    --  • Header oscuro con barra vertical de ACENTO izq
+    --  • Título blanco bold + ícono derecha
+    --  • Línea divisoria 1px
+    -- ══════════════════════════════════════════════════════
+    local function MiniPanel(parent, title, fixedW)
+        local panel = mk("Frame", {
+            Size             = fixedW and UDim2.new(0, fixedW, 0, 0) or UDim2.new(1, 0, 0, 0),
+            AutomaticSize    = Enum.AutomaticSize.Y,
+            BackgroundColor3 = Color3.fromRGB(28, 27, 25),
+            BorderSizePixel  = 0, LayoutOrder = SO(),
+        }, parent)
+        rnd(5, panel)
+        mk("UIStroke", { Color = Color3.fromRGB(48, 46, 42), Thickness = 1, Transparency = 0.35 }, panel)
+
+        -- Header
+        local header = mk("Frame", {
+            Size             = UDim2.new(1, 0, 0, 34),
+            BackgroundColor3 = Color3.fromRGB(22, 21, 19),
+            BorderSizePixel  = 0, ZIndex = 4, ClipsDescendants = true,
+        }, panel)
+        rnd(5, header)
+        mk("Frame", {
+            Size = UDim2.new(1, 0, 0.5, 0), Position = UDim2.new(0, 0, 0.5, 0),
+            BackgroundColor3 = Color3.fromRGB(22, 21, 19),
+            BorderSizePixel  = 0, ZIndex = 3,
+        }, header)
+
+        -- Barra acento vertical izquierda
+        local bar = mk("Frame", {
+            Size = UDim2.new(0, 2, 0, 16), Position = UDim2.new(0, 8, 0.5, -8),
+            BackgroundColor3 = C.RED, BorderSizePixel = 0, ZIndex = 6,
+        }, header)
+        rnd(1, bar)
+        table.insert(accentEls, { el = bar, prop = "BackgroundColor3" })
+
+        mk("TextLabel", {
+            Text = title, Font = Enum.Font.GothamBold, TextSize = 12,
+            TextColor3 = C.WHITE, BackgroundTransparency = 1,
+            Size = UDim2.new(1, -44, 1, 0), Position = UDim2.new(0, 16, 0, 0),
+            TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 6,
+        }, header)
+
+        -- Línea divisoria
+        mk("Frame", {
+            Size = UDim2.new(1, 0, 0, 1), Position = UDim2.new(0, 0, 0, 34),
+            BackgroundColor3 = Color3.fromRGB(42, 40, 37),
+            BorderSizePixel = 0, ZIndex = 4,
+        }, panel)
+
+        local content = mk("Frame", {
+            Size = UDim2.new(1, -18, 0, 0), Position = UDim2.new(0, 9, 0, 42),
+            AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1,
+        }, panel)
+        mk("UIListLayout", { Padding = UDim.new(0, 5), SortOrder = Enum.SortOrder.LayoutOrder }, content)
+        mk("UIPadding", { PaddingBottom = UDim.new(0, 10) }, panel)
+        return content
+    end
+
+    local function applyAccent(col)
+        C.RED = col
+        rdot.BackgroundColor3 = col
+        title2.TextColor3     = col
+        for i, t in ipairs(navT) do
+            if i == actNavFn() then tw(t.img, .2, { ImageColor3 = col }) end
+        end
+        for _, e in ipairs(accentEls) do pcall(function() e.el[e.prop] = col end) end
+    end
+
+    local function CreateAccentPicker(parent)
+        makeSectionLabel(parent, "ACCENT COLOR", SO())
+        local originalColor = C.RED
+        local currentH, currentS, currentV = Color3.toHSV(C.RED)
+        local pickerOpen, pickerAnim = false, false
+        local PW, SV, HW, PAD = 228, 118, 12, 8
+        local PREVW, APPH = PW - SV - HW - PAD*3, 20
+        local CONTENTH, TOTALH = SV + PAD + APPH, SV + PAD + APPH + PAD*2
+
+        local root = mk("Frame", {
+            Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
+            BackgroundTransparency = 1, LayoutOrder = SO(),
+        }, parent)
+        mk("UIListLayout", { Padding = UDim.new(0, 5), SortOrder = Enum.SortOrder.LayoutOrder }, root)
+
+        local row1 = makeRow(root, "Accent Color", 1)
+        local chkBg, chkMark, chkBtn = makeCheckbox(row1, 5)
+        chkBg.Position = UDim2.new(1, -15, 0.5, -7)
+        local checked = false
+
+        local rgbModeOn, rgbHue, rgbConn = false, 0, nil
+        local function stopRGBMode() if rgbConn then rgbConn:Disconnect(); rgbConn = nil end end
+        local function startRGBMode()
+            stopRGBMode()
+            rgbConn = RunService.RenderStepped:Connect(function(dt)
+                rgbHue = (rgbHue + dt * 0.4) % 1
+                applyAccent(Color3.fromHSV(rgbHue, 1, 1))
+            end)
+        end
+
+        local row2 = makeRow(root, "RGB Mode", 2)
+        local ledBadge = mk("Frame", {
+            Size = UDim2.new(0, 34, 0, 16), Position = UDim2.new(0, 80, 0.5, -8),
+            BackgroundColor3 = Color3.fromRGB(32, 31, 29), BorderSizePixel = 0, ZIndex = 6,
+        }, row2)
+        rnd(4, ledBadge)
+        mk("UIStroke", { Color = Color3.fromRGB(62, 58, 53), Thickness = 1, Transparency = 0 }, ledBadge)
+        local ledDot = mk("Frame", {
+            Size = UDim2.new(0, 5, 0, 5), Position = UDim2.new(0, 5, 0.5, -2),
+            BackgroundColor3 = Color3.fromRGB(75, 71, 65), BorderSizePixel = 0, ZIndex = 7,
+        }, ledBadge)
+        rnd(3, ledDot)
+        mk("TextLabel", {
+            Text = "LED", Font = Enum.Font.GothamBold, TextSize = 7,
+            TextColor3 = Color3.fromRGB(125, 120, 112), BackgroundTransparency = 1,
+            Size = UDim2.new(1, -13, 1, 0), Position = UDim2.new(0, 12, 0, 0),
+            ZIndex = 7, TextXAlignment = Enum.TextXAlignment.Center,
+        }, ledBadge)
+
+        local rgbChkBg, rgbChkMark, rgbChkBtn = makeCheckbox(row2, 5)
+        rgbChkBg.Position = UDim2.new(1, -15, 0.5, -7)
+
+        rgbChkBtn.MouseButton1Click:Connect(function()
+            rgbModeOn = not rgbModeOn
+            tw(rgbChkMark, .15, { BackgroundTransparency = rgbModeOn and 0 or 1 })
+            if rgbModeOn then
+                tw(ledDot, .3, { BackgroundColor3 = C.RED })
+                checked = false; tw(chkMark, .15, { BackgroundTransparency = 1 })
+                startRGBMode()
+            else
+                tw(ledDot, .3, { BackgroundColor3 = Color3.fromRGB(75, 71, 65) })
+                stopRGBMode(); applyAccent(originalColor)
+            end
+        end)
+
+        -- Dropdown de Color Palette (mismo estilo que la foto)
+        local palBtn = mk("TextButton", {
+            Text = "", BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 28),
+            BorderSizePixel = 0, ZIndex = 5, AutoButtonColor = false, LayoutOrder = 3,
+        }, root)
+        local palBg = mk("Frame", {
+            Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.fromRGB(32, 31, 29),
+            BorderSizePixel = 0, ZIndex = 4,
+        }, palBtn)
+        rnd(4, palBg)
+        mk("UIStroke", { Color = Color3.fromRGB(58, 55, 49), Thickness = 1, Transparency = 0 }, palBg)
+        local prevDot = mk("Frame", {
+            Size = UDim2.new(0, 14, 0, 14), Position = UDim2.new(0, 7, 0.5, -7),
+            BackgroundColor3 = C.RED, BorderSizePixel = 0, ZIndex = 6,
+        }, palBg)
+        rnd(3, prevDot)
+        table.insert(accentEls, { el = prevDot, prop = "BackgroundColor3" })
+        mk("TextLabel", {
+            Text = "Color Palette", Font = Enum.Font.Gotham, TextSize = 10,
+            TextColor3 = C.WHITE, BackgroundTransparency = 1,
+            Size = UDim2.new(1, -46, 1, 0), Position = UDim2.new(0, 28, 0, 0),
+            TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 6,
+        }, palBg)
+        local arrowC = mk("TextLabel", {
+            Text = "▾", Font = Enum.Font.GothamBold, TextSize = 10,
+            TextColor3 = Color3.fromRGB(125, 120, 112), BackgroundTransparency = 1,
+            Size = UDim2.new(0, 16, 1, 0), Position = UDim2.new(1, -18, 0, 0),
+            TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 6,
+        }, palBg)
+        palBtn.MouseEnter:Connect(function() tw(palBg, .1, { BackgroundColor3 = Color3.fromRGB(36, 35, 32) }) end)
+        palBtn.MouseLeave:Connect(function() tw(palBg, .1, { BackgroundColor3 = Color3.fromRGB(32, 31, 29) }) end)
+
+        local pickerPanel = mk("Frame", {
+            Size = UDim2.new(1, 0, 0, 0), BackgroundColor3 = Color3.fromRGB(24, 23, 21),
+            BorderSizePixel = 0, ZIndex = 5, ClipsDescendants = true, LayoutOrder = 4,
+        }, root)
+        rnd(4, pickerPanel)
+        mk("UIStroke", { Color = Color3.fromRGB(50, 47, 43), Thickness = 1, Transparency = 0 }, pickerPanel)
+
+        local inner = mk("Frame", {
+            Size = UDim2.new(0, PW-PAD*2, 0, CONTENTH), Position = UDim2.new(0, PAD, 0, PAD),
+            BackgroundTransparency = 1, ZIndex = 6,
+        }, pickerPanel)
+
+        local svSq = mk("Frame", { Size=UDim2.new(0,SV,0,SV), BackgroundColor3=Color3.fromHSV(currentH,1,1), BorderSizePixel=0, ZIndex=7 }, inner)
+        rnd(3, svSq)
+        local wL=mk("Frame",{Size=UDim2.new(1,0,1,0),BackgroundColor3=Color3.new(1,1,1),BorderSizePixel=0,ZIndex=8},svSq)
+        local wG=Instance.new("UIGradient"); wG.Rotation=0
+        wG.Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,0),NumberSequenceKeypoint.new(1,1)}); wG.Parent=wL
+        local bL=mk("Frame",{Size=UDim2.new(1,0,1,0),BackgroundColor3=Color3.new(0,0,0),BorderSizePixel=0,ZIndex=9},svSq)
+        local bG=Instance.new("UIGradient"); bG.Rotation=90
+        bG.Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,1),NumberSequenceKeypoint.new(1,0)}); bG.Parent=bL
+        local svCur=mk("Frame",{Size=UDim2.new(0,10,0,10),BackgroundColor3=Color3.new(1,1,1),BorderSizePixel=0,ZIndex=12},inner)
+        rnd(5,svCur); mk("UIStroke",{Color=Color3.new(0,0,0),Thickness=1.5},svCur)
+        local svHit=mk("TextButton",{Text="",BackgroundTransparency=1,Size=UDim2.new(0,SV,0,SV),ZIndex=13,AutoButtonColor=false},inner)
+
+        local hueBg=mk("Frame",{Size=UDim2.new(0,HW,0,SV),Position=UDim2.new(0,SV+PAD,0,0),BackgroundColor3=Color3.new(1,0,0),BorderSizePixel=0,ZIndex=7},inner)
+        rnd(3,hueBg)
+        local hG=Instance.new("UIGradient"); hG.Rotation=90
+        hG.Color=ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.fromRGB(255,0,0)),ColorSequenceKeypoint.new(0.17,Color3.fromRGB(255,255,0)),ColorSequenceKeypoint.new(0.33,Color3.fromRGB(0,255,0)),ColorSequenceKeypoint.new(0.50,Color3.fromRGB(0,255,255)),ColorSequenceKeypoint.new(0.67,Color3.fromRGB(0,0,255)),ColorSequenceKeypoint.new(0.83,Color3.fromRGB(255,0,255)),ColorSequenceKeypoint.new(1,Color3.fromRGB(255,0,0))}); hG.Parent=hueBg
+        local hueCur=mk("Frame",{Size=UDim2.new(0,HW+4,0,3),BackgroundColor3=Color3.new(1,1,1),BorderSizePixel=0,ZIndex=9},inner)
+        rnd(2,hueCur); mk("UIStroke",{Color=Color3.new(0,0,0),Thickness=1},hueCur)
+        local hueHit=mk("TextButton",{Text="",BackgroundTransparency=1,Size=UDim2.new(0,HW,0,SV),Position=UDim2.new(0,SV+PAD,0,0),ZIndex=13,AutoButtonColor=false},inner)
+
+        local rx=SV+HW+PAD*2
+        local bigPrev=mk("Frame",{Size=UDim2.new(0,PREVW,0,SV-20),Position=UDim2.new(0,rx,0,0),BackgroundColor3=Color3.fromHSV(currentH,currentS,currentV),BorderSizePixel=0,ZIndex=7},inner)
+        rnd(4,bigPrev); mk("UIStroke",{Color=Color3.fromRGB(50,47,43),Thickness=1,Transparency=0},bigPrev)
+        local function toHex(c) return string.format("#%02X%02X%02X",math.floor(c.R*255),math.floor(c.G*255),math.floor(c.B*255)) end
+        local hexLbl=mk("TextLabel",{Text=toHex(C.RED),Font=Enum.Font.Code,TextSize=7,TextColor3=C.GRAY,BackgroundTransparency=1,Size=UDim2.new(0,PREVW,0,14),Position=UDim2.new(0,rx,0,SV-18),TextXAlignment=Enum.TextXAlignment.Center,ZIndex=7},inner)
+        local applyBtn=mk("TextButton",{Text="Apply Color",Font=Enum.Font.GothamSemibold,TextSize=9,TextColor3=Color3.fromHSV(currentH,currentS,currentV),BackgroundColor3=Color3.fromRGB(32,31,29),BorderSizePixel=0,ZIndex=7,Size=UDim2.new(1,0,0,APPH),Position=UDim2.new(0,0,0,SV+PAD),AutoButtonColor=false},inner)
+        rnd(4,applyBtn); mk("UIStroke",{Color=Color3.fromRGB(58,55,49),Thickness=1,Transparency=0},applyBtn)
+        applyBtn.MouseEnter:Connect(function() tw(applyBtn,.1,{BackgroundColor3=Color3.fromRGB(38,36,33)}) end)
+        applyBtn.MouseLeave:Connect(function() tw(applyBtn,.1,{BackgroundColor3=Color3.fromRGB(32,31,29)}) end)
+
+        local function refreshPicker()
+            local col=Color3.fromHSV(currentH,currentS,currentV)
+            svSq.BackgroundColor3=Color3.fromHSV(currentH,1,1); bigPrev.BackgroundColor3=col; prevDot.BackgroundColor3=col
+            hexLbl.Text=toHex(col); applyBtn.TextColor3=col
+            svCur.Position=UDim2.new(0,currentS*SV-5,0,(1-currentV)*SV-5)
+            hueCur.Position=UDim2.new(0,SV+PAD-2,0,currentH*SV-1)
+        end
+
+        chkBtn.MouseButton1Click:Connect(function()
+            checked=not checked
+            tw(chkMark,.15,{BackgroundTransparency=checked and 0 or 1})
+            if checked then
+                if rgbModeOn then rgbModeOn=false;stopRGBMode();tw(rgbChkMark,.15,{BackgroundTransparency=1});tw(ledDot,.3,{BackgroundColor3=Color3.fromRGB(75,71,65)}) end
+                applyAccent(Color3.fromHSV(currentH,currentS,currentV))
+            else applyAccent(originalColor) end
+        end)
+        applyBtn.MouseButton1Click:Connect(function()
+            if not checked then tw(chkBg,.1,{BackgroundColor3=Color3.fromRGB(55,25,22)}); task.delay(.2,function() tw(chkBg,.1,{BackgroundColor3=Color3.fromRGB(32,31,29)}) end); return end
+            if rgbModeOn then rgbModeOn=false;stopRGBMode();tw(rgbChkMark,.15,{BackgroundTransparency=1});tw(ledDot,.3,{BackgroundColor3=Color3.fromRGB(75,71,65)}) end
+            local newCol=Color3.fromHSV(currentH,currentS,currentV); applyAccent(newCol)
+            tw(applyBtn,.08,{TextColor3=Color3.fromRGB(80,210,80)}); task.delay(.6,function() tw(applyBtn,.25,{TextColor3=newCol}) end)
+        end)
+
+        local svDrag=false
+        svHit.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then svDrag=true end end)
+        UIS.InputEnded:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then svDrag=false end end)
+        RunService.RenderStepped:Connect(function()
+            if not svDrag then return end
+            local mp=UIS:GetMouseLocation()
+            currentS=math.clamp((mp.X-svHit.AbsolutePosition.X)/svHit.AbsoluteSize.X,0,1)
+            currentV=1-math.clamp((mp.Y-svHit.AbsolutePosition.Y)/svHit.AbsoluteSize.Y,0,1)
+            refreshPicker()
+        end)
+        local hueDrag=false
+        hueHit.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then hueDrag=true end end)
+        UIS.InputEnded:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then hueDrag=false end end)
+        RunService.RenderStepped:Connect(function()
+            if not hueDrag then return end
+            local mp=UIS:GetMouseLocation()
+            currentH=math.clamp((mp.Y-hueHit.AbsolutePosition.Y)/hueHit.AbsoluteSize.Y,0,1)
+            refreshPicker()
+        end)
+        palBtn.MouseButton1Click:Connect(function()
+            if pickerAnim then return end; pickerAnim=true; pickerOpen=not pickerOpen
+            if pickerOpen then arrowC.Text="▴"; tw(pickerPanel,.3,{Size=UDim2.new(1,0,0,TOTALH)},Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
+            else arrowC.Text="▾"; tw(pickerPanel,.25,{Size=UDim2.new(1,0,0,0)},Enum.EasingStyle.Quint,Enum.EasingDirection.In) end
+            task.delay(.3,function() pickerAnim=false end)
+        end)
+        refreshPicker()
+    end
+
+    local FONTS = {
+        {name="Gotham",font=Enum.Font.Gotham},{name="GothamBold",font=Enum.Font.GothamBold},
+        {name="Code",font=Enum.Font.Code},{name="Ubuntu",font=Enum.Font.Ubuntu},
+        {name="Arcade",font=Enum.Font.Arcade},{name="Bangers",font=Enum.Font.Bangers},
+    }
+
+    local function CreateFontPicker(parent)
+        makeSectionLabel(parent,"FONT",SO())
+        local PW,ITEMH,GAPF=228,26,3
+        local selFont,checked,panOpen,panAnim=1,false,false,false
+        local LISTHTOTAL,PAD=#FONTS*ITEMH+(#FONTS-1)*GAPF+14,6
+
+        local root=mk("Frame",{Size=UDim2.new(1,0,0,0),AutomaticSize=Enum.AutomaticSize.Y,BackgroundTransparency=1,LayoutOrder=SO()},parent)
+        mk("UIListLayout",{Padding=UDim.new(0,5),SortOrder=Enum.SortOrder.LayoutOrder},root)
+
+        local row1=makeRow(root,"Custom Font",1)
+        local chkBg,chkMark,chkBtn=makeCheckbox(row1,5)
+        chkBg.Position=UDim2.new(1,-15,0.5,-7)
+
+        local selBtn=mk("TextButton",{Text="",BackgroundTransparency=1,Size=UDim2.new(1,0,0,28),BorderSizePixel=0,ZIndex=5,AutoButtonColor=false,LayoutOrder=2},root)
+        local selBg=mk("Frame",{Size=UDim2.new(1,0,1,0),BackgroundColor3=Color3.fromRGB(32,31,29),BorderSizePixel=0,ZIndex=4},selBtn)
+        rnd(4,selBg); mk("UIStroke",{Color=Color3.fromRGB(58,55,49),Thickness=1,Transparency=0},selBg)
+        local fontIcon=mk("TextLabel",{Text="Aa",Font=Enum.Font.GothamBold,TextSize=9,TextColor3=C.RED,BackgroundTransparency=1,Size=UDim2.new(0,22,1,0),Position=UDim2.new(0,6,0,0),TextXAlignment=Enum.TextXAlignment.Center,ZIndex=6},selBg)
+        table.insert(accentEls,{el=fontIcon,prop="TextColor3"})
+        mk("Frame",{Size=UDim2.new(0,1,0,13),Position=UDim2.new(0,30,0.5,-6),BackgroundColor3=Color3.fromRGB(55,52,46),BorderSizePixel=0,ZIndex=7},selBg)
+        local selLbl=mk("TextLabel",{Text=FONTS[selFont].name,Font=FONTS[selFont].font,TextSize=10,TextColor3=C.WHITE,BackgroundTransparency=1,Size=UDim2.new(1,-52,1,0),Position=UDim2.new(0,36,0,0),TextXAlignment=Enum.TextXAlignment.Left,ZIndex=6},selBg)
+        local arrowF=mk("TextLabel",{Text="▾",Font=Enum.Font.GothamBold,TextSize=10,TextColor3=Color3.fromRGB(125,120,112),BackgroundTransparency=1,Size=UDim2.new(0,16,1,0),Position=UDim2.new(1,-18,0,0),TextXAlignment=Enum.TextXAlignment.Center,ZIndex=6},selBg)
+        selBtn.MouseEnter:Connect(function() tw(selBg,.1,{BackgroundColor3=Color3.fromRGB(36,35,32)}) end)
+        selBtn.MouseLeave:Connect(function() tw(selBg,.1,{BackgroundColor3=Color3.fromRGB(32,31,29)}) end)
+
+        local listPanel=mk("Frame",{Size=UDim2.new(1,0,0,0),BackgroundColor3=Color3.fromRGB(24,23,21),BorderSizePixel=0,ZIndex=5,ClipsDescendants=true,LayoutOrder=3},root)
+        rnd(4,listPanel); mk("UIStroke",{Color=Color3.fromRGB(50,47,43),Thickness=1,Transparency=0},listPanel)
+        local listInner=mk("Frame",{Size=UDim2.new(1,-PAD*2,0,0),AutomaticSize=Enum.AutomaticSize.Y,Position=UDim2.new(0,PAD,0,PAD/2),BackgroundTransparency=1,ZIndex=6},listPanel)
+        mk("UIListLayout",{Padding=UDim.new(0,GAPF),SortOrder=Enum.SortOrder.LayoutOrder},listInner)
+
+        local itemRefs={}
+        for i,fd in ipairs(FONTS) do
+            local isSel=(i==selFont)
+            local item=mk("Frame",{Size=UDim2.new(1,0,0,ITEMH),BackgroundColor3=isSel and Color3.fromRGB(35,34,31) or Color3.fromRGB(28,27,25),BorderSizePixel=0,ZIndex=7,LayoutOrder=i},listInner)
+            rnd(3,item)
+            local selBar=mk("Frame",{Size=UDim2.new(0,2,0,12),Position=UDim2.new(0,0,0.5,-6),BackgroundColor3=C.RED,BorderSizePixel=0,ZIndex=8},item)
+            rnd(1,selBar); selBar.BackgroundTransparency=isSel and 0 or 1
+            table.insert(accentEls,{el=selBar,prop="BackgroundColor3"})
+            mk("UIStroke",{Color=isSel and Color3.fromRGB(88,83,76) or Color3.fromRGB(44,42,38),Thickness=1,Transparency=isSel and 0.2 or 0},item)
+            local lbl=mk("TextLabel",{Text=fd.name,Font=fd.font,TextSize=10,TextColor3=isSel and C.WHITE or C.GRAY,BackgroundTransparency=1,Size=UDim2.new(1,-18,1,0),Position=UDim2.new(0,8,0,0),TextXAlignment=Enum.TextXAlignment.Left,ZIndex=8},item)
+            local dot=mk("Frame",{Size=UDim2.new(0,5,0,5),Position=UDim2.new(1,-11,0.5,-2),BackgroundColor3=C.RED,BorderSizePixel=0,ZIndex=8},item)
+            rnd(3,dot); dot.BackgroundTransparency=isSel and 0 or 1
+            table.insert(accentEls,{el=dot,prop="BackgroundColor3"})
+            local hitBtn=mk("TextButton",{Text="",BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),ZIndex=9,AutoButtonColor=false},item)
+            itemRefs[i]={item=item,lbl=lbl,dot=dot,selBar=selBar}
+            hitBtn.MouseEnter:Connect(function() if i~=selFont then tw(item,.1,{BackgroundColor3=Color3.fromRGB(32,31,28)}); tw(lbl,.1,{TextColor3=C.WHITE}) end end)
+            hitBtn.MouseLeave:Connect(function() if i~=selFont then tw(item,.1,{BackgroundColor3=Color3.fromRGB(28,27,25)}); tw(lbl,.1,{TextColor3=C.GRAY}) end end)
+            hitBtn.MouseButton1Click:Connect(function()
+                local prev=itemRefs[selFont]
+                tw(prev.item,.15,{BackgroundColor3=Color3.fromRGB(28,27,25)}); tw(prev.lbl,.15,{TextColor3=C.GRAY})
+                prev.dot.BackgroundTransparency=1; prev.selBar.BackgroundTransparency=1
+                selFont=i; tw(item,.15,{BackgroundColor3=Color3.fromRGB(35,34,31)}); tw(lbl,.15,{TextColor3=C.WHITE})
+                dot.BackgroundTransparency=0; selBar.BackgroundTransparency=0
+                selLbl.Text=fd.name; selLbl.Font=fd.font
+                if checked then title1.Font=fd.font; if title3 then title3.Font=fd.font end; for _,t in ipairs(navT) do t.lbl.Font=fd.font end end
+            end)
+        end
+        chkBtn.MouseButton1Click:Connect(function()
+            checked=not checked; tw(chkMark,.15,{BackgroundTransparency=checked and 0 or 1})
+            if checked then local fd=FONTS[selFont]; title1.Font=fd.font; if title3 then title3.Font=fd.font end; for _,t in ipairs(navT) do t.lbl.Font=fd.font end
+            else title1.Font=Enum.Font.GothamBold; if title3 then title3.Font=Enum.Font.Gotham end; for _,t in ipairs(navT) do t.lbl.Font=Enum.Font.GothamSemibold end end
+        end)
+        selBtn.MouseButton1Click:Connect(function()
+            if panAnim then return end; panAnim=true; panOpen=not panOpen
+            if panOpen then arrowF.Text="▴"; tw(listPanel,.3,{Size=UDim2.new(1,0,0,LISTHTOTAL)},Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
+            else arrowF.Text="▾"; tw(listPanel,.25,{Size=UDim2.new(1,0,0,0)},Enum.EasingStyle.Quint,Enum.EasingDirection.In) end
+            task.delay(.3,function() panAnim=false end)
+        end)
+    end
+
+    local function CreateKeybinds(parent)
+        local root=mk("Frame",{Size=UDim2.new(1,0,0,0),AutomaticSize=Enum.AutomaticSize.Y,BackgroundTransparency=1,LayoutOrder=SO()},parent)
+        mk("UIListLayout",{Padding=UDim.new(0,5),SortOrder=Enum.SortOrder.LayoutOrder},root)
+        local justAssignedMin,justAssignedClose,justAssignedSesion,justAssignedViewTime=false,false,false,false
+
+        local function keyName(kc)
+            local names={[Enum.KeyCode.LeftControl]="L.Ctrl",[Enum.KeyCode.RightControl]="R.Ctrl",[Enum.KeyCode.LeftShift]="L.Shft",[Enum.KeyCode.RightShift]="R.Shft",[Enum.KeyCode.LeftAlt]="L.Alt",[Enum.KeyCode.RightAlt]="AltGr",[Enum.KeyCode.Tab]="Tab",[Enum.KeyCode.CapsLock]="Caps",[Enum.KeyCode.Insert]="Ins",[Enum.KeyCode.Home]="Home",[Enum.KeyCode.Delete]="Del",[Enum.KeyCode.End]="End",[Enum.KeyCode.Backspace]="Back",[Enum.KeyCode.Return]="Enter",[Enum.KeyCode.Escape]="Esc",[Enum.KeyCode.Space]="Space",[Enum.KeyCode.PageUp]="PgUp",[Enum.KeyCode.PageDown]="PgDn"}
+            if names[kc] then return names[kc] end
+            local raw=tostring(kc):gsub("Enum%.KeyCode%.","")
+            if raw:match("^[A-Z]$") or raw:match("^[0-9]$") then return raw end
+            if #raw<=6 then return raw else return raw:sub(1,5).."." end
+        end
+
+        -- Badge tecla: caja oscura redondeada, texto key, limpio como la foto
+        local function makeKeyRow(parent,labelText,defaultKey,lo)
+            local row=mk("Frame",{Size=UDim2.new(1,0,0,28),BackgroundTransparency=1,LayoutOrder=lo or SO()},parent)
+            mk("TextLabel",{Text=labelText,Font=Enum.Font.Gotham,TextSize=11,TextColor3=C.WHITE,BackgroundTransparency=1,Size=UDim2.new(1,-60,1,0),TextXAlignment=Enum.TextXAlignment.Left,ZIndex=5},row)
+            local keyBg=mk("Frame",{Size=UDim2.new(0,52,0,20),Position=UDim2.new(1,-52,0.5,-10),BackgroundColor3=Color3.fromRGB(32,31,29),BorderSizePixel=0,ZIndex=5},row)
+            rnd(5,keyBg)
+            mk("UIStroke",{Color=Color3.fromRGB(68,64,57),Thickness=1,Transparency=0},keyBg)
+            local keyLbl=mk("TextLabel",{Text=keyName(defaultKey),Font=Enum.Font.GothamBold,TextSize=9,TextColor3=C.WHITE,BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),ZIndex=6,TextXAlignment=Enum.TextXAlignment.Center},keyBg)
+            local keyBtn=mk("TextButton",{Text="",BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),ZIndex=7,AutoButtonColor=false},keyBg)
+            keyBtn.MouseEnter:Connect(function() tw(keyBg,.1,{BackgroundColor3=Color3.fromRGB(38,36,33)}) end)
+            keyBtn.MouseLeave:Connect(function() tw(keyBg,.1,{BackgroundColor3=Color3.fromRGB(32,31,29)}) end)
+            return keyBg,keyLbl,keyBtn
+        end
+
+        makeSectionLabel(root,"TOGGLE VISIBILITY",1)
+        local minKeyBg,minKeyLbl,minKeyBtn=makeKeyRow(root,"Minimize Key",Enum.KeyCode.LeftControl,2)
+        local minListening,currentMinKey,minListenConn=false,Enum.KeyCode.LeftControl,nil
+        local function startMinListening()
+            if minListenConn then minListenConn:Disconnect() end
+            minListenConn=UIS.InputBegan:Connect(function(input,gpe)
+                if input.UserInputType~=Enum.UserInputType.Keyboard then return end
+                minListening=false; currentMinKey=input.KeyCode; justAssignedMin=true
+                task.delay(0.1,function() justAssignedMin=false end)
+                if minListenConn then minListenConn:Disconnect(); minListenConn=nil end
+                minKeyLbl.Text=keyName(currentMinKey); minKeyLbl.TextColor3=C.WHITE
+                tw(minKeyBg,.08,{BackgroundColor3=Color3.fromRGB(18,32,18)}); task.delay(.35,function() tw(minKeyBg,.2,{BackgroundColor3=Color3.fromRGB(32,31,29)}) end)
+            end)
+        end
+        minKeyBtn.MouseButton1Click:Connect(function()
+            if minListening then return end; minListening=true
+            tw(minKeyBg,.1,{BackgroundColor3=Color3.fromRGB(42,32,12)}); minKeyLbl.Text="···"; minKeyLbl.TextColor3=C.GRAY; startMinListening()
+        end)
+
+        makeSectionLabel(root,"CLOSE PANEL",3)
+        local closeKeyBg,closeKeyLbl,closeKeyBtn=makeKeyRow(root,"Close Key",Enum.KeyCode.LeftAlt,4)
+        local closeListening,currentCloseKey,closeListenConn=false,Enum.KeyCode.LeftAlt,nil
+        local function startCloseListening()
+            if closeListenConn then closeListenConn:Disconnect() end
+            closeListenConn=UIS.InputBegan:Connect(function(input,gpe)
+                if input.UserInputType~=Enum.UserInputType.Keyboard then return end
+                closeListening=false; currentCloseKey=input.KeyCode; justAssignedClose=true
+                task.delay(0.1,function() justAssignedClose=false end)
+                if closeListenConn then closeListenConn:Disconnect(); closeListenConn=nil end
+                closeKeyLbl.Text=keyName(currentCloseKey); closeKeyLbl.TextColor3=C.WHITE
+                tw(closeKeyBg,.08,{BackgroundColor3=Color3.fromRGB(18,32,18)}); task.delay(.35,function() tw(closeKeyBg,.2,{BackgroundColor3=Color3.fromRGB(32,31,29)}) end)
+            end)
+        end
+        closeKeyBtn.MouseButton1Click:Connect(function()
+            if closeListening then return end; closeListening=true
+            tw(closeKeyBg,.1,{BackgroundColor3=Color3.fromRGB(42,32,12)}); closeKeyLbl.Text="···"; closeKeyLbl.TextColor3=C.GRAY; startCloseListening()
+        end)
+
+        makeSectionLabel(root,"CLOSE SESION",5)
+        local sesionKeyBg,sesionKeyLbl,sesionKeyBtn=makeKeyRow(root,"Close Sesion",Enum.KeyCode.RightControl,6)
+        local sesionListening,currentSesionKey,sesionListenConn=false,Enum.KeyCode.RightControl,nil
+        local function startSesionListening()
+            if sesionListenConn then sesionListenConn:Disconnect() end
+            sesionListenConn=UIS.InputBegan:Connect(function(input,gpe)
+                if input.UserInputType~=Enum.UserInputType.Keyboard then return end
+                sesionListening=false; currentSesionKey=input.KeyCode; justAssignedSesion=true
+                task.delay(0.1,function() justAssignedSesion=false end)
+                if sesionListenConn then sesionListenConn:Disconnect(); sesionListenConn=nil end
+                sesionKeyLbl.Text=keyName(currentSesionKey); sesionKeyLbl.TextColor3=C.WHITE
+                tw(sesionKeyBg,.08,{BackgroundColor3=Color3.fromRGB(18,32,18)}); task.delay(.35,function() tw(sesionKeyBg,.2,{BackgroundColor3=Color3.fromRGB(32,31,29)}) end)
+            end)
+        end
+        sesionKeyBtn.MouseButton1Click:Connect(function()
+            if sesionListening then return end; sesionListening=true
+            tw(sesionKeyBg,.1,{BackgroundColor3=Color3.fromRGB(42,32,12)}); sesionKeyLbl.Text="···"; sesionKeyLbl.TextColor3=C.GRAY; startSesionListening()
+        end)
+
+        makeSectionLabel(root,"VIEW TIME",7)
+        local viewTimeKeyBg,viewTimeKeyLbl,viewTimeKeyBtn=makeKeyRow(root,"View Time",Enum.KeyCode.RightAlt,8)
+        local viewTimeListening,currentViewTimeKey,viewTimeListenConn=false,Enum.KeyCode.RightAlt,nil
+        local function startViewTimeListening()
+            if viewTimeListenConn then viewTimeListenConn:Disconnect() end
+            viewTimeListenConn=UIS.InputBegan:Connect(function(input,gpe)
+                if input.UserInputType~=Enum.UserInputType.Keyboard then return end
+                viewTimeListening=false; currentViewTimeKey=input.KeyCode; justAssignedViewTime=true
+                task.delay(0.1,function() justAssignedViewTime=false end)
+                if viewTimeListenConn then viewTimeListenConn:Disconnect(); viewTimeListenConn=nil end
+                viewTimeKeyLbl.Text=keyName(currentViewTimeKey); viewTimeKeyLbl.TextColor3=C.WHITE
+                tw(viewTimeKeyBg,.08,{BackgroundColor3=Color3.fromRGB(18,32,18)}); task.delay(.35,function() tw(viewTimeKeyBg,.2,{BackgroundColor3=Color3.fromRGB(32,31,29)}) end)
+            end)
+        end
+        viewTimeKeyBtn.MouseButton1Click:Connect(function()
+            if viewTimeListening then return end; viewTimeListening=true
+            tw(viewTimeKeyBg,.1,{BackgroundColor3=Color3.fromRGB(42,32,12)}); viewTimeKeyLbl.Text="···"; viewTimeKeyLbl.TextColor3=C.GRAY; startViewTimeListening()
+        end)
+
+        local toggleConn=UIS.InputBegan:Connect(function(input,gpe)
+            if gpe then return end
+            if input.UserInputType==Enum.UserInputType.Keyboard then
+                if minListening or closeListening or sesionListening or viewTimeListening then return end
+                if input.KeyCode==currentMinKey and not justAssignedMin then if r.anim and r.anim.toggleMinimize then r.anim.toggleMinimize() end end
+                if input.KeyCode==currentCloseKey and not justAssignedClose then if r.anim and r.anim.doClose then r.anim.doClose() end end
+                if input.KeyCode==currentSesionKey and not justAssignedSesion then
+                    if r.anim and r.anim.doClose then r.anim.doClose() end
+                    task.delay(0.3,function()
+                        local ok,content=pcall(function() return game:HttpGet("https://raw.githubusercontent.com/denzells/verified/main/ui.lua") end)
+                        if ok and content and content~="" then local fn,err=_loadstring(content); if fn then pcall(fn) end end
+                    end)
+                end
+                if input.KeyCode==currentViewTimeKey and not justAssignedViewTime then
+                    if expiryLabelRef and fullExpiryText~="" then expiryLabelRef.Text=fullExpiryText end
+                end
+            end
+        end)
+        local toggleConnRelease=UIS.InputEnded:Connect(function(input)
+            if input.UserInputType==Enum.UserInputType.Keyboard then
+                if input.KeyCode==currentViewTimeKey then
+                    if expiryLabelRef and shortExpiryText~="" then expiryLabelRef.Text=shortExpiryText end
+                end
+            end
+        end)
+        root.Destroying:Connect(function()
+            if minListenConn then minListenConn:Disconnect() end; if closeListenConn then closeListenConn:Disconnect() end
+            if sesionListenConn then sesionListenConn:Disconnect() end; if viewTimeListenConn then viewTimeListenConn:Disconnect() end
+            if toggleConn then toggleConn:Disconnect() end; if toggleConnRelease then toggleConnRelease:Disconnect() end
+        end)
+    end
+
+    local function CreateSessionInfo(parent)
+        local SAVE_FILE="serios_saved.json"
+        local canRead=typeof(readfile)=="function" and typeof(isfile)=="function"
+        local username,key,expiry="N/A","N/A","N/A"
+        local isLifetime=false
+        if canRead then
+            local ok,result=pcall(function()
+                if not isfile(SAVE_FILE) then return nil end
+                return HttpService:JSONDecode(readfile(SAVE_FILE))
+            end)
+            if ok and result and result.username and result.key then username=result.username; key=result.key; expiry=result.expiry or "N/A"
+            else username="Not Found"; key="Not Found" end
+        end
+        local function formatExpiryShort(exp)
+            if not exp or exp=="N/A" or exp=="Not Found" then return "N/A" end
+            if exp=="lifetime" then isLifetime=true; return "Lifetime" end
+            local ts=tonumber(exp); if ts then local d=os.date("*t",ts); return string.format("%02d/%02d/%04d",d.day,d.month,d.year) end
+            return tostring(exp)
+        end
+        local function formatExpiryFull(exp)
+            if not exp or exp=="N/A" or exp=="Not Found" then return "N/A" end
+            if exp=="lifetime" then return "Lifetime (no expiry)" end
+            local ts=tonumber(exp); if ts then local d=os.date("*t",ts); return string.format("%02d/%02d/%04d  %02d:%02d:%02d",d.day,d.month,d.year,d.hour,d.min,d.sec) end
+            return tostring(exp)
+        end
+        shortExpiryText=formatExpiryShort(expiry); fullExpiryText=formatExpiryFull(expiry)
+        local expiryColor=(isLifetime or isAdmin) and Color3.fromRGB(228,226,222) or Color3.fromRGB(72,200,88)
+
+        local gridRow=mk("Frame",{Size=UDim2.new(1,0,0,46),BackgroundTransparency=1,LayoutOrder=SO()},parent)
+        mk("UIListLayout",{FillDirection=Enum.FillDirection.Horizontal,Padding=UDim.new(0,6),SortOrder=Enum.SortOrder.LayoutOrder},gridRow)
+
+        local function makeCompactField(parent,label,value,icon,isPassword,lo,overrideColor)
+            local container=mk("Frame",{Size=UDim2.new(0.333,-5,1,0),BackgroundTransparency=1,LayoutOrder=lo},parent)
+            mk("TextLabel",{Text=label,Font=Enum.Font.GothamBold,TextSize=8,TextColor3=C.GRAY,BackgroundTransparency=1,Size=UDim2.new(1,0,0,12),TextXAlignment=Enum.TextXAlignment.Left,ZIndex=5},container)
+            local box=mk("Frame",{Size=UDim2.new(1,0,0,28),Position=UDim2.new(0,0,0,14),BackgroundColor3=Color3.fromRGB(24,23,21),BorderSizePixel=0,ZIndex=5},container)
+            rnd(4,box); mk("UIStroke",{Color=Color3.fromRGB(50,47,43),Thickness=1,Transparency=0},box)
+            if icon then
+                mk("Frame",{Size=UDim2.new(0,1,0,13),Position=UDim2.new(0,28,0.5,-6),BackgroundColor3=Color3.fromRGB(50,47,43),BorderSizePixel=0,ZIndex=7},box)
+                local img=mk("ImageLabel",{Image=icon,Size=UDim2.new(0,12,0,12),Position=UDim2.new(0,8,0.5,-6),BackgroundTransparency=1,ImageColor3=C.RED,ZIndex=6},box)
+                table.insert(accentEls,{el=img,prop="ImageColor3"})
+            end
+            local displayText=isPassword and string.rep("•",math.min(#value,18)) or value
+            local textLbl=mk("TextLabel",{Text=displayText,Font=Enum.Font.Code,TextSize=8,TextColor3=overrideColor or C.WHITE,BackgroundTransparency=1,Size=UDim2.new(1,icon and -54 or -10,1,0),Position=UDim2.new(0,icon and 36 or 6,0,0),TextXAlignment=Enum.TextXAlignment.Left,TextTruncate=Enum.TextTruncate.AtEnd,ZIndex=6},box)
+            if isPassword then
+                local showKey=false
+                local eyeBtn=mk("TextButton",{Text="○",Font=Enum.Font.GothamBold,TextSize=9,TextColor3=C.MUTED,BackgroundTransparency=1,Size=UDim2.new(0,20,0,20),Position=UDim2.new(1,-22,0.5,-10),ZIndex=7,AutoButtonColor=false},box)
+                eyeBtn.MouseButton1Click:Connect(function()
+                    showKey=not showKey; textLbl.Text=showKey and value or displayText; eyeBtn.Text=showKey and "●" or "○"
+                    tw(eyeBtn,0.1,{TextColor3=showKey and C.RED or C.MUTED})
+                end)
+                eyeBtn.MouseEnter:Connect(function() if not showKey then tw(eyeBtn,.1,{TextColor3=C.GRAY}) end end)
+                eyeBtn.MouseLeave:Connect(function() if not showKey then tw(eyeBtn,.1,{TextColor3=C.MUTED}) end end)
+            end
+            return textLbl
+        end
+        makeCompactField(gridRow,"USERNAME",username,"rbxassetid://75066739039083",false,1,nil)
+        makeCompactField(gridRow,"KEY",key,"rbxassetid://126448589402910",true,2,nil)
+        expiryLabelRef=makeCompactField(gridRow,"EXPIRY",shortExpiryText,"rbxassetid://78475382175834",false,3,expiryColor)
+    end
+
+    task.delay(1, function()
+        mk("UIListLayout",{Padding=UDim.new(0,8),SortOrder=Enum.SortOrder.LayoutOrder},page)
+        mk("UIPadding",{PaddingTop=UDim.new(0,8),PaddingBottom=UDim.new(0,8),PaddingLeft=UDim.new(0,8),PaddingRight=UDim.new(0,8)},page)
+
+        local topRow=mk("Frame",{Size=UDim2.new(1,0,0,0),AutomaticSize=Enum.AutomaticSize.Y,BackgroundTransparency=1,LayoutOrder=SO()},page)
+        mk("UIListLayout",{FillDirection=Enum.FillDirection.Horizontal,Padding=UDim.new(0,8),SortOrder=Enum.SortOrder.LayoutOrder},topRow)
+
+        local customPanel=MiniPanel(topRow,"Custom Panel",nil)
+        customPanel.Parent.Size=UDim2.new(0.5,-4,0,0); customPanel.Parent.AutomaticSize=Enum.AutomaticSize.Y
+        -- Ícono en el header (FindFirstChildOfClass busca el primer Frame = el header)
+        local cpHeader=customPanel.Parent:FindFirstChildOfClass("Frame")
+        if cpHeader then
+            local cpIcon=mk("ImageLabel",{Image="rbxassetid://79986513204084",Size=UDim2.new(0,13,0,13),Position=UDim2.new(1,-22,0.5,-6),BackgroundTransparency=1,ImageColor3=C.RED,ZIndex=8},cpHeader)
+            table.insert(accentEls,{el=cpIcon,prop="ImageColor3"})
+        end
+        CreateAccentPicker(customPanel); CreateFontPicker(customPanel)
+
+        local keybindPanel=MiniPanel(topRow,"Keybinds",nil)
+        keybindPanel.Parent.Size=UDim2.new(0.5,-4,0,0); keybindPanel.Parent.AutomaticSize=Enum.AutomaticSize.Y
+        local kbHeader=keybindPanel.Parent:FindFirstChildOfClass("Frame")
+        if kbHeader then
+            local kbIcon=mk("ImageLabel",{Image="rbxassetid://75198932068107",Size=UDim2.new(0,13,0,13),Position=UDim2.new(1,-22,0.5,-6),BackgroundTransparency=1,ImageColor3=Color3.fromRGB(125,120,112),ZIndex=8},kbHeader)
+            table.insert(accentEls,{el=kbIcon,prop="ImageColor3"})
+        end
+        CreateKeybinds(keybindPanel)
+
+        local sessionOuterPanel=mk("Frame",{Size=UDim2.new(1,0,0,0),AutomaticSize=Enum.AutomaticSize.Y,BackgroundColor3=Color3.fromRGB(28,27,25),BorderSizePixel=0,LayoutOrder=SO()},page)
+        rnd(5,sessionOuterPanel)
+        mk("UIStroke",{Color=Color3.fromRGB(48,46,42),Thickness=1,Transparency=0.35},sessionOuterPanel)
+        local sesHeader=mk("Frame",{Size=UDim2.new(1,0,0,34),BackgroundColor3=Color3.fromRGB(22,21,19),BorderSizePixel=0,ZIndex=4,ClipsDescendants=true},sessionOuterPanel)
+        rnd(5,sesHeader)
+        mk("Frame",{Size=UDim2.new(1,0,0.5,0),Position=UDim2.new(0,0,0.5,0),BackgroundColor3=Color3.fromRGB(22,21,19),BorderSizePixel=0,ZIndex=3},sesHeader)
+        local sesBar=mk("Frame",{Size=UDim2.new(0,2,0,16),Position=UDim2.new(0,8,0.5,-8),BackgroundColor3=C.RED,BorderSizePixel=0,ZIndex=6},sesHeader)
+        rnd(1,sesBar); table.insert(accentEls,{el=sesBar,prop="BackgroundColor3"})
+        mk("TextLabel",{Text="Info Sesion",Font=Enum.Font.GothamBold,TextSize=12,TextColor3=C.WHITE,BackgroundTransparency=1,Size=UDim2.new(1,-44,1,0),Position=UDim2.new(0,16,0,0),TextXAlignment=Enum.TextXAlignment.Left,ZIndex=6},sesHeader)
+        local sesIcon=mk("ImageLabel",{Image="rbxassetid://78475382175834",Size=UDim2.new(0,13,0,13),Position=UDim2.new(1,-22,0.5,-6),BackgroundTransparency=1,ImageColor3=C.RED,ZIndex=7},sesHeader)
+        table.insert(accentEls,{el=sesIcon,prop="ImageColor3"})
+        mk("Frame",{Size=UDim2.new(1,0,0,1),Position=UDim2.new(0,0,0,34),BackgroundColor3=Color3.fromRGB(42,40,37),BorderSizePixel=0,ZIndex=4},sessionOuterPanel)
+        local sessionContent=mk("Frame",{Size=UDim2.new(1,-18,0,0),Position=UDim2.new(0,9,0,42),AutomaticSize=Enum.AutomaticSize.Y,BackgroundTransparency=1},sessionOuterPanel)
+        mk("UIPadding",{PaddingBottom=UDim.new(0,10)},sessionOuterPanel)
+        CreateSessionInfo(sessionContent)
+    end)
 end
 
--- ── Ventana principal ─────────────────────────────────────────────────────
-Win = mk("Frame", {
-	Size             = UDim2.new(0, W.WW, 0, W.WH),
-	Position         = UDim2.new(0.5, -W.WW/2, 0.5, -W.WH/2),
-	BackgroundColor3 = C.WIN,
-	BorderSizePixel  = 0,
-	ClipsDescendants = false,
-	ZIndex           = 3,
-}, SG)
-rnd(CORNER.WIN, Win)
-
-local WinStroke = mk("UIStroke", {
-	Color        = C.LINE,
-	Thickness    = 1,
-	Transparency = 1,   -- sin trazo
-}, Win)
-
--- ── Titlebar ──────────────────────────────────────────────────────────────
-local TBar = mk("Frame", {
-	Size             = UDim2.new(1, 0, 0, W.TH),
-	BackgroundColor3 = C.TBAR,
-	BorderSizePixel  = 0,
-	ZIndex           = 6,
-	ClipsDescendants = false,
-	Active           = true,
-}, Win)
-mk("UICorner", { CornerRadius = UDim.new(0, CORNER.TBAR) }, TBar)
-
--- Parche inferior para que TBar no tenga esquinas redondeadas abajo
-mk("Frame", {
-	Size             = UDim2.new(1, 0, 0, CORNER.TBAR),
-	Position         = UDim2.new(0, 0, 1, -CORNER.TBAR),
-	BackgroundColor3 = C.TBAR,
-	BorderSizePixel  = 0,
-	ZIndex           = 5,
-}, TBar)
-
--- Separador inferior del TBar (más sutil)
-mk("Frame", {
-	Size                   = UDim2.new(1, 0, 0, 1),
-	Position               = UDim2.new(0, 0, 1, 0),
-	BackgroundColor3       = C.LINE,
-	BorderSizePixel        = 0,
-	ZIndex                 = 7,
-	BackgroundTransparency = 0.6,
-}, TBar)
-
--- Punto de acento
-local rdot = mk("Frame", {
-	Size             = UDim2.new(0, 8, 0, 8),
-	Position         = UDim2.new(0, 14, 0.5, -4),
-	BackgroundColor3 = C.RED,
-	BorderSizePixel  = 0,
-	ZIndex           = 8,
-}, TBar)
-rnd(CORNER.DOT, rdot)
-
--- Etiquetas del título
-local function tlbl(txt, font, sz, col, x, w)
-	return mk("TextLabel", {
-		Text                   = txt,
-		Font                   = font,
-		TextSize               = sz,
-		TextColor3             = col,
-		BackgroundTransparency = 1,
-		Size                   = UDim2.new(0, w, 0, W.TH),
-		Position               = UDim2.new(0, x, 0, 0),
-		TextXAlignment         = Enum.TextXAlignment.Left,
-		ZIndex                 = 8,
-	}, TBar)
-end
-
-local title1 = tlbl("checktheprint", Enum.Font.GothamBold,    13, C.WHITE, 30,  92)
-local title2 = tlbl("|",            Enum.Font.GothamBold,    16, C.RED,   125, 14)
-
--- Badge verificado
-local verifiedBadge = mk("Frame", {
-	Size             = UDim2.new(0, 84, 0, 20),
-	Position         = UDim2.new(0, 141, 0.5, -10),
-	BackgroundColor3 = BADGE.bg,
-	BorderSizePixel  = 0,
-	ZIndex           = 8,
-}, TBar)
-rnd(CORNER.BADGE, verifiedBadge)
-mk("UIStroke", { Color = BADGE.stroke, Thickness = 1, Transparency = BADGE.stAlpha }, verifiedBadge)
-mk("TextLabel", {
-	Text                   = BADGE.text,
-	Font                   = Enum.Font.GothamBold,
-	TextSize               = 9,
-	TextColor3             = BADGE.col,
-	BackgroundTransparency = 1,
-	Size                   = UDim2.new(1, 0, 1, 0),
-	ZIndex                 = 9,
-	TextXAlignment         = Enum.TextXAlignment.Center,
-}, verifiedBadge)
-
-local title4 = tlbl("|",      Enum.Font.GothamBold, 14, C.MUTED, 237, 14)
-local title5 = tlbl("v1.0.0", Enum.Font.Code,       11, C.MUTED, 253, 60)
-
--- Botones minimizar / cerrar
-local MinB = mk("TextButton", {
-	Text                   = "─",
-	Font                   = Enum.Font.GothamBold,
-	TextSize               = 14,
-	TextColor3             = C.GRAY,
-	BackgroundTransparency = 1,
-	BorderSizePixel        = 0,
-	Size                   = UDim2.new(0, 36, 0, W.TH),
-	Position               = UDim2.new(0, W.WW-72, 0, 0),
-	ZIndex                 = 8,
-	AutoButtonColor        = false,
-}, TBar)
-
-local ClsB = mk("TextButton", {
-	Text                   = "×",
-	Font                   = Enum.Font.GothamBold,
-	TextSize               = 20,
-	TextColor3             = C.GRAY,
-	BackgroundTransparency = 1,
-	BorderSizePixel        = 0,
-	Size                   = UDim2.new(0, 36, 0, W.TH),
-	Position               = UDim2.new(0, W.WW-36, 0, 0),
-	ZIndex                 = 8,
-	AutoButtonColor        = false,
-}, TBar)
-
-ClsB.MouseEnter:Connect(function()  tw(ClsB, .12, {TextColor3 = Color3.fromRGB(220,60,60)})
-navT[3].lbl.Text = "Settings"  -- fuerza el label tras posible override del módulo end)
-ClsB.MouseLeave:Connect(function()  tw(ClsB, .18, {TextColor3 = C.GRAY})  end)
-MinB.MouseEnter:Connect(function()  tw(MinB, .12, {TextColor3 = C.WHITE}) end)
-MinB.MouseLeave:Connect(function()  tw(MinB, .18, {TextColor3 = C.GRAY})  end)
-
--- ── Body ──────────────────────────────────────────────────────────────────
-BodyClip = mk("Frame", {
-	Size             = UDim2.new(0, W.WW, 0, W.BH),
-	Position         = UDim2.new(0, 0, 0, W.TH),
-	BackgroundColor3 = C.WIN,
-	BorderSizePixel  = 0,
-	ZIndex           = 2,
-	ClipsDescendants = true,
-}, Win)
-rnd(CORNER.WIN, BodyClip)
-
-local function makePage()
-	local scr = mk("ScrollingFrame", {
-		Size                = UDim2.new(1, 0, 0, W.BH),
-		BackgroundTransparency = 1,
-		BorderSizePixel     = 0,
-		ScrollBarThickness  = 0,
-		CanvasSize          = UDim2.new(0,0,0,0),
-		AutomaticCanvasSize = Enum.AutomaticSize.Y,
-		ZIndex              = 3,
-	}, BodyClip)
-	local pg = mk("Frame", {
-		Size             = UDim2.new(1, -24, 0, 0),
-		Position         = UDim2.new(0, 12, 0, 12),
-		AutomaticSize    = Enum.AutomaticSize.Y,
-		BackgroundTransparency = 1,
-	}, scr)
-	mk("UIListLayout", {
-		Padding   = UDim.new(0, 12),
-		SortOrder = Enum.SortOrder.LayoutOrder,
-	}, pg)
-	return pg
-end
-
--- ── NavBar ────────────────────────────────────────────────────────────────
-NavBar = mk("Frame", {
-	Size             = UDim2.new(0, W.NW, 0, W.NH),
-	Position         = UDim2.new(0.5, -W.WW/2+(W.WW-W.NW)/2, 0.5, -W.WH/2+W.WH+W.NGAP),
-	BackgroundColor3 = C.NAV,
-	BorderSizePixel  = 0,
-	ZIndex           = 8,
-	ClipsDescendants = true,
-}, SG)
-rnd(CORNER.NAV, NavBar)
-
-local NavStroke = mk("UIStroke", {
-	Color        = C.LINE,
-	Thickness    = 1,
-	Transparency = 1,   -- sin trazo
-}, NavBar)
-
--- ── Tabs ──────────────────────────────────────────────────────────────────
-local TDEFS = {
-	{ img = "rbxassetid://125925976660286", lbl = "Combat"   },
-	{ img = "rbxassetid://79653542226069",  lbl = "Visuals"  },
-	{ img = "rbxassetid://105322951498375", lbl = "Settings" },
-}
-
-local NT, GAP, TBW, TBW_EXP, IMGS = 3, 2, 68, 98, 18
-local navT, tPages, actNav = {}, {}, 1
-
-local function getActNav() return actNav end
-
-local function updateTabPositions(activeIndex)
-	local cx = 4
-	for i = 1, NT do
-		local t = navT[i]
-		local w = (i == activeIndex) and TBW_EXP or TBW
-		t.targetX = cx; t.targetW = w; cx = cx + w + GAP
-	end
-end
-
-for i = 1, NT do
-	local pg = makePage()
-	pg.Parent.Visible = (i == 1)
-	tPages[i] = pg
-end
-
--- Animación de entrada escalonada para las páginas
-local function slidePageIn(pg)
-	local scr = pg.Parent
-	scr.Position = UDim2.new(0, 18, 0, 0)
-	scr.BackgroundTransparency = 1
-	tw(scr, .28, { Position = UDim2.new(0, 0, 0, 0) }, Enum.EasingStyle.Quint)
-end
-
-for i, td in ipairs(TDEFS) do
-	local isF = (i == 1)
-	local pill = mk("Frame", {
-		Size             = UDim2.new(0, isF and TBW_EXP or TBW, 0, W.NH - 8),
-		Position         = UDim2.new(0, 0, 0, 4),
-		BackgroundColor3 = isF and C.NAVPIL or C.NAV,
-		BorderSizePixel  = 0,
-		ZIndex           = isF and 15 or 10,
-	}, NavBar)
-	rnd(CORNER.PILL, pill)
-
-	-- Borde sutil en pastilla activa
-	local pillStroke = mk("UIStroke", {
-		Color        = C.LINE,
-		Thickness    = 1,
-		Transparency = 1,   -- sin trazo
-	}, pill)
-
-	local img = mk("ImageLabel", {
-		Size                   = UDim2.new(0, IMGS, 0, IMGS),
-		Position               = isF and UDim2.new(0, 11, 0.5, -IMGS/2) or UDim2.new(0.5, -IMGS/2, 0.5, -IMGS/2),
-		BackgroundTransparency = 1,
-		Image                  = td.img,
-		ImageColor3            = isF and C.WHITE or C.MUTED,
-		ZIndex                 = 11,
-	}, pill)
-
-	local lbl = mk("TextLabel", {
-		Text                   = td.lbl,
-		Font                   = Enum.Font.GothamSemibold,
-		TextSize               = 10,
-		TextColor3             = C.WHITE,
-		BackgroundTransparency = 1,
-		Size                   = UDim2.new(0, 62, 1, 0),
-		Position               = UDim2.new(0, 36, 0, 0),
-		TextXAlignment         = Enum.TextXAlignment.Left,
-		TextTransparency       = isF and 0 or 1,
-		ZIndex                 = 11,
-	}, pill)
-
-	local hit = mk("TextButton", {
-		Text                   = "",
-		BackgroundTransparency = 1,
-		Size                   = UDim2.new(1, 0, 1, 0),
-		ZIndex                 = 16,
-		AutoButtonColor        = false,
-	}, pill)
-
-	navT[i] = {
-		pill       = pill,
-		pillStroke = pillStroke,
-		img        = img,
-		lbl        = lbl,
-		targetX    = 0,
-		targetW    = isF and TBW_EXP or TBW,
-	}
-
-	hit.MouseButton1Click:Connect(function()
-		if actNav == i then return end
-
-		-- Desactivar tab anterior
-		local pv = navT[actNav]
-		pv.pill.ZIndex = 10
-		tw(pv.pill,       .3,  { BackgroundColor3 = C.NAV },                                              Enum.EasingStyle.Quint)
-		tw(pv.pillStroke, .3,  { Transparency = 1 })
-		tw(pv.img,        .3,  { Position = UDim2.new(0.5,-IMGS/2,0.5,-IMGS/2), ImageColor3 = C.MUTED }, Enum.EasingStyle.Quint)
-		tw(pv.lbl,        .15, { TextTransparency = 1 })
-		tPages[actNav].Parent.Visible = false
-
-		-- Activar tab nuevo
-		actNav = i
-		tPages[i].Parent.Visible = true
-		slidePageIn(tPages[i])
-		pill.ZIndex = 15
-
-		updateTabPositions(i)
-		for j = 1, NT do
-			local nt = navT[j]
-			tw(nt.pill, .3, {
-				Size     = UDim2.new(0, nt.targetW, 0, W.NH - 8),
-				Position = UDim2.new(0, nt.targetX, 0, 4),
-			}, Enum.EasingStyle.Quint)
-		end
-
-		tw(pill,       .3,  { BackgroundColor3 = C.NAVPIL },                              Enum.EasingStyle.Quint)
-		tw(pillStroke, .3,  { Transparency = 0.5 })
-		tw(img,        .3,  { Position = UDim2.new(0,11,0.5,-IMGS/2), ImageColor3 = C.WHITE }, Enum.EasingStyle.Quint)
-		task.delay(.12, function() tw(lbl, .22, { TextTransparency = 0 }) end)
-	end)
-
-	-- Hover más sutil
-	hit.MouseEnter:Connect(function()
-		if actNav ~= i then
-			tw(img,  .12, { ImageColor3 = C.GRAY })
-			tw(pill, .12, { BackgroundColor3 = Color3.fromRGB(20,20,20) })
-		end
-	end)
-	hit.MouseLeave:Connect(function()
-		if actNav ~= i then
-			tw(img,  .18, { ImageColor3 = C.MUTED })
-			tw(pill, .18, { BackgroundColor3 = C.NAV })
-		end
-	end)
-end
-
-updateTabPositions(1)
-for i = 1, NT do
-	local t = navT[i]
-	t.pill.Position = UDim2.new(0, t.targetX, 0, 4)
-end
-
--- ── Drag ──────────────────────────────────────────────────────────────────
-do
-	local dragging, mStart, wStart = false, Vector2.new(), Vector2.new()
-	local DragHit = mk("TextButton", {
-		Text                   = "",
-		BackgroundTransparency = 1,
-		BorderSizePixel        = 0,
-		Size                   = UDim2.new(1, -72, 1, 0),
-		ZIndex                 = 50,
-		AutoButtonColor        = false,
-	}, TBar)
-
-	DragHit.MouseButton1Down:Connect(function()
-		local mp = UIS:GetMouseLocation()
-		dragging = true
-		mStart   = mp
-		wStart   = Vector2.new(Win.Position.X.Offset, Win.Position.Y.Offset)
-	end)
-
-	UIS.InputEnded:Connect(function(inp)
-		if inp.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
-	end)
-
-	RunService.RenderStepped:Connect(function()
-		if not dragging then return end
-		local mp = UIS:GetMouseLocation()
-		local d  = mp - mStart
-		local tx, ty = wStart.X + d.X, wStart.Y + d.Y
-		local cx, cy = Win.Position.X.Offset, Win.Position.Y.Offset
-		-- Suavizado del drag más fluido (lerp 0.4)
-		local nx = cx + (tx - cx) * 0.4
-		local ny = cy + (ty - cy) * 0.4
-		if math.abs(nx - tx) < 0.5 then nx = tx end
-		if math.abs(ny - ty) < 0.5 then ny = ty end
-		applyPos(nx, ny)
-	end)
-end
-
--- ── Animations init ───────────────────────────────────────────────────────
-local anim = Animations.init({
-	C         = C,
-	W         = W,
-	Win       = Win,
-	NavBar    = NavBar,
-	BodyClip  = BodyClip,
-	WinStroke = WinStroke,
-	NavStroke = NavStroke,
-	navT      = navT,
-	actNavFn  = getActNav,
-	rdot      = rdot,
-	title1    = title1,
-	title2    = title2,
-	title3    = nil,
-	title4    = title4,
-	title5    = title5,
-	MinB      = MinB,
-	ClsB      = ClsB,
-	SG        = SG,
-	tw        = tw,
-})
-
-MinB.MouseButton1Click:Connect(function() anim.toggleMinimize() end)
-ClsB.MouseButton1Click:Connect(function() anim.doClose()        end)
-
-UIS.InputBegan:Connect(function(inp, gp)
-	if gp then return end
-	if inp.KeyCode == Enum.KeyCode.RightShift then anim.toggleHide() end
-	if inp.KeyCode == Enum.KeyCode.End        then anim.doClose()    end
-end)
-
--- ── Build pages ───────────────────────────────────────────────────────────
-Combat.build(tPages[1],  { C = C, mk = mk, rnd = rnd, tw = tw })
-Visuals.build(tPages[2], { C = C, mk = mk, rnd = rnd, tw = tw })
-Settings.build(tPages[3], {
-	navT        = navT,
-	actNavFn    = getActNav,
-	rdot        = rdot,
-	title1      = title1,
-	title2      = title2,
-	title3      = nil,
-	tw          = tw,
-	mk          = mk,
-	rnd         = rnd,
-	Win         = Win,
-	NavBar      = NavBar,
-	anim        = anim,
-	isAdmin     = isAdmin,
-	savedExpiry = savedExpiry,
-})
-
-anim.playOpen()
-print("[BrutalityPanel] ✨ Loaded — checktheprint v1.0.0")
+return Settings
