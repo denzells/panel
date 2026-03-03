@@ -1,26 +1,48 @@
 -- main.lua – PanelBase | checktheprint (Restyled)
+-- Captura loadstring de múltiples fuentes para compatibilidad con distintos executors
 local _loadstring = loadstring
+	or (syn and syn.loadstring)
+	or (fluxus and fluxus.loadstring)
+	or (getfenv and getfenv(0).loadstring)
+
 local RAW_BASE = "https://raw.githubusercontent.com/denzells/panel/main/"
 
 local function loadModule(path)
+	local url = RAW_BASE .. path
+
+	-- 1. Descargar
 	local content
-	local ok = pcall(function()
-		content = game:HttpGet(RAW_BASE .. path)
+	local ok1, err1 = pcall(function()
+		content = game:HttpGet(url, true)
 	end)
-	if not ok or not content or content == "" then
-		warn("[BrutalityPanel] Error descargando " .. path)
+	if not ok1 then
+		warn("[BrutalityPanel] HttpGet falló en '" .. path .. "': " .. tostring(err1))
 		return nil
 	end
-	local fn, err = _loadstring(content)
+	if not content or content == "" or content:sub(1,1) == "<" then
+		-- Si devuelve HTML significa 404 u otro error de GitHub
+		warn("[BrutalityPanel] Contenido inválido para '" .. path .. "' (¿archivo no existe en el repo?)")
+		return nil
+	end
+
+	-- 2. Compilar
+	if not _loadstring then
+		warn("[BrutalityPanel] loadstring no disponible en este executor")
+		return nil
+	end
+	local fn, err2 = _loadstring(content, path)
 	if not fn then
-		warn("[BrutalityPanel] Error compilando " .. path .. ": " .. tostring(err))
+		warn("[BrutalityPanel] Error de compilación en '" .. path .. "': " .. tostring(err2))
 		return nil
 	end
-	local ok2, result = pcall(fn)
-	if not ok2 then
-		warn("[BrutalityPanel] Error ejecutando " .. path .. ": " .. tostring(result))
+
+	-- 3. Ejecutar
+	local ok3, result = pcall(fn)
+	if not ok3 then
+		warn("[BrutalityPanel] Error de ejecución en '" .. path .. "': " .. tostring(result))
 		return nil
 	end
+
 	return result
 end
 
