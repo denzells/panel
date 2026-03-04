@@ -12,7 +12,7 @@ local CONFIG = {
     -- Íconos de cada tab
     TAB_ICONS = {
         "rbxassetid://125925976660286",
-        "rbxassetid://135016273575155",
+        "rbxassetid://126136584090446",
         "rbxassetid://105322951498375",
     },
 
