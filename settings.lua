@@ -12,20 +12,32 @@ local HttpService = game:GetService("HttpService")
 local Settings = {}
 
 -- ──────────────────────────────────────────────────────────────
---  COLOR PALETTE
+--  COLOR PALETTE  (matched to reference image)
 -- ──────────────────────────────────────────────────────────────
+--
+--   HEADER_BG  ██  RGB( 17,  16,  15)  near-black warm
+--   CARD_BG    ██  RGB( 26,  25,  23)  dark warm gray
+--   FIELD_BG   ██  RGB( 38,  36,  34)  raised control surface
+--   ACCENT     ██  RGB(200,  55,  50)  warm red  (icon / badge)
+--   WHITE      ██  RGB(208, 205, 200)  warm off-white
+--   GRAY       ██  RGB(112, 108, 102)  muted label gray
+--   MUTED      ██  RGB( 55,  52,  48)  faint interactive gray
+--   GREEN      ██  RGB( 82, 200,  95)  active / lifetime expiry
 
 Settings.C = {
-    WIN    = Color3.fromRGB( 20,  19,  18),
-    TBAR   = Color3.fromRGB( 15,  14,  13),
-    LINE   = Color3.fromRGB( 45,  43,  40),
-    ACCENT = Color3.fromRGB(255, 255, 255),
-    NAV    = Color3.fromRGB( 13,  12,  11),
-    NAVPIL = Color3.fromRGB( 28,  26,  24),
-    WHITE  = Color3.fromRGB(228, 226, 222),
-    GRAY   = Color3.fromRGB(108, 104,  98),
-    MUTED  = Color3.fromRGB( 58,  55,  50),
-    PANEL  = Color3.fromRGB( 28,  27,  25),
+    WIN       = Color3.fromRGB( 20,  19,  18),
+    TBAR      = Color3.fromRGB( 15,  14,  13),
+    LINE      = Color3.fromRGB( 45,  43,  40),
+    ACCENT    = Color3.fromRGB(200,  55,  50),   -- warm red
+    HEADER_BG = Color3.fromRGB( 17,  16,  15),   -- near-black
+    CARD_BG   = Color3.fromRGB( 26,  25,  23),   -- dark warm gray
+    FIELD_BG  = Color3.fromRGB( 38,  36,  34),   -- raised surface
+    NAV       = Color3.fromRGB( 13,  12,  11),
+    NAVPIL    = Color3.fromRGB( 28,  26,  24),
+    WHITE     = Color3.fromRGB(208, 205, 200),   -- warm off-white
+    GRAY      = Color3.fromRGB(112, 108, 102),   -- muted label
+    MUTED     = Color3.fromRGB( 55,  52,  48),   -- faint gray
+    GREEN     = Color3.fromRGB( 82, 200,  95),   -- expiry active
 }
 
 -- ──────────────────────────────────────────────────────────────
@@ -71,7 +83,8 @@ function Settings.build(page, r)
     end
 
     -- ──────────────────────────────────────────────────────────
-    --  HELPER · Info Row  (label left · value box right)
+    --  HELPER · Info Row
+    --    label ──────────────── [ value box ]
     -- ──────────────────────────────────────────────────────────
 
     local function makeInfoRow(parent, label, value, icon, isPassword, layoutOrder, valueColor)
@@ -82,7 +95,7 @@ function Settings.build(page, r)
             LayoutOrder            = layoutOrder,
         }, parent)
 
-        -- Label
+        -- Left label
         mk("TextLabel", {
             Text                   = label,
             Font                   = Enum.Font.GothamBold,
@@ -95,11 +108,11 @@ function Settings.build(page, r)
             ZIndex                 = 5,
         }, row)
 
-        -- Value box — flat, no stroke
+        -- Right value box — raised surface, no stroke
         local valBox = mk("Frame", {
             Size             = UDim2.new(0.58, 0, 0, 24),
             Position         = UDim2.new(0.42, 0, 0.5, -12),
-            BackgroundColor3 = Color3.fromRGB(16, 15, 14),
+            BackgroundColor3 = C.FIELD_BG,
             BorderSizePixel  = 0,
             ZIndex           = 5,
         }, row)
@@ -223,8 +236,8 @@ function Settings.build(page, r)
         fullExpiryText  = formatFull(expiry)
 
         local expiryColor = (isLifetime or isAdmin)
-            and Color3.fromRGB(228, 226, 222)
-            or  Color3.fromRGB( 88, 210, 110)
+            and C.WHITE
+            or  C.GREEN
 
         local lo = 0
         local function lo_next() lo = lo + 1; return lo end
@@ -257,31 +270,31 @@ function Settings.build(page, r)
         -- │  Session Info Card                              │
         -- └─────────────────────────────────────────────────┘
 
-        -- Outer card  (content background)
+        -- Card body  (CARD_BG — dark warm gray)
         local panel = mk("Frame", {
             Size             = UDim2.new(1, 0, 0, 0),
             AutomaticSize    = Enum.AutomaticSize.Y,
-            BackgroundColor3 = Color3.fromRGB(26, 25, 23),   -- content area
+            BackgroundColor3 = C.CARD_BG,
             BorderSizePixel  = 0,
             LayoutOrder      = nextOrder(),
         }, page)
-        rnd(8, panel)
+        rnd(7, panel)
 
-        -- Header block — noticeably darker than content
+        -- Header  (HEADER_BG — near-black, clear contrast)
         local header = mk("Frame", {
             Size             = UDim2.new(1, 0, 0, 38),
-            BackgroundColor3 = Color3.fromRGB(14, 13, 12),   -- dark header
+            BackgroundColor3 = C.HEADER_BG,
             BorderSizePixel  = 0,
             ZIndex           = 4,
             ClipsDescendants = true,
         }, panel)
-        rnd(8, header)
+        rnd(7, header)
 
-        -- Fill bottom half of header to square off bottom edge
+        -- Square off the bottom edge of the rounded header
         mk("Frame", {
             Size             = UDim2.new(1, 0, 0.5, 0),
             Position         = UDim2.new(0, 0, 0.5, 0),
-            BackgroundColor3 = Color3.fromRGB(14, 13, 12),
+            BackgroundColor3 = C.HEADER_BG,
             BorderSizePixel  = 0,
             ZIndex           = 3,
         }, header)
@@ -299,11 +312,11 @@ function Settings.build(page, r)
             ZIndex                 = 6,
         }, header)
 
-        -- Icon top-right
+        -- Accent icon — top right corner (warm red, like reference)
         local headerIcon = mk("ImageLabel", {
             Image                  = "rbxassetid://78475382175834",
-            Size                   = UDim2.new(0, 12, 0, 12),
-            Position               = UDim2.new(1, -20, 0.5, -6),
+            Size                   = UDim2.new(0, 11, 0, 11),
+            Position               = UDim2.new(1, -19, 0.5, -5),
             BackgroundTransparency = 1,
             ImageColor3            = C.ACCENT,
             ZIndex                 = 7,
