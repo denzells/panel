@@ -1,6 +1,5 @@
--- ============================================================
 -- animations.lua  –  Animaciones de PanelBase
--- ============================================================
+-- Este módulo NUNCA modifica .Text de ningún label de navegación.
 
 local Animations = {}
 
@@ -19,7 +18,7 @@ function Animations.init(r)
     local rdot     = r.rdot
     local title1   = r.title1
     local title2   = r.title2
-    local title3   = r.title3  -- puede ser nil
+    local title3   = r.title3
     local title4   = r.title4
     local title5   = r.title5
     local MinB     = r.MinB
@@ -30,7 +29,6 @@ function Animations.init(r)
     local animating = false
     local hidden    = false
 
-    -- ── Helpers internos ─────────────────────────────────────
     local function hideAllTabs(fast)
         local t = fast and 0.12 or 0.15
         for _, tab in ipairs(navT) do
@@ -55,7 +53,6 @@ function Animations.init(r)
         end)
     end
 
-    -- ── OPEN ─────────────────────────────────────────────────
     function Animations.playOpen()
         Win.Size                      = UDim2.new(0, W.WW/3, 0, W.TH)
         Win.BackgroundTransparency    = 1
@@ -67,7 +64,6 @@ function Animations.init(r)
         BodyClip.Position             = UDim2.new(0, 0, 0, W.TH)
         rdot.BackgroundTransparency   = 1
 
-        -- Ocultar títulos (title3 puede ser nil, se protege)
         for _, el in ipairs({ title1, title2, title4, title5, MinB, ClsB }) do
             el.TextTransparency = 1
         end
@@ -113,7 +109,6 @@ function Animations.init(r)
         end)
     end
 
-    -- ── MINIMIZE / RESTORE ───────────────────────────────────
     function Animations.toggleMinimize()
         if animating then return end
         animating = true
@@ -159,7 +154,6 @@ function Animations.init(r)
         MinB.Text = minimized and "□" or "─"
     end
 
-    -- ── CLOSE ────────────────────────────────────────────────
     function Animations.doClose()
         if animating then return end
         animating     = true
@@ -190,7 +184,6 @@ function Animations.init(r)
         task.delay(0.8, function() SG:Destroy() end)
     end
 
-    -- ── HIDE / SHOW ──────────────────────────────────────────
     function Animations.toggleHide()
         if animating then return end
         hidden = not hidden
