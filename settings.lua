@@ -79,80 +79,76 @@ function Settings.build(page, r)
     end
 
     -- ──────────────────────────────────────────────────────────
-    --  HELPER · Compact field  (label + value box)
+    --  HELPER · Row  (label left · value right)
     -- ──────────────────────────────────────────────────────────
+    --  Each row renders as:
+    --    ┌──────────────────────────────────────────┐
+    --    │  LABEL           ··· value / control     │
+    --    └──────────────────────────────────────────┘
+    --  with a hairline separator beneath it.
 
-    local function makeCompactField(parent, label, value, icon, isPassword, layoutOrder, overrideColor)
+    local function makeInfoRow(parent, label, value, icon, isPassword, layoutOrder, valueColor)
 
-        -- Container
-        local container = mk("Frame", {
-            Size                   = UDim2.new(0.333, -5, 1, 0),
+        -- Row wrapper
+        local row = mk("Frame", {
+            Size                   = UDim2.new(1, 0, 0, 38),
             BackgroundTransparency = 1,
             LayoutOrder            = layoutOrder,
         }, parent)
 
-        -- Label
+        -- Left label  ── gray, small caps style
         mk("TextLabel", {
             Text                   = label,
             Font                   = Enum.Font.GothamBold,
-            TextSize               = 8,
+            TextSize               = 10,
             TextColor3             = C.GRAY,
             BackgroundTransparency = 1,
-            Size                   = UDim2.new(1, 0, 0, 12),
+            Size                   = UDim2.new(0.45, 0, 1, 0),
+            Position               = UDim2.new(0, 0, 0, 0),
             TextXAlignment         = Enum.TextXAlignment.Left,
             ZIndex                 = 5,
-        }, container)
+        }, row)
 
-        -- Value box
-        local box = mk("Frame", {
-            Size             = UDim2.new(1, 0, 0, 28),
-            Position         = UDim2.new(0, 0, 0, 14),
-            BackgroundColor3 = Color3.fromRGB(24, 23, 21),
-            BorderSizePixel  = 0,
-            ZIndex           = 5,
-        }, container)
-        rnd(4, box)
-        mk("UIStroke", {
-            Color        = Color3.fromRGB(50, 47, 43),
-            Thickness    = 1,
-            Transparency = 0,
-        }, box)
+        -- Right value container
+        local valBox = mk("Frame", {
+            Size                   = UDim2.new(0.55, 0, 0, 26),
+            Position               = UDim2.new(0.45, 0, 0.5, -13),
+            BackgroundColor3       = Color3.fromRGB(18, 17, 16),
+            BorderSizePixel        = 0,
+            ZIndex                 = 5,
+        }, row)
+        rnd(5, valBox)
 
-        -- Optional icon + divider
+        -- Optional icon inside the box
         if icon then
-            mk("Frame", {
-                Size             = UDim2.new(0, 1, 0, 13),
-                Position         = UDim2.new(0, 28, 0.5, -6),
-                BackgroundColor3 = Color3.fromRGB(50, 47, 43),
-                BorderSizePixel  = 0,
-                ZIndex           = 7,
-            }, box)
-
             local img = mk("ImageLabel", {
                 Image                  = icon,
-                Size                   = UDim2.new(0, 12, 0, 12),
-                Position               = UDim2.new(0, 8, 0.5, -6),
+                Size                   = UDim2.new(0, 11, 0, 11),
+                Position               = UDim2.new(0, 7, 0.5, -5),
                 BackgroundTransparency = 1,
                 ImageColor3            = C.ACCENT,
                 ZIndex                 = 6,
-            }, box)
+            }, valBox)
             registerAccent(img, "ImageColor3")
         end
 
         -- Value text
-        local displayText = isPassword and string.rep("•", math.min(#value, 18)) or value
+        local displayText = isPassword and string.rep("•", math.min(#value, 16)) or value
+        local xOffset     = icon and 24 or 8
+        local xSize       = isPassword and -52 or (icon and -28 or -16)
+
         local textLbl = mk("TextLabel", {
             Text                   = displayText,
             Font                   = Enum.Font.Code,
-            TextSize               = 8,
-            TextColor3             = overrideColor or C.WHITE,
+            TextSize               = 9,
+            TextColor3             = valueColor or C.WHITE,
             BackgroundTransparency = 1,
-            Size                   = UDim2.new(1, icon and -54 or -10, 1, 0),
-            Position               = UDim2.new(0, icon and 36 or 6, 0, 0),
+            Size                   = UDim2.new(1, xSize, 1, 0),
+            Position               = UDim2.new(0, xOffset, 0, 0),
             TextXAlignment         = Enum.TextXAlignment.Left,
             TextTruncate           = Enum.TextTruncate.AtEnd,
             ZIndex                 = 6,
-        }, box)
+        }, valBox)
 
         -- Show / hide toggle (passwords only)
         if isPassword then
@@ -164,17 +160,17 @@ function Settings.build(page, r)
                 TextSize               = 9,
                 TextColor3             = C.MUTED,
                 BackgroundTransparency = 1,
-                Size                   = UDim2.new(0, 20, 0, 20),
-                Position               = UDim2.new(1, -22, 0.5, -10),
+                Size                   = UDim2.new(0, 22, 1, 0),
+                Position               = UDim2.new(1, -24, 0, 0),
                 ZIndex                 = 7,
                 AutoButtonColor        = false,
-            }, box)
+            }, valBox)
 
             eyeBtn.MouseButton1Click:Connect(function()
                 visible        = not visible
                 textLbl.Text   = visible and value or displayText
                 eyeBtn.Text    = visible and "●" or "○"
-                tw(eyeBtn, 0.1, { TextColor3 = visible and C.ACCENT or C.MUTED })
+                tw(eyeBtn, 0.12, { TextColor3 = visible and C.ACCENT or C.MUTED })
             end)
 
             eyeBtn.MouseEnter:Connect(function()
@@ -184,6 +180,16 @@ function Settings.build(page, r)
                 if not visible then tw(eyeBtn, 0.1, { TextColor3 = C.MUTED }) end
             end)
         end
+
+        -- Hairline separator beneath the row
+        mk("Frame", {
+            Size             = UDim2.new(1, 0, 0, 1),
+            Position         = UDim2.new(0, 0, 1, -1),
+            BackgroundColor3 = Color3.fromRGB(34, 33, 31),
+            BorderSizePixel  = 0,
+            ZIndex           = 4,
+            BackgroundTransparency = 0.3,
+        }, row)
 
         return textLbl
     end
@@ -249,25 +255,16 @@ function Settings.build(page, r)
 
         local expiryColor = (isLifetime or isAdmin)
             and Color3.fromRGB(228, 226, 222)
-            or  Color3.fromRGB( 72, 200,  88)
+            or  Color3.fromRGB( 88, 210, 110)
 
-        -- Fields row
-        local gridRow = mk("Frame", {
-            Size                   = UDim2.new(1, 0, 0, 46),
-            BackgroundTransparency = 1,
-            LayoutOrder            = nextOrder(),
-        }, parent)
+        -- Rows
+        local lo = 0
+        local function lo_next() lo = lo + 1; return lo end
 
-        mk("UIListLayout", {
-            FillDirection = Enum.FillDirection.Horizontal,
-            Padding       = UDim.new(0, 6),
-            SortOrder     = Enum.SortOrder.LayoutOrder,
-        }, gridRow)
-
-        makeCompactField(gridRow, "USERNAME", username,         "rbxassetid://75066739039083",  false, 1, nil)
-        makeCompactField(gridRow, "KEY",      key,              "rbxassetid://126448589402910", true,  2, nil)
+        makeInfoRow(parent, "Username",   username,        "rbxassetid://75066739039083",  false, lo_next(), nil)
+        makeInfoRow(parent, "Key",        key,             "rbxassetid://126448589402910", true,  lo_next(), nil)
         expiryLabelRef =
-        makeCompactField(gridRow, "EXPIRY",   shortExpiryText,  "rbxassetid://78475382175834",  false, 3, expiryColor)
+        makeInfoRow(parent, "Expiry",     shortExpiryText, "rbxassetid://78475382175834",  false, lo_next(), expiryColor)
     end
 
     -- ──────────────────────────────────────────────────────────
@@ -278,82 +275,56 @@ function Settings.build(page, r)
 
         -- Page layout + padding
         mk("UIListLayout", {
-            Padding   = UDim.new(0, 8),
+            Padding   = UDim.new(0, 10),
             SortOrder = Enum.SortOrder.LayoutOrder,
         }, page)
 
         mk("UIPadding", {
-            PaddingTop    = UDim.new(0, 8),
-            PaddingBottom = UDim.new(0, 8),
-            PaddingLeft   = UDim.new(0, 8),
-            PaddingRight  = UDim.new(0, 8),
+            PaddingTop    = UDim.new(0, 10),
+            PaddingBottom = UDim.new(0, 10),
+            PaddingLeft   = UDim.new(0, 10),
+            PaddingRight  = UDim.new(0, 10),
         }, page)
 
         -- ┌─────────────────────────────────────────────────┐
-        -- │  Session Info Panel                             │
+        -- │  Session Info Panel  (borderless, soft dark)    │
         -- └─────────────────────────────────────────────────┘
 
         local panel = mk("Frame", {
             Size             = UDim2.new(1, 0, 0, 0),
             AutomaticSize    = Enum.AutomaticSize.Y,
-            BackgroundColor3 = Color3.fromRGB(28, 27, 25),
+            BackgroundColor3 = Color3.fromRGB(22, 21, 20),
             BorderSizePixel  = 0,
             LayoutOrder      = nextOrder(),
         }, page)
-        rnd(5, panel)
-        mk("UIStroke", {
-            Color        = Color3.fromRGB(48, 46, 42),
-            Thickness    = 1,
-            Transparency = 0.35,
-        }, panel)
+        rnd(8, panel)
+        -- No UIStroke — clean borderless card
 
-        -- Header background
+        -- ── Header ───────────────────────────────────────
+
         local header = mk("Frame", {
-            Size             = UDim2.new(1, 0, 0, 34),
-            BackgroundColor3 = Color3.fromRGB(22, 21, 19),
-            BorderSizePixel  = 0,
-            ZIndex           = 4,
-            ClipsDescendants = true,
+            Size                   = UDim2.new(1, 0, 0, 40),
+            BackgroundTransparency = 1,
+            ZIndex                 = 4,
         }, panel)
-        rnd(5, header)
-
-        -- Fill bottom half to remove rounded bottom corners on header
-        mk("Frame", {
-            Size             = UDim2.new(1, 0, 0.5, 0),
-            Position         = UDim2.new(0, 0, 0.5, 0),
-            BackgroundColor3 = Color3.fromRGB(22, 21, 19),
-            BorderSizePixel  = 0,
-            ZIndex           = 3,
-        }, header)
-
-        -- Left accent bar
-        local accentBar = mk("Frame", {
-            Size             = UDim2.new(0, 2, 0, 16),
-            Position         = UDim2.new(0, 8, 0.5, -8),
-            BackgroundColor3 = C.ACCENT,
-            BorderSizePixel  = 0,
-            ZIndex           = 6,
-        }, header)
-        rnd(1, accentBar)
-        registerAccent(accentBar, "BackgroundColor3")
 
         -- Title
         mk("TextLabel", {
             Text                   = "Session Info",
             Font                   = Enum.Font.GothamBold,
-            TextSize               = 12,
+            TextSize               = 13,
             TextColor3             = C.WHITE,
             BackgroundTransparency = 1,
-            Size                   = UDim2.new(1, -44, 1, 0),
-            Position               = UDim2.new(0, 16, 0, 0),
+            Size                   = UDim2.new(1, -40, 1, 0),
+            Position               = UDim2.new(0, 14, 0, 0),
             TextXAlignment         = Enum.TextXAlignment.Left,
             ZIndex                 = 6,
         }, header)
 
-        -- Header icon
+        -- Small accent icon (top-right, like reference image)
         local headerIcon = mk("ImageLabel", {
             Image                  = "rbxassetid://78475382175834",
-            Size                   = UDim2.new(0, 13, 0, 13),
+            Size                   = UDim2.new(0, 12, 0, 12),
             Position               = UDim2.new(1, -22, 0.5, -6),
             BackgroundTransparency = 1,
             ImageColor3            = C.ACCENT,
@@ -361,24 +332,31 @@ function Settings.build(page, r)
         }, header)
         registerAccent(headerIcon, "ImageColor3")
 
-        -- Header / content divider
+        -- Header divider
         mk("Frame", {
-            Size             = UDim2.new(1, 0, 0, 1),
-            Position         = UDim2.new(0, 0, 0, 34),
-            BackgroundColor3 = Color3.fromRGB(42, 40, 37),
-            BorderSizePixel  = 0,
-            ZIndex           = 4,
-        }, panel)
+            Size                   = UDim2.new(1, -28, 0, 1),
+            Position               = UDim2.new(0, 14, 1, -1),
+            BackgroundColor3       = Color3.fromRGB(38, 36, 34),
+            BorderSizePixel        = 0,
+            ZIndex                 = 4,
+            BackgroundTransparency = 0,
+        }, header)
 
-        -- Content area
+        -- ── Content ──────────────────────────────────────
+
         local content = mk("Frame", {
-            Size                   = UDim2.new(1, -18, 0, 0),
-            Position               = UDim2.new(0, 9, 0, 42),
+            Size                   = UDim2.new(1, -28, 0, 0),
+            Position               = UDim2.new(0, 14, 0, 44),
             AutomaticSize          = Enum.AutomaticSize.Y,
             BackgroundTransparency = 1,
         }, panel)
 
-        mk("UIPadding", { PaddingBottom = UDim.new(0, 10) }, panel)
+        mk("UIListLayout", {
+            Padding   = UDim.new(0, 0),
+            SortOrder = Enum.SortOrder.LayoutOrder,
+        }, content)
+
+        mk("UIPadding", { PaddingBottom = UDim.new(0, 14) }, panel)
 
         buildSessionInfo(content)
     end)
