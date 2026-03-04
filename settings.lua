@@ -12,32 +12,23 @@ local HttpService = game:GetService("HttpService")
 local Settings = {}
 
 -- ──────────────────────────────────────────────────────────────
---  COLOR PALETTE  (matched to reference image)
+--  COLOR PALETTE
 -- ──────────────────────────────────────────────────────────────
---
---   HEADER_BG  ██  RGB( 17,  16,  15)  near-black warm
---   CARD_BG    ██  RGB( 26,  25,  23)  dark warm gray
---   FIELD_BG   ██  RGB( 38,  36,  34)  raised control surface
---   ACCENT     ██  RGB(200,  55,  50)  warm red  (icon / badge)
---   WHITE      ██  RGB(208, 205, 200)  warm off-white
---   GRAY       ██  RGB(112, 108, 102)  muted label gray
---   MUTED      ██  RGB( 55,  52,  48)  faint interactive gray
---   GREEN      ██  RGB( 82, 200,  95)  active / lifetime expiry
 
 Settings.C = {
     WIN       = Color3.fromRGB( 20,  19,  18),
     TBAR      = Color3.fromRGB( 15,  14,  13),
     LINE      = Color3.fromRGB( 45,  43,  40),
-    ACCENT    = Color3.fromRGB(200,  55,  50),   -- warm red
-    HEADER_BG = Color3.fromRGB( 17,  16,  15),   -- near-black
-    CARD_BG   = Color3.fromRGB( 26,  25,  23),   -- dark warm gray
-    FIELD_BG  = Color3.fromRGB( 38,  36,  34),   -- raised surface
+    ACCENT    = Color3.fromRGB(255, 255, 255),
+    HEADER_BG = Color3.fromRGB( 60,  60,  60),   -- #3C3C3C
+    CARD_BG   = Color3.fromRGB( 88,  88,  88),   -- #585858
+    FIELD_BG  = Color3.fromRGB( 16,  15,  14),   -- value boxes (dark)
     NAV       = Color3.fromRGB( 13,  12,  11),
     NAVPIL    = Color3.fromRGB( 28,  26,  24),
-    WHITE     = Color3.fromRGB(208, 205, 200),   -- warm off-white
-    GRAY      = Color3.fromRGB(112, 108, 102),   -- muted label
-    MUTED     = Color3.fromRGB( 55,  52,  48),   -- faint gray
-    GREEN     = Color3.fromRGB( 82, 200,  95),   -- expiry active
+    WHITE     = Color3.fromRGB(228, 226, 222),
+    GRAY      = Color3.fromRGB(108, 104,  98),
+    MUTED     = Color3.fromRGB( 58,  55,  50),
+    GREEN     = Color3.fromRGB( 82, 200,  95),
 }
 
 -- ──────────────────────────────────────────────────────────────
@@ -84,7 +75,6 @@ function Settings.build(page, r)
 
     -- ──────────────────────────────────────────────────────────
     --  HELPER · Info Row
-    --    label ──────────────── [ value box ]
     -- ──────────────────────────────────────────────────────────
 
     local function makeInfoRow(parent, label, value, icon, isPassword, layoutOrder, valueColor)
@@ -100,7 +90,7 @@ function Settings.build(page, r)
             Text                   = label,
             Font                   = Enum.Font.GothamBold,
             TextSize               = 10,
-            TextColor3             = C.GRAY,
+            TextColor3             = C.WHITE,
             BackgroundTransparency = 1,
             Size                   = UDim2.new(0.42, 0, 1, 0),
             Position               = UDim2.new(0, 0, 0, 0),
@@ -108,7 +98,7 @@ function Settings.build(page, r)
             ZIndex                 = 5,
         }, row)
 
-        -- Right value box — raised surface, no stroke
+        -- Right value box
         local valBox = mk("Frame", {
             Size             = UDim2.new(0.58, 0, 0, 24),
             Position         = UDim2.new(0.42, 0, 0.5, -12),
@@ -270,7 +260,7 @@ function Settings.build(page, r)
         -- │  Session Info Card                              │
         -- └─────────────────────────────────────────────────┘
 
-        -- Card body  (CARD_BG — dark warm gray)
+        -- Card body  (#585858)
         local panel = mk("Frame", {
             Size             = UDim2.new(1, 0, 0, 0),
             AutomaticSize    = Enum.AutomaticSize.Y,
@@ -280,7 +270,7 @@ function Settings.build(page, r)
         }, page)
         rnd(7, panel)
 
-        -- Header  (HEADER_BG — near-black, clear contrast)
+        -- Header  (#3C3C3C)
         local header = mk("Frame", {
             Size             = UDim2.new(1, 0, 0, 38),
             BackgroundColor3 = C.HEADER_BG,
@@ -312,7 +302,7 @@ function Settings.build(page, r)
             ZIndex                 = 6,
         }, header)
 
-        -- Accent icon — top right corner (warm red, like reference)
+        -- Accent icon top-right
         local headerIcon = mk("ImageLabel", {
             Image                  = "rbxassetid://78475382175834",
             Size                   = UDim2.new(0, 11, 0, 11),
