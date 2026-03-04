@@ -1,5 +1,7 @@
 -- settings.lua - PanelBase (Reference Screenshot Style)
--- Tono cálido oscuro, paneles limpios, checkbox cuadrado suave, barra acento izquierda
+-- NOTA: Este módulo NUNCA escribe .Text en los labels del navT.
+--       Solo modifica .Font cuando el usuario activa Custom Font.
+--       Los nombres de los tabs los controla exclusivamente main.lua.
 
 local _loadstring = loadstring
 
@@ -9,7 +11,7 @@ local HttpService = game:GetService("HttpService")
 
 local Settings = {}
 
--- Paleta cálida oscura — igual que la foto de referencia (#1a1918 base)
+-- Paleta cálida oscura
 Settings.C = {
     WIN    = Color3.fromRGB(20,  19,  18),
     TBAR   = Color3.fromRGB(15,  14,  13),
@@ -55,8 +57,6 @@ function Settings.build(page, r)
 
     -- ══════════════════════════════════════════════════════
     --  CHECKBOX
-    --  Caja oscura 15x15, borde suave cálido,
-    --  cuadrado interior relleno de acento al activar
     -- ══════════════════════════════════════════════════════
     local function makeCheckbox(parent, zBase)
         zBase = zBase or 5
@@ -89,7 +89,7 @@ function Settings.build(page, r)
     end
 
     -- ══════════════════════════════════════════════════════
-    --  SECTION LABEL — texto gris, sin decoración extra
+    --  SECTION LABEL
     -- ══════════════════════════════════════════════════════
     local function makeSectionLabel(parent, text, lo)
         local row = mk("Frame", {
@@ -123,11 +123,7 @@ function Settings.build(page, r)
     end
 
     -- ══════════════════════════════════════════════════════
-    --  MINI PANEL — igual que la foto de referencia:
-    --  • Sin borde exterior duro (muy sutil, casi invisible)
-    --  • Header oscuro con barra vertical de ACENTO izq
-    --  • Título blanco bold + ícono derecha
-    --  • Línea divisoria 1px
+    --  MINI PANEL
     -- ══════════════════════════════════════════════════════
     local function MiniPanel(parent, title, fixedW)
         local panel = mk("Frame", {
@@ -139,7 +135,6 @@ function Settings.build(page, r)
         rnd(5, panel)
         mk("UIStroke", { Color = Color3.fromRGB(48, 46, 42), Thickness = 1, Transparency = 0.35 }, panel)
 
-        -- Header
         local header = mk("Frame", {
             Size             = UDim2.new(1, 0, 0, 34),
             BackgroundColor3 = Color3.fromRGB(22, 21, 19),
@@ -152,7 +147,6 @@ function Settings.build(page, r)
             BorderSizePixel  = 0, ZIndex = 3,
         }, header)
 
-        -- Barra acento vertical izquierda
         local bar = mk("Frame", {
             Size = UDim2.new(0, 2, 0, 16), Position = UDim2.new(0, 8, 0.5, -8),
             BackgroundColor3 = C.RED, BorderSizePixel = 0, ZIndex = 6,
@@ -167,7 +161,6 @@ function Settings.build(page, r)
             TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 6,
         }, header)
 
-        -- Línea divisoria
         mk("Frame", {
             Size = UDim2.new(1, 0, 0, 1), Position = UDim2.new(0, 0, 0, 34),
             BackgroundColor3 = Color3.fromRGB(42, 40, 37),
@@ -258,7 +251,6 @@ function Settings.build(page, r)
             end
         end)
 
-        -- Dropdown de Color Palette (mismo estilo que la foto)
         local palBtn = mk("TextButton", {
             Text = "", BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 28),
             BorderSizePixel = 0, ZIndex = 5, AutoButtonColor = false, LayoutOrder = 3,
@@ -391,7 +383,7 @@ function Settings.build(page, r)
 
     local function CreateFontPicker(parent)
         makeSectionLabel(parent,"FONT",SO())
-        local PW,ITEMH,GAPF=228,26,3
+        local ITEMH,GAPF=26,3
         local selFont,checked,panOpen,panAnim=1,false,false,false
         local LISTHTOTAL,PAD=#FONTS*ITEMH+(#FONTS-1)*GAPF+14,6
 
@@ -442,14 +434,39 @@ function Settings.build(page, r)
                 selFont=i; tw(item,.15,{BackgroundColor3=Color3.fromRGB(35,34,31)}); tw(lbl,.15,{TextColor3=C.WHITE})
                 dot.BackgroundTransparency=0; selBar.BackgroundTransparency=0
                 selLbl.Text=fd.name; selLbl.Font=fd.font
-                if checked then title1.Font=fd.font; if title3 then title3.Font=fd.font end; for _,t in ipairs(navT) do t.lbl.Font=fd.font end end
+                -- Solo cambiamos Font, nunca .Text de los tabs de navegación
+                if checked then
+                    title1.Font=fd.font
+                    if title3 then title3.Font=fd.font end
+                    for _,t in ipairs(navT) do
+                        t.lbl.Font=fd.font
+                        -- t.lbl.Text NO se toca — lo controla main.lua
+                    end
+                end
             end)
         end
+
         chkBtn.MouseButton1Click:Connect(function()
-            checked=not checked; tw(chkMark,.15,{BackgroundTransparency=checked and 0 or 1})
-            if checked then local fd=FONTS[selFont]; title1.Font=fd.font; if title3 then title3.Font=fd.font end; for _,t in ipairs(navT) do t.lbl.Font=fd.font end
-            else title1.Font=Enum.Font.GothamBold; if title3 then title3.Font=Enum.Font.Gotham end; for _,t in ipairs(navT) do t.lbl.Font=Enum.Font.GothamSemibold end end
+            checked=not checked
+            tw(chkMark,.15,{BackgroundTransparency=checked and 0 or 1})
+            if checked then
+                local fd=FONTS[selFont]
+                title1.Font=fd.font
+                if title3 then title3.Font=fd.font end
+                for _,t in ipairs(navT) do
+                    t.lbl.Font=fd.font
+                    -- t.lbl.Text NO se toca
+                end
+            else
+                title1.Font=Enum.Font.GothamBold
+                if title3 then title3.Font=Enum.Font.Gotham end
+                for _,t in ipairs(navT) do
+                    t.lbl.Font=Enum.Font.GothamSemibold
+                    -- t.lbl.Text NO se toca
+                end
+            end
         end)
+
         selBtn.MouseButton1Click:Connect(function()
             if panAnim then return end; panAnim=true; panOpen=not panOpen
             if panOpen then arrowF.Text="▴"; tw(listPanel,.3,{Size=UDim2.new(1,0,0,LISTHTOTAL)},Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
@@ -471,7 +488,6 @@ function Settings.build(page, r)
             if #raw<=6 then return raw else return raw:sub(1,5).."." end
         end
 
-        -- Badge tecla: caja oscura redondeada, texto key, limpio como la foto
         local function makeKeyRow(parent,labelText,defaultKey,lo)
             local row=mk("Frame",{Size=UDim2.new(1,0,0,28),BackgroundTransparency=1,LayoutOrder=lo or SO()},parent)
             mk("TextLabel",{Text=labelText,Font=Enum.Font.Gotham,TextSize=11,TextColor3=C.WHITE,BackgroundTransparency=1,Size=UDim2.new(1,-60,1,0),TextXAlignment=Enum.TextXAlignment.Left,ZIndex=5},row)
@@ -653,6 +669,7 @@ function Settings.build(page, r)
         expiryLabelRef=makeCompactField(gridRow,"EXPIRY",shortExpiryText,"rbxassetid://78475382175834",false,3,expiryColor)
     end
 
+    -- Usamos task.delay(1) para que el layout del page esté listo
     task.delay(1, function()
         mk("UIListLayout",{Padding=UDim.new(0,8),SortOrder=Enum.SortOrder.LayoutOrder},page)
         mk("UIPadding",{PaddingTop=UDim.new(0,8),PaddingBottom=UDim.new(0,8),PaddingLeft=UDim.new(0,8),PaddingRight=UDim.new(0,8)},page)
@@ -662,7 +679,6 @@ function Settings.build(page, r)
 
         local customPanel=MiniPanel(topRow,"Custom Panel",nil)
         customPanel.Parent.Size=UDim2.new(0.5,-4,0,0); customPanel.Parent.AutomaticSize=Enum.AutomaticSize.Y
-        -- Ícono en el header (FindFirstChildOfClass busca el primer Frame = el header)
         local cpHeader=customPanel.Parent:FindFirstChildOfClass("Frame")
         if cpHeader then
             local cpIcon=mk("ImageLabel",{Image="rbxassetid://79986513204084",Size=UDim2.new(0,13,0,13),Position=UDim2.new(1,-22,0.5,-6),BackgroundTransparency=1,ImageColor3=C.RED,ZIndex=8},cpHeader)
@@ -687,7 +703,7 @@ function Settings.build(page, r)
         mk("Frame",{Size=UDim2.new(1,0,0.5,0),Position=UDim2.new(0,0,0.5,0),BackgroundColor3=Color3.fromRGB(22,21,19),BorderSizePixel=0,ZIndex=3},sesHeader)
         local sesBar=mk("Frame",{Size=UDim2.new(0,2,0,16),Position=UDim2.new(0,8,0.5,-8),BackgroundColor3=C.RED,BorderSizePixel=0,ZIndex=6},sesHeader)
         rnd(1,sesBar); table.insert(accentEls,{el=sesBar,prop="BackgroundColor3"})
-        mk("TextLabel",{Text="Info Sesion",Font=Enum.Font.GothamBold,TextSize=12,TextColor3=C.WHITE,BackgroundTransparency=1,Size=UDim2.new(1,-44,1,0),Position=UDim2.new(0,16,0,0),TextXAlignment=Enum.TextXAlignment.Left,ZIndex=6},sesHeader)
+        mk("TextLabel",{Text="Session Info",Font=Enum.Font.GothamBold,TextSize=12,TextColor3=C.WHITE,BackgroundTransparency=1,Size=UDim2.new(1,-44,1,0),Position=UDim2.new(0,16,0,0),TextXAlignment=Enum.TextXAlignment.Left,ZIndex=6},sesHeader)
         local sesIcon=mk("ImageLabel",{Image="rbxassetid://78475382175834",Size=UDim2.new(0,13,0,13),Position=UDim2.new(1,-22,0.5,-6),BackgroundTransparency=1,ImageColor3=C.RED,ZIndex=7},sesHeader)
         table.insert(accentEls,{el=sesIcon,prop="ImageColor3"})
         mk("Frame",{Size=UDim2.new(1,0,0,1),Position=UDim2.new(0,0,0,34),BackgroundColor3=Color3.fromRGB(42,40,37),BorderSizePixel=0,ZIndex=4},sessionOuterPanel)
