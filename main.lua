@@ -4,10 +4,10 @@
 -- ══════════════════════════════════════════════════════════════
 local CONFIG = {
     -- Nombres de los tabs (en orden: 1=Combat, 2=Visuals, 3=Settings)
-    TAB_NAMES = { "Combat", "Visuals", "Settings" },
+    TAB_NAMES = { "Combat", "General", "Settings" },
 
     -- Archivos de cada módulo (relativos a RAW_BASE)
-    TAB_FILES = { "combat.lua", "visuals.lua", "settings.lua" },
+    TAB_FILES = { "combat.lua", "general.lua", "settings.lua" },
 
     -- Íconos de cada tab
     TAB_ICONS = {
