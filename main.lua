@@ -11,9 +11,9 @@ local CONFIG = {
 
     -- Íconos de cada tab
     TAB_ICONS = {
-        "rbxassetid://125925976660286",
-        "rbxassetid://126136584090446",
-        "rbxassetid://105322951498375",
+        "rbxassetid://92223666070054", -- Settings
+        "rbxassetid://126136584090446", -- General
+        "rbxassetid://105322951498375", -- Combat
     },
 
     -- Versión del panel
